@@ -30,3 +30,12 @@ def test_create_superuser():
 def test_email_is_required():
     with pytest.raises(ValueError):
         User.objects.create_user(email="", password="x", full_name="Sin Email")
+
+
+@pytest.mark.django_db
+def test_duplicate_email_raises():
+    from django.db import IntegrityError
+
+    User.objects.create_user(email="dup@veragro.com", password="x", full_name="A")
+    with pytest.raises(IntegrityError):
+        User.objects.create_user(email="dup@veragro.com", password="y", full_name="B")
