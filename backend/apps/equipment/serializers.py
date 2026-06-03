@@ -6,6 +6,7 @@ from .models import Equipment, EquipmentType
 class EquipmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = EquipmentType
+        # Omite intencionalmente is_active: el endpoint solo expone tipos activos.
         fields = ("id", "name")
 
 
