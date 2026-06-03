@@ -46,3 +46,28 @@ def test_me_returns_current_user(user):
     assert resp.status_code == 200
     assert resp.data["email"] == "tech@veragro.com"
     assert resp.data["role"] == "technician"
+
+
+@pytest.mark.django_db
+def test_login_rejects_wrong_password(user):
+    client = APIClient()
+    resp = client.post(
+        "/api/auth/login/",
+        {"email": "tech@veragro.com", "password": "wrong"},
+        format="json",
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+def test_refresh_returns_new_access(user):
+    client = APIClient()
+    login = client.post(
+        "/api/auth/login/",
+        {"email": "tech@veragro.com", "password": "secret123"},
+        format="json",
+    )
+    refresh = login.data["refresh"]
+    resp = client.post("/api/auth/refresh/", {"refresh": refresh}, format="json")
+    assert resp.status_code == 200
+    assert "access" in resp.data
