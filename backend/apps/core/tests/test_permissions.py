@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 
-from apps.core.permissions import IsAdmin, IsAdminOrReadOnly
+from apps.core.permissions import IsAdmin, IsAdminOrReadOnly, role_required
 
 User = get_user_model()
 
@@ -44,3 +44,21 @@ def test_is_admin_or_readonly_blocks_write_for_non_admin():
         email="t3@v.com", password="x", full_name="T", role="technician"
     )
     assert IsAdminOrReadOnly().has_permission(_request("post", tech), None) is False
+
+
+@pytest.mark.django_db
+def test_role_required_allows_listed_role():
+    sales = User.objects.create_user(
+        email="s@v.com", password="x", full_name="S", role="sales"
+    )
+    perm = role_required("admin", "sales")()
+    assert perm.has_permission(_request("post", sales), None) is True
+
+
+@pytest.mark.django_db
+def test_role_required_blocks_unlisted_role():
+    tech = User.objects.create_user(
+        email="t4@v.com", password="x", full_name="T", role="technician"
+    )
+    perm = role_required("admin", "sales")()
+    assert perm.has_permission(_request("post", tech), None) is False
