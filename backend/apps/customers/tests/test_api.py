@@ -108,7 +108,13 @@ def test_is_active_not_writable_via_api(auth_client):
 @pytest.mark.django_db
 def test_history_endpoints_return_empty(auth_client):
     c = Customer.objects.create(name="Con Historial")
-    for sub in ("service-orders", "invoices", "equipment"):
+    # service-orders ya conectado al módulo: respuesta paginada vacía.
+    resp = auth_client.get(f"/api/customers/{c.id}/service-orders/")
+    assert resp.status_code == 200
+    assert resp.data["count"] == 0
+    assert resp.data["results"] == []
+    # invoices y equipment siguen como placeholders (billing/equipment).
+    for sub in ("invoices", "equipment"):
         resp = auth_client.get(f"/api/customers/{c.id}/{sub}/")
         assert resp.status_code == 200
         assert resp.data == []

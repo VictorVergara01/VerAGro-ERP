@@ -97,7 +97,9 @@ def test_service_history_returns_empty(admin_client, equipment_type):
     e = Equipment.objects.create(name="ConHist", equipment_type=equipment_type, owner_type="company")
     resp = admin_client.get(f"/api/equipment/{e.id}/service-history/")
     assert resp.status_code == 200
-    assert resp.data == []
+    # Conectado al módulo de órdenes de servicio: respuesta paginada vacía.
+    assert resp.data["count"] == 0
+    assert resp.data["results"] == []
 
 
 @pytest.mark.django_db

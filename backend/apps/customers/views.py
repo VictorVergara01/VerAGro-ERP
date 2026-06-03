@@ -22,11 +22,19 @@ class CustomerViewSet(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save(update_fields=["is_active", "updated_at"])
 
-    # Placeholders: devuelven vacío hasta que existan los módulos correspondientes.
     @action(detail=True, methods=["get"], url_path="service-orders")
     def service_orders(self, request, pk=None):
-        self.get_object()  # valida existencia / 404
-        return Response([])  # TODO: conectar con módulo service_orders
+        from apps.service_orders.serializers import ServiceOrderSummarySerializer
+
+        customer = self.get_object()
+        qs = customer.service_orders.all()
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = ServiceOrderSummarySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(ServiceOrderSummarySerializer(qs, many=True).data)
+
+    # Placeholders: devuelven vacío hasta que existan los módulos correspondientes.
 
     @action(detail=True, methods=["get"])
     def invoices(self, request, pk=None):

@@ -59,5 +59,12 @@ class EquipmentViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="service-history")
     def service_history(self, request, pk=None):
-        self.get_object()  # valida existencia / 404
-        return Response([])  # TODO: conectar con módulo service_orders
+        from apps.service_orders.serializers import ServiceOrderSummarySerializer
+
+        equipment = self.get_object()
+        qs = equipment.service_orders.all()
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = ServiceOrderSummarySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(ServiceOrderSummarySerializer(qs, many=True).data)
