@@ -1,0 +1,52 @@
+from rest_framework import filters, mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from apps.core.permissions import RoleWriteOrReadOnly
+
+from .models import Equipment, EquipmentType
+from .serializers import EquipmentSerializer, EquipmentTypeSerializer
+
+
+class EquipmentTypeViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """Listado read-only de tipos de equipo activos (para selectores)."""
+
+    serializer_class = EquipmentTypeSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        return EquipmentType.objects.filter(is_active=True)
+
+
+class EquipmentViewSet(viewsets.ModelViewSet):
+    serializer_class = EquipmentSerializer
+    permission_classes = [
+        RoleWriteOrReadOnly("admin", "technician", "sales", "inventory")
+    ]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "serial_number", "internal_code", "brand", "model"]
+
+    def get_queryset(self):
+        qs = Equipment.objects.all()
+        params = self.request.query_params
+        status_param = params.get("status")
+        if status_param:
+            qs = qs.filter(status=status_param)
+        customer_param = params.get("customer")
+        if customer_param:
+            qs = qs.filter(customer_id=customer_param)
+        type_param = params.get("equipment_type")
+        if type_param:
+            qs = qs.filter(equipment_type_id=type_param)
+        return qs
+
+    def perform_destroy(self, instance):
+        instance.status = Equipment.Status.RETIRED
+        instance.save(update_fields=["status", "updated_at"])
+
+    @action(detail=True, methods=["get"], url_path="service-history")
+    def service_history(self, request, pk=None):
+        self.get_object()  # valida existencia / 404
+        return Response([])  # TODO: conectar con módulo service_orders
