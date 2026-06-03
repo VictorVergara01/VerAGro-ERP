@@ -11,8 +11,8 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Customer.objects.all()
-        include_inactive = self.request.query_params.get("include_inactive")
-        if include_inactive not in ("1", "true", "True"):
+        include_inactive = self.request.query_params.get("include_inactive", "")
+        if include_inactive.lower() not in ("1", "true", "yes", "on"):
             qs = qs.filter(is_active=True)
         return qs
 

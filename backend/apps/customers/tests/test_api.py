@@ -61,3 +61,45 @@ def test_requires_authentication():
     client = APIClient()
     resp = client.get("/api/customers/")
     assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+def test_patch_clearing_number_with_existing_type_is_rejected(auth_client):
+    c = Customer.objects.create(
+        name="Con RUC", identification_type="ruc", identification_number="155-1"
+    )
+    resp = auth_client.patch(
+        f"/api/customers/{c.id}/", {"identification_number": ""}, format="json"
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_patch_setting_type_when_number_already_present_is_allowed(auth_client):
+    c = Customer.objects.create(name="Sin tipo", identification_number="155-2")
+    resp = auth_client.patch(
+        f"/api/customers/{c.id}/", {"identification_type": "ruc"}, format="json"
+    )
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_include_inactive_shows_inactive(auth_client):
+    Customer.objects.create(name="Activo")
+    Customer.objects.create(name="Inactivo", is_active=False)
+    resp = auth_client.get("/api/customers/?include_inactive=true")
+    names = [c["name"] for c in resp.data["results"]]
+    assert "Activo" in names
+    assert "Inactivo" in names
+
+
+@pytest.mark.django_db
+def test_is_active_not_writable_via_api(auth_client):
+    resp = auth_client.post(
+        "/api/customers/",
+        {"name": "Intento Inactivo", "is_active": False},
+        format="json",
+    )
+    assert resp.status_code == 201
+    # is_active es read-only: se ignora el valor enviado y queda activo por defecto.
+    assert resp.data["is_active"] is True
