@@ -171,3 +171,14 @@ def test_supplier_products_filter_is_preferred(inv_client):
     # ?is_preferred= (vacío) => no filtra, devuelve ambos
     resp_empty = inv_client.get("/api/supplier-products/?is_preferred=")
     assert resp_empty.data["count"] == 2
+
+
+@pytest.mark.django_db
+def test_nested_products_duplicate_returns_400(inv_client):
+    s = Supplier.objects.create(name="S")
+    p = Product.objects.create(sku="ND-1", name="Pieza")
+    SupplierProduct.objects.create(supplier=s, product=p)
+    resp = inv_client.post(
+        f"/api/suppliers/{s.id}/products/", {"product": p.id}, format="json"
+    )
+    assert resp.status_code == 400
