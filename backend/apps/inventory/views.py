@@ -28,7 +28,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["sku", "name", "barcode", "brand", "model"]
 
     def get_queryset(self):
-        qs = Product.objects.all()
+        qs = Product.objects.prefetch_related("compatible_equipment_types")
         params = self.request.query_params
         include_inactive = params.get("include_inactive", "")
         if include_inactive.lower() not in ("1", "true", "yes", "on"):
@@ -64,7 +64,8 @@ class LowStockListView(ListAPIView):
 
     def get_queryset(self):
         return (
-            Product.objects.filter(is_active=True)
+            Product.objects.filter(is_active=True, minimum_stock__gt=0)
+            .prefetch_related("compatible_equipment_types")
             .annotate(available=F("stock_quantity") - F("reserved_quantity"))
             .filter(available__lte=F("minimum_stock"))
         )

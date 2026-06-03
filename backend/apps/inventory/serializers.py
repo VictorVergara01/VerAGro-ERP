@@ -45,7 +45,9 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
 
 
 class AdjustmentSerializer(serializers.Serializer):
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    product = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.filter(is_active=True)
+    )
     movement_type = serializers.ChoiceField(
         choices=["adjustment_in", "adjustment_out"]
     )

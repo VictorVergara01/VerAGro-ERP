@@ -170,3 +170,27 @@ def test_readonly_cannot_write():
         "/api/inventory/products/", {"sku": "R-1", "name": "X"}, format="json"
     )
     assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_low_stock_ignores_zero_minimum(inv_client):
+    # minimum_stock=0 (default) => "sin mínimo configurado" => NO debe aparecer.
+    Product.objects.create(sku="LS-3", name="SinMin", stock_quantity=Decimal("0"))
+    resp = inv_client.get("/api/inventory/low-stock/")
+    names = [p["name"] for p in resp.data]
+    assert "SinMin" not in names
+
+
+@pytest.mark.django_db
+def test_adjustment_on_inactive_product_rejected(inv_client):
+    p = Product.objects.create(
+        sku="INA-1", name="Inactivo", stock_quantity=Decimal("5"), is_active=False
+    )
+    resp = inv_client.post(
+        "/api/inventory/adjustments/",
+        {"product": p.id, "movement_type": "adjustment_in", "quantity": "1"},
+        format="json",
+    )
+    assert resp.status_code == 400
+    p.refresh_from_db()
+    assert p.stock_quantity == Decimal("5")  # intacto
