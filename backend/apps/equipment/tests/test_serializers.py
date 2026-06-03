@@ -89,3 +89,11 @@ def test_patch_to_company_without_clearing_customer_is_rejected():
     )
     s = EquipmentSerializer(instance=e, data={"owner_type": "company"}, partial=True)
     assert s.is_valid() is False
+
+
+@pytest.mark.django_db
+def test_create_without_owner_type_defaults_to_customer_and_requires_customer():
+    # Omitir owner_type => default "customer" => exige customer => inválido sin él.
+    t, _ = EquipmentType.objects.get_or_create(name="Bomba")
+    s = EquipmentSerializer(data={"name": "X", "equipment_type": t.id})
+    assert s.is_valid() is False

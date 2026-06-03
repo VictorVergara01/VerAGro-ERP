@@ -21,7 +21,9 @@ class EquipmentSerializer(serializers.ModelSerializer):
         instance = self.instance
         owner_type = attrs.get(
             "owner_type",
-            getattr(instance, "owner_type", None) if instance else None,
+            getattr(instance, "owner_type", None)
+            if instance
+            else Equipment.OwnerType.CUSTOMER,
         )
         if "customer" in attrs:
             customer = attrs.get("customer")

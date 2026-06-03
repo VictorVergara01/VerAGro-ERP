@@ -147,3 +147,38 @@ def test_technician_role_can_create(equipment_type):
         format="json",
     )
     assert resp.status_code == 201
+
+
+@pytest.mark.django_db
+def test_create_without_owner_type_is_rejected(admin_client, equipment_type):
+    resp = admin_client.post(
+        "/api/equipment/",
+        {"name": "SinOwner", "equipment_type": equipment_type.id},
+        format="json",
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_patch_owner_invariant_via_api(admin_client, equipment_type):
+    from apps.customers.models import Customer
+
+    c = Customer.objects.create(name="Agro SA")
+    e = Equipment.objects.create(
+        name="B1", equipment_type=equipment_type, owner_type="customer", customer=c
+    )
+    # Quitar el customer dejando owner_type=customer debe fallar (400).
+    resp = admin_client.patch(
+        f"/api/equipment/{e.id}/", {"customer": None}, format="json"
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_filter_by_equipment_type_success(admin_client, equipment_type):
+    other, _ = EquipmentType.objects.get_or_create(name="Cargador")
+    Equipment.objects.create(name="DeBomba", equipment_type=equipment_type, owner_type="company")
+    Equipment.objects.create(name="DeCargador", equipment_type=other, owner_type="company")
+    resp = admin_client.get(f"/api/equipment/?equipment_type={equipment_type.id}")
+    names = [e["name"] for e in resp.data["results"]]
+    assert names == ["DeBomba"]
