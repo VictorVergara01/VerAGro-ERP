@@ -113,8 +113,12 @@ def test_history_endpoints_return_empty(auth_client):
     assert resp.status_code == 200
     assert resp.data["count"] == 0
     assert resp.data["results"] == []
-    # invoices y equipment siguen como placeholders (billing/equipment).
-    for sub in ("invoices", "equipment"):
-        resp = auth_client.get(f"/api/customers/{c.id}/{sub}/")
-        assert resp.status_code == 200
-        assert resp.data == []
+    # invoices ya conectado al módulo billing: respuesta paginada vacía.
+    resp = auth_client.get(f"/api/customers/{c.id}/invoices/")
+    assert resp.status_code == 200
+    assert resp.data["count"] == 0
+    assert resp.data["results"] == []
+    # equipment sigue como placeholder.
+    resp = auth_client.get(f"/api/customers/{c.id}/equipment/")
+    assert resp.status_code == 200
+    assert resp.data == []

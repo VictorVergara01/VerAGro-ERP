@@ -120,16 +120,18 @@ def consume_stock(
     quantity,
     was_reserved=False,
     unit_cost=0,
+    movement_type=InventoryMovement.MovementType.SERVICE_OUT,
     reference_type="",
     reference_id=None,
     notes="",
     user=None,
 ):
-    """Descuenta stock físico por consumo en una orden de servicio.
+    """Descuenta stock físico por consumo (servicio) o venta directa.
 
     Decrementa stock_quantity (guard de no-negativo). Si la pieza estaba
     reservada, también libera la reserva (reserved_quantity -= quantity).
-    Registra un movimiento ``service_out``.
+    Registra un movimiento de salida (``service_out`` por defecto; ``sale_out``
+    para ventas directas).
     """
     quantity = Decimal(str(quantity))
     if quantity <= 0:
@@ -146,7 +148,7 @@ def consume_stock(
 
     return InventoryMovement.objects.create(
         product=locked,
-        movement_type=InventoryMovement.MovementType.SERVICE_OUT,
+        movement_type=movement_type,
         quantity=quantity,
         unit_cost=unit_cost or 0,
         reference_type=reference_type,

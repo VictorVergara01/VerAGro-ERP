@@ -165,3 +165,20 @@ def test_consume_stock_insufficient_fails():
     p.refresh_from_db()
     assert p.stock_quantity == Decimal("2")
     assert not InventoryMovement.objects.filter(product=p).exists()
+
+
+@pytest.mark.django_db
+def test_consume_stock_sale_out_movement_type():
+    p = Product.objects.create(sku="CS4", name="P", stock_quantity=Decimal("5"))
+    consume_stock(
+        product=p,
+        quantity=Decimal("2"),
+        movement_type=InventoryMovement.MovementType.SALE_OUT,
+        reference_type="invoice",
+        reference_id=99,
+    )
+    p.refresh_from_db()
+    assert p.stock_quantity == Decimal("3")
+    mov = InventoryMovement.objects.get(product=p)
+    assert mov.movement_type == "sale_out"
+    assert mov.reference_type == "invoice"

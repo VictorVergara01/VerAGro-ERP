@@ -38,8 +38,15 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def invoices(self, request, pk=None):
-        self.get_object()
-        return Response([])  # TODO: conectar con módulo billing
+        from apps.billing.serializers import InvoiceSummarySerializer
+
+        customer = self.get_object()
+        qs = customer.invoices.all()
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = InvoiceSummarySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(InvoiceSummarySerializer(qs, many=True).data)
 
     @action(detail=True, methods=["get"])
     def equipment(self, request, pk=None):

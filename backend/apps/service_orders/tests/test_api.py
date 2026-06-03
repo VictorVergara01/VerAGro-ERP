@@ -170,15 +170,23 @@ def test_filters_and_search(tech_client, customer):
 
 
 @pytest.mark.django_db
-def test_quote_invoice_stubs_501(tech_client, customer):
-    o = ServiceOrder.objects.create(customer=customer)
+def test_generate_quote_any_state_invoice_requires_finished(tech_client, customer):
+    o = ServiceOrder.objects.create(customer=customer)  # received
+    # La cotización puede generarse desde cualquier estado.
     assert (
         tech_client.post(f"/api/service-orders/{o.id}/generate-quote/").status_code
-        == 501
+        == 201
     )
+    # La factura exige la orden finalizada.
     assert (
         tech_client.post(f"/api/service-orders/{o.id}/generate-invoice/").status_code
-        == 501
+        == 400
+    )
+    o.status = ServiceOrder.Status.FINISHED
+    o.save()
+    assert (
+        tech_client.post(f"/api/service-orders/{o.id}/generate-invoice/").status_code
+        == 201
     )
 
 

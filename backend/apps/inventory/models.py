@@ -70,6 +70,7 @@ class InventoryMovement(TimeStampedModel):
     class MovementType(models.TextChoices):
         PURCHASE_IN = "purchase_in", "Entrada por compra"
         SERVICE_OUT = "service_out", "Salida por servicio"
+        SALE_OUT = "sale_out", "Salida por venta"
         RESERVATION = "reservation", "Reserva"
         RESERVATION_RELEASE = "reservation_release", "Liberación de reserva"
         ADJUSTMENT_IN = "adjustment_in", "Ajuste positivo"

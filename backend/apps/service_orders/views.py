@@ -117,9 +117,20 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
 
         order = self.get_object()
+        # Regla doc §5.10: no entregar sin factura, salvo permiso especial (admin).
+        is_admin = getattr(request.user, "role", None) == "admin"
+        if order.status != ServiceOrder.Status.INVOICED and not is_admin:
+            raise ValidationError(
+                {"status": "La orden debe estar facturada para entregarse (override solo admin)."}
+            )
+        allowed = (
+            (ServiceOrder.Status.FINISHED, ServiceOrder.Status.INVOICED)
+            if is_admin
+            else (ServiceOrder.Status.INVOICED,)
+        )
         _transition(
             order,
-            (ServiceOrder.Status.FINISHED, ServiceOrder.Status.INVOICED),
+            allowed,
             ServiceOrder.Status.DELIVERED,
             delivered_date=timezone.localdate(),
         )
@@ -192,21 +203,27 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         )
         return Response(ServiceChecklistSerializer(qs, many=True).data)
 
-    # --- Stubs de módulos diferidos (reservan la ruta del doc §7.7) ---
+    # --- Documentos (módulo billing, import local) ---
     @action(detail=True, methods=["post"], url_path="generate-quote")
     def generate_quote(self, request, pk=None):
-        self.get_object()
+        from apps.billing.serializers import QuoteSerializer
+        from apps.billing.services import create_quote_from_service_order
+
+        order = self.get_object()
+        quote = create_quote_from_service_order(order=order, user=request.user)
         return Response(
-            {"detail": "Pendiente: módulo de cotizaciones."},
-            status=http_status.HTTP_501_NOT_IMPLEMENTED,
+            QuoteSerializer(quote).data, status=http_status.HTTP_201_CREATED
         )
 
     @action(detail=True, methods=["post"], url_path="generate-invoice")
     def generate_invoice(self, request, pk=None):
-        self.get_object()
+        from apps.billing.serializers import InvoiceSerializer
+        from apps.billing.services import create_invoice_from_service_order
+
+        order = self.get_object()
+        invoice = create_invoice_from_service_order(order=order, user=request.user)
         return Response(
-            {"detail": "Pendiente: módulo de facturación."},
-            status=http_status.HTTP_501_NOT_IMPLEMENTED,
+            InvoiceSerializer(invoice).data, status=http_status.HTTP_201_CREATED
         )
 
 
