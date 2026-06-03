@@ -55,3 +55,11 @@ def test_non_positive_quantity_rejected():
         apply_adjustment(
             product=p, movement_type="adjustment_in", quantity=Decimal("0")
         )
+
+
+@pytest.mark.django_db
+def test_adjustment_out_full_balance_to_zero():
+    p = Product.objects.create(sku="A6", name="P", stock_quantity=Decimal("4"))
+    apply_adjustment(product=p, movement_type="adjustment_out", quantity=Decimal("4"))
+    p.refresh_from_db()
+    assert p.stock_quantity == Decimal("0")

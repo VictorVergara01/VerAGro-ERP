@@ -5,7 +5,10 @@ from rest_framework.exceptions import ValidationError
 
 from .models import InventoryMovement, Product
 
-ADJUSTMENT_TYPES = {"adjustment_in", "adjustment_out"}
+ADJUSTMENT_TYPES = {
+    InventoryMovement.MovementType.ADJUSTMENT_IN,
+    InventoryMovement.MovementType.ADJUSTMENT_OUT,
+}
 
 
 @transaction.atomic
@@ -20,7 +23,7 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
         raise ValidationError(
             {"movement_type": "Solo se permiten ajustes (adjustment_in/adjustment_out)."}
         )
-    quantity = Decimal(quantity)
+    quantity = Decimal(str(quantity))
     if quantity <= 0:
         raise ValidationError({"quantity": "La cantidad debe ser mayor que cero."})
 
@@ -35,7 +38,7 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
     else:  # adjustment_in
         locked.stock_quantity = locked.stock_quantity + quantity
 
-    locked.save(update_fields=["stock_quantity", "updated_at"])
+    locked.save(update_fields=["stock_quantity"])
 
     return InventoryMovement.objects.create(
         product=locked,
