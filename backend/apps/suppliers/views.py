@@ -37,7 +37,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=201)
-        qs = supplier.supplier_products.all()
+        qs = supplier.supplier_products.select_related("product", "supplier")
         return Response(SupplierProductSerializer(qs, many=True).data)
 
     @action(detail=True, methods=["get"], url_path="purchase-history")
@@ -51,7 +51,7 @@ class SupplierProductViewSet(viewsets.ModelViewSet):
     permission_classes = [SuppliersWrite]
 
     def get_queryset(self):
-        qs = SupplierProduct.objects.all()
+        qs = SupplierProduct.objects.select_related("product", "supplier")
         params = self.request.query_params
         supplier = params.get("supplier")
         if supplier:
@@ -66,6 +66,6 @@ class SupplierProductViewSet(viewsets.ModelViewSet):
             except (TypeError, ValueError):
                 raise ValidationError({"product": "Debe ser un id numérico."})
         is_preferred = params.get("is_preferred")
-        if is_preferred is not None:
+        if is_preferred:  # ignora "" (param presente sin valor) => no filtra
             qs = qs.filter(is_preferred=is_preferred.lower() in ("1", "true", "yes", "on"))
         return qs

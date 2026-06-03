@@ -155,3 +155,19 @@ def test_readonly_cannot_write():
     client = _client("readonly")
     resp = client.post("/api/suppliers/", {"name": "X"}, format="json")
     assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_supplier_products_filter_is_preferred(inv_client):
+    s = Supplier.objects.create(name="S")
+    p1 = Product.objects.create(sku="IP-1", name="A")
+    p2 = Product.objects.create(sku="IP-2", name="B")
+    SupplierProduct.objects.create(supplier=s, product=p1, is_preferred=True)
+    SupplierProduct.objects.create(supplier=s, product=p2, is_preferred=False)
+    # ?is_preferred=true => solo el preferido
+    resp = inv_client.get("/api/supplier-products/?is_preferred=true")
+    skus = sorted(sp["product_sku"] for sp in resp.data["results"])
+    assert skus == ["IP-1"]
+    # ?is_preferred= (vacío) => no filtra, devuelve ambos
+    resp_empty = inv_client.get("/api/supplier-products/?is_preferred=")
+    assert resp_empty.data["count"] == 2
