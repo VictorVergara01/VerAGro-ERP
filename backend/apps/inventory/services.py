@@ -38,7 +38,8 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
     else:  # adjustment_in
         locked.stock_quantity = locked.stock_quantity + quantity
 
-    locked.save(update_fields=["stock_quantity"])
+    # updated_at es auto_now pero NO se actualiza si se omite de update_fields.
+    locked.save(update_fields=["stock_quantity", "updated_at"])
 
     return InventoryMovement.objects.create(
         product=locked,

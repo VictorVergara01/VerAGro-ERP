@@ -63,3 +63,15 @@ def test_adjustment_out_full_balance_to_zero():
     apply_adjustment(product=p, movement_type="adjustment_out", quantity=Decimal("4"))
     p.refresh_from_db()
     assert p.stock_quantity == Decimal("0")
+
+
+@pytest.mark.django_db
+def test_adjustment_updates_product_updated_at():
+    import time
+
+    p = Product.objects.create(sku="A7", name="P", stock_quantity=Decimal("5"))
+    before = p.updated_at
+    time.sleep(0.01)
+    apply_adjustment(product=p, movement_type="adjustment_in", quantity=Decimal("1"))
+    p.refresh_from_db()
+    assert p.updated_at > before
