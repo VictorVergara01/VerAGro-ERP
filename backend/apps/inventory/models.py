@@ -47,6 +47,13 @@ class Product(TimeStampedModel):
         max_digits=12, decimal_places=2, default=0
     )
     is_active = models.BooleanField(default=True)
+    main_supplier = models.ForeignKey(
+        "suppliers.Supplier",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="main_for_products",
+    )
 
     class Meta:
         ordering = ("name",)
