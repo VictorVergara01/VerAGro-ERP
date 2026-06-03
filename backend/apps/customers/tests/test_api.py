@@ -103,3 +103,12 @@ def test_is_active_not_writable_via_api(auth_client):
     assert resp.status_code == 201
     # is_active es read-only: se ignora el valor enviado y queda activo por defecto.
     assert resp.data["is_active"] is True
+
+
+@pytest.mark.django_db
+def test_history_endpoints_return_empty(auth_client):
+    c = Customer.objects.create(name="Con Historial")
+    for sub in ("service-orders", "invoices", "equipment"):
+        resp = auth_client.get(f"/api/customers/{c.id}/{sub}/")
+        assert resp.status_code == 200
+        assert resp.data == []
