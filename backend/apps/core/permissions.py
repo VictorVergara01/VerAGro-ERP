@@ -43,3 +43,24 @@ def role_required(*roles):
             )
 
     return RolePermission
+
+
+def RoleWriteOrReadOnly(*write_roles):
+    """Lectura para cualquier autenticado; escritura solo para los roles dados.
+
+    Uso: ``permission_classes = [RoleWriteOrReadOnly("admin", "technician")]``.
+    Métodos seguros (GET/HEAD/OPTIONS) los puede usar cualquier usuario
+    autenticado; la escritura queda restringida a ``write_roles``.
+    """
+
+    allowed = set(write_roles)
+
+    class _RoleWriteOrReadOnly(BasePermission):
+        def has_permission(self, request, view):
+            if not (request.user and request.user.is_authenticated):
+                return False
+            if request.method in SAFE_METHODS:
+                return True
+            return request.user.role in allowed
+
+    return _RoleWriteOrReadOnly
