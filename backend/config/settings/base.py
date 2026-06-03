@@ -82,7 +82,7 @@ DATABASES = {
         "USER": env("DATABASE_USER", default="veragro_user"),
         "PASSWORD": env("DATABASE_PASSWORD", default="veragro_password"),
         "HOST": env("DATABASE_HOST", default="db"),
-        "PORT": env("DATABASE_PORT", default="5432"),
+        "PORT": env.int("DATABASE_PORT", default=5432),
     }
 }
 
@@ -124,6 +124,13 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API del ERP modular Veragro",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
