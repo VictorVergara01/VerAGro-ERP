@@ -123,6 +123,18 @@ def test_readonly_role_cannot_create(equipment_type):
 
 
 @pytest.mark.django_db
+def test_invalid_customer_filter_returns_400(admin_client, equipment_type):
+    resp = admin_client.get("/api/equipment/?customer=abc")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_invalid_equipment_type_filter_returns_400(admin_client, equipment_type):
+    resp = admin_client.get("/api/equipment/?equipment_type=abc")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
 def test_technician_role_can_create(equipment_type):
     user = User.objects.create_user(
         email="tech@veragro.com", password="x", full_name="T", role="technician"

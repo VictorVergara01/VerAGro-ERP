@@ -1,5 +1,6 @@
 from rest_framework import filters, mixins, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -21,6 +22,8 @@ class EquipmentTypeViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
+    """CRUD de equipos con búsqueda, filtros y soft-delete vía status=retired."""
+
     serializer_class = EquipmentSerializer
     permission_classes = [
         RoleWriteOrReadOnly("admin", "technician", "sales", "inventory")
@@ -36,10 +39,18 @@ class EquipmentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(status=status_param)
         customer_param = params.get("customer")
         if customer_param:
-            qs = qs.filter(customer_id=customer_param)
+            try:
+                qs = qs.filter(customer_id=int(customer_param))
+            except (TypeError, ValueError):
+                raise ValidationError({"customer": "Debe ser un id numérico."})
         type_param = params.get("equipment_type")
         if type_param:
-            qs = qs.filter(equipment_type_id=type_param)
+            try:
+                qs = qs.filter(equipment_type_id=int(type_param))
+            except (TypeError, ValueError):
+                raise ValidationError(
+                    {"equipment_type": "Debe ser un id numérico."}
+                )
         return qs
 
     def perform_destroy(self, instance):
