@@ -163,6 +163,35 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         order.refresh_from_db()
         return Response(self.get_serializer(order).data)
 
+    @action(detail=True, methods=["get", "post"])
+    def checklist(self, request, pk=None):
+        """GET: lista los checklists de la orden. POST {checklist_template}: instancia
+        uno desde una plantilla (módulo checklists)."""
+        from apps.checklists.models import ChecklistTemplate
+        from apps.checklists.serializers import ServiceChecklistSerializer
+        from apps.checklists.services import instantiate_checklist
+
+        order = self.get_object()
+        if request.method == "POST":
+            template_id = request.data.get("checklist_template")
+            try:
+                template = ChecklistTemplate.objects.get(pk=template_id, is_active=True)
+            except (ChecklistTemplate.DoesNotExist, ValueError, TypeError):
+                raise ValidationError(
+                    {"checklist_template": "Plantilla no encontrada o inactiva."}
+                )
+            checklist = instantiate_checklist(
+                service_order=order, template=template, user=request.user
+            )
+            return Response(
+                ServiceChecklistSerializer(checklist).data,
+                status=http_status.HTTP_201_CREATED,
+            )
+        qs = order.checklists.select_related("checklist_template").prefetch_related(
+            "items__template_item", "items__recommended_product"
+        )
+        return Response(ServiceChecklistSerializer(qs, many=True).data)
+
     # --- Stubs de módulos diferidos (reservan la ruta del doc §7.7) ---
     @action(detail=True, methods=["post"], url_path="generate-quote")
     def generate_quote(self, request, pk=None):
