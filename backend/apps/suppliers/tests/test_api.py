@@ -73,11 +73,13 @@ def test_nested_products_get_and_post(inv_client):
 
 
 @pytest.mark.django_db
-def test_purchase_history_placeholder(inv_client):
+def test_purchase_history_empty(inv_client):
     s = Supplier.objects.create(name="S")
     resp = inv_client.get(f"/api/suppliers/{s.id}/purchase-history/")
     assert resp.status_code == 200
-    assert resp.data == []
+    # Ahora conectado al módulo de compras: respuesta paginada, sin órdenes aún.
+    assert resp.data["count"] == 0
+    assert resp.data["results"] == []
 
 
 @pytest.mark.django_db

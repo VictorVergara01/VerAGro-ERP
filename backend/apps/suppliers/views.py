@@ -42,8 +42,15 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="purchase-history")
     def purchase_history(self, request, pk=None):
-        self.get_object()
-        return Response([])  # TODO: conectar con módulo purchasing
+        from apps.purchasing.serializers import PurchaseOrderSummarySerializer
+
+        supplier = self.get_object()
+        qs = supplier.purchase_orders.all()
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = PurchaseOrderSummarySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(PurchaseOrderSummarySerializer(qs, many=True).data)
 
 
 class SupplierProductViewSet(viewsets.ModelViewSet):
