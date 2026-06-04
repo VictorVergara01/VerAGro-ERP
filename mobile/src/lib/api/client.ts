@@ -36,18 +36,20 @@ const authMiddleware: Middleware = {
     return request;
   },
   async onResponse({ request, response }) {
-    if (response.status !== 401) return response;
-    if (request.url.includes("/api/auth/")) return response;
-
+    // openapi-fetch exige devolver undefined si NO se modifica la respuesta,
+    // o una Response nueva si se reemplaza.
+    if (response.status !== 401 || request.url.includes("/api/auth/")) {
+      return undefined;
+    }
     const access = await tryRefresh();
     if (!access) {
       await clearTokens();
       emitAuthExpired();
-      return response;
+      return undefined; // dejar pasar el 401 original
     }
     const retry = request.clone();
     retry.headers.set("Authorization", `Bearer ${access}`);
-    return fetch(retry);
+    return await fetch(retry);
   },
 };
 
