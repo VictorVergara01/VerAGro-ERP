@@ -83,13 +83,42 @@ def test_delete_is_soft_sets_retired(admin_client, equipment_type):
 
 
 @pytest.mark.django_db
-def test_types_endpoint_is_readonly(admin_client, equipment_type):
+def test_types_list_no_pagination(admin_client, equipment_type):
     resp = admin_client.get("/api/equipment/types/")
     assert resp.status_code == 200
-    names = [t["name"] for t in resp.data]
+    names = [t["name"] for t in resp.data]  # respuesta es lista (sin paginar)
     assert "Bomba" in names
-    resp_post = admin_client.post("/api/equipment/types/", {"name": "Nuevo"}, format="json")
-    assert resp_post.status_code == 405
+
+
+@pytest.mark.django_db
+def test_types_crud_admin(admin_client):
+    resp = admin_client.post("/api/equipment/types/", {"name": "Nuevo Tipo"}, format="json")
+    assert resp.status_code == 201
+    type_id = resp.data["id"]
+    patch = admin_client.patch(
+        f"/api/equipment/types/{type_id}/", {"name": "Tipo Editado"}, format="json"
+    )
+    assert patch.status_code == 200
+    assert patch.data["name"] == "Tipo Editado"
+    # Soft-delete: deja de listarse por defecto.
+    assert admin_client.delete(f"/api/equipment/types/{type_id}/").status_code == 204
+    names = [t["name"] for t in admin_client.get("/api/equipment/types/").data]
+    assert "Tipo Editado" not in names
+
+
+@pytest.mark.django_db
+def test_types_write_forbidden_for_technician(equipment_type):
+    from django.contrib.auth import get_user_model
+    from rest_framework.test import APIClient
+
+    user = get_user_model().objects.create_user(
+        email="tec_t@v.com", password="x", full_name="T", role="technician"
+    )
+    c = APIClient()
+    c.force_authenticate(user=user)
+    # Lectura sí; escritura no.
+    assert c.get("/api/equipment/types/").status_code == 200
+    assert c.post("/api/equipment/types/", {"name": "X"}, format="json").status_code == 403
 
 
 @pytest.mark.django_db

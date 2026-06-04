@@ -34,7 +34,7 @@ const ITEMS: NavItem[] = [
   { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice, ready: true },
   { label: "Facturas", to: "/invoices", icon: IconReceipt, ready: true },
   { label: "Reportes", to: "/reports", icon: IconReportAnalytics, ready: true },
-  { label: "Configuración", to: "/settings", icon: IconSettings },
+  { label: "Configuración", to: "/settings", icon: IconSettings, ready: true },
 ];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {

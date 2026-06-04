@@ -1,5 +1,5 @@
 from django.db.models import F
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView, ListAPIView
@@ -71,10 +71,23 @@ class LowStockListView(ListAPIView):
         )
 
 
-class CategoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
+    """CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+
+    Sin paginación: alimenta selectores. Soft-delete vía is_active.
+    """
+
     serializer_class = ProductCategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [InventoryWrite]
     pagination_class = None
 
     def get_queryset(self):
-        return ProductCategory.objects.filter(is_active=True)
+        qs = ProductCategory.objects.all()
+        include_inactive = self.request.query_params.get("include_inactive", "")
+        if include_inactive.lower() not in ("1", "true", "yes", "on"):
+            qs = qs.filter(is_active=True)
+        return qs
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=["is_active"])

@@ -16,6 +16,7 @@ import { ProductDetailPage } from "../features/inventory/ProductDetailPage";
 import { PurchaseOrderDetailPage } from "../features/purchasing/PurchaseOrderDetailPage";
 import { PurchasingPage } from "../features/purchasing/PurchasingPage";
 import { ReportsPage } from "../features/reports/ReportsPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 import { ServiceOrderDetailPage } from "../features/service-orders/ServiceOrderDetailPage";
 import { ServiceOrdersPage } from "../features/service-orders/ServiceOrdersPage";
 import { SupplierDetailPage } from "../features/suppliers/SupplierDetailPage";
@@ -46,6 +47,7 @@ export function AppRoutes() {
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
     </Routes>

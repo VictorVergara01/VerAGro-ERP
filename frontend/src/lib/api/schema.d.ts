@@ -266,14 +266,59 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Listado read-only de tipos de equipo activos (para selectores). */
+        /**
+         * @description CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+         */
         get: operations["equipment_types_list"];
         put?: never;
-        post?: never;
+        /**
+         * @description CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+         */
+        post: operations["equipment_types_create"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/types/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+         */
+        get: operations["equipment_types_retrieve"];
+        /**
+         * @description CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+         */
+        put: operations["equipment_types_update"];
+        post?: never;
+        /**
+         * @description CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+         */
+        delete: operations["equipment_types_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+         */
+        patch: operations["equipment_types_partial_update"];
         trace?: never;
     };
     "/api/inventory/adjustments/": {
@@ -299,13 +344,59 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: alimenta selectores. Soft-delete vía is_active.
+         */
         get: operations["inventory_categories_list"];
         put?: never;
-        post?: never;
+        /**
+         * @description CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: alimenta selectores. Soft-delete vía is_active.
+         */
+        post: operations["inventory_categories_create"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/categories/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: alimenta selectores. Soft-delete vía is_active.
+         */
+        get: operations["inventory_categories_retrieve"];
+        /**
+         * @description CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: alimenta selectores. Soft-delete vía is_active.
+         */
+        put: operations["inventory_categories_update"];
+        post?: never;
+        /**
+         * @description CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: alimenta selectores. Soft-delete vía is_active.
+         */
+        delete: operations["inventory_categories_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
+         *
+         *     Sin paginación: alimenta selectores. Soft-delete vía is_active.
+         */
+        patch: operations["inventory_categories_partial_update"];
         trace?: never;
     };
     "/api/inventory/low-stock/": {
@@ -1447,6 +1538,7 @@ export interface components {
         EquipmentType: {
             readonly id: number;
             name: string;
+            is_active?: boolean;
         };
         /**
          * @description * `cedula` - Cédula
@@ -1902,6 +1994,11 @@ export interface components {
             customer?: number | null;
             equipment_type?: number;
         };
+        PatchedEquipmentType: {
+            readonly id?: number;
+            name?: string;
+            is_active?: boolean;
+        };
         PatchedInvoice: {
             readonly id?: number;
             readonly invoice_number?: string;
@@ -1997,6 +2094,11 @@ export interface components {
             category?: number | null;
             main_supplier?: number | null;
             compatible_equipment_types?: number[];
+        };
+        PatchedProductCategory: {
+            readonly id?: number;
+            name?: string;
+            is_active?: boolean;
         };
         PatchedPurchaseAdditionalCost: {
             readonly id?: number;
@@ -2313,6 +2415,7 @@ export interface components {
         ProductCategory: {
             readonly id: number;
             name: string;
+            is_active?: boolean;
         };
         PurchaseAdditionalCost: {
             readonly id: number;
@@ -3432,6 +3535,130 @@ export interface operations {
             };
         };
     };
+    equipment_types_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentType"];
+                "application/x-www-form-urlencoded": components["schemas"]["EquipmentType"];
+                "multipart/form-data": components["schemas"]["EquipmentType"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentType"];
+                };
+            };
+        };
+    };
+    equipment_types_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment type. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentType"];
+                };
+            };
+        };
+    };
+    equipment_types_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment type. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentType"];
+                "application/x-www-form-urlencoded": components["schemas"]["EquipmentType"];
+                "multipart/form-data": components["schemas"]["EquipmentType"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentType"];
+                };
+            };
+        };
+    };
+    equipment_types_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment type. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    equipment_types_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment type. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedEquipmentType"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedEquipmentType"];
+                "multipart/form-data": components["schemas"]["PatchedEquipmentType"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentType"];
+                };
+            };
+        };
+    };
     inventory_adjustments_create: {
         parameters: {
             query?: never;
@@ -3472,6 +3699,130 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductCategory"][];
+                };
+            };
+        };
+    };
+    inventory_categories_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCategory"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProductCategory"];
+                "multipart/form-data": components["schemas"]["ProductCategory"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCategory"];
+                };
+            };
+        };
+    };
+    inventory_categories_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product category. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCategory"];
+                };
+            };
+        };
+    };
+    inventory_categories_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product category. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCategory"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProductCategory"];
+                "multipart/form-data": components["schemas"]["ProductCategory"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCategory"];
+                };
+            };
+        };
+    };
+    inventory_categories_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product category. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    inventory_categories_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product category. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProductCategory"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProductCategory"];
+                "multipart/form-data": components["schemas"]["PatchedProductCategory"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCategory"];
                 };
             };
         };

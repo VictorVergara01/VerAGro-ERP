@@ -137,14 +137,30 @@ def test_low_stock(inv_client):
 
 
 @pytest.mark.django_db
-def test_categories_readonly(inv_client):
+def test_categories_list_no_pagination(inv_client):
     ProductCategory.objects.create(name="Consumibles")
     resp = inv_client.get("/api/inventory/categories/")
     assert resp.status_code == 200
-    names = [c["name"] for c in resp.data]
+    names = [c["name"] for c in resp.data]  # lista sin paginar
     assert "Consumibles" in names
-    resp_post = inv_client.post("/api/inventory/categories/", {"name": "Nueva"}, format="json")
-    assert resp_post.status_code == 405
+
+
+@pytest.mark.django_db
+def test_categories_crud(inv_client):
+    # inventory puede escribir categorías.
+    resp = inv_client.post(
+        "/api/inventory/categories/", {"name": "Nueva Cat"}, format="json"
+    )
+    assert resp.status_code == 201
+    cat_id = resp.data["id"]
+    patch = inv_client.patch(
+        f"/api/inventory/categories/{cat_id}/", {"name": "Cat Editada"}, format="json"
+    )
+    assert patch.status_code == 200
+    # Soft-delete: deja de listarse.
+    assert inv_client.delete(f"/api/inventory/categories/{cat_id}/").status_code == 204
+    names = [c["name"] for c in inv_client.get("/api/inventory/categories/").data]
+    assert "Cat Editada" not in names
 
 
 @pytest.mark.django_db

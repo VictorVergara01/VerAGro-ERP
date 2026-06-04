@@ -1,7 +1,6 @@
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.core.permissions import RoleWriteOrReadOnly
@@ -10,15 +9,26 @@ from .models import Equipment, EquipmentType
 from .serializers import EquipmentSerializer, EquipmentTypeSerializer
 
 
-class EquipmentTypeViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    """Listado read-only de tipos de equipo activos (para selectores)."""
+class EquipmentTypeViewSet(viewsets.ModelViewSet):
+    """CRUD de tipos de equipo (lookup). Lectura para todos; escritura admin/inventory.
+
+    Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
+    """
 
     serializer_class = EquipmentTypeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleWriteOrReadOnly("admin", "inventory")]
     pagination_class = None
 
     def get_queryset(self):
-        return EquipmentType.objects.filter(is_active=True)
+        qs = EquipmentType.objects.all()
+        include_inactive = self.request.query_params.get("include_inactive", "")
+        if include_inactive.lower() not in ("1", "true", "yes", "on"):
+            qs = qs.filter(is_active=True)
+        return qs
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=["is_active"])
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):

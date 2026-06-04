@@ -7,7 +7,8 @@ from .services import apply_adjustment
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = ("id", "name")
+        fields = ("id", "name", "is_active")
+        read_only_fields = ("id",)
 
 
 class ProductSerializer(serializers.ModelSerializer):
