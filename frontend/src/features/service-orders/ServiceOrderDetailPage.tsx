@@ -27,6 +27,7 @@ import type { ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { useAuth } from "../auth/useAuth";
 import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AddPartModal } from "./AddPartModal";
@@ -63,6 +64,8 @@ function Field({ label, value }: { label: string; value?: ReactNode }) {
 export function ServiceOrderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const orderId = id ? Number(id) : undefined;
   const { data: order, isLoading, error } = useServiceOrder(orderId);
   const action = useServiceOrderAction(orderId);
@@ -216,35 +219,48 @@ export function ServiceOrderDetailPage() {
             </Button>
           )}
           {status === "finished" && (
-            <Badge color="teal" variant="light" size="lg">
-              Esperando facturación / pago
-            </Badge>
+            <>
+              <Badge color="teal" variant="light" size="lg">
+                Esperando facturación / pago
+              </Badge>
+              {isAdmin && (
+                <Button
+                  color="green"
+                  variant="outline"
+                  onClick={() =>
+                    act("deliver", "Entregada (override de admin, sin cobro).")
+                  }
+                >
+                  Entregar sin cobro
+                </Button>
+              )}
+            </>
           )}
           {status === "invoiced" && (
             <Button color="green" onClick={() => act("deliver", "Entregada.")}>
               Entregar
             </Button>
           )}
-          <Menu position="bottom-end">
-            <Menu.Target>
-              <Button variant="light" rightSection={<IconChevronDown size={16} />}>
-                Más
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<IconFileInvoice size={16} />}
-                onClick={() => doGenerate("quote")}
-              >
-                Generar cotización
-              </Menu.Item>
-              {!terminal && (
+          {!terminal && (
+            <Menu position="bottom-end">
+              <Menu.Target>
+                <Button variant="light" rightSection={<IconChevronDown size={16} />}>
+                  Más
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<IconFileInvoice size={16} />}
+                  onClick={() => doGenerate("quote")}
+                >
+                  Generar cotización
+                </Menu.Item>
                 <Menu.Item color="red" onClick={confirmCancel}>
                   Cancelar orden
                 </Menu.Item>
-              )}
-            </Menu.Dropdown>
-          </Menu>
+              </Menu.Dropdown>
+            </Menu>
+          )}
         </Group>
       </Group>
 

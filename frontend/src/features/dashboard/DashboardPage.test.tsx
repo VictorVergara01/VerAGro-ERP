@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DashboardPage } from "./DashboardPage";
 import type { DashboardData } from "./useDashboard";
@@ -11,10 +12,17 @@ vi.mock("./useDashboard", async (importOriginal) => {
   return { ...actual, useDashboard: () => mockUseDashboard() };
 });
 
+const mockUser = vi.fn();
+vi.mock("../auth/useAuth", () => ({
+  useAuth: () => ({ user: mockUser(), status: "authenticated", login: vi.fn(), logout: vi.fn() }),
+}));
+
 function renderPage() {
   return render(
     <MantineProvider>
-      <DashboardPage />
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
     </MantineProvider>,
   );
 }
@@ -29,7 +37,11 @@ const data: DashboardData = {
 };
 
 describe("DashboardPage", () => {
-  it("muestra las tarjetas con los datos", () => {
+  beforeEach(() => {
+    mockUser.mockReturnValue({ id: 1, email: "a@a.com", full_name: "Admin", role: "admin", is_active: true });
+  });
+
+  it("muestra las tarjetas con los datos (rol financiero)", () => {
     mockUseDashboard.mockReturnValue({ data, isLoading: false, error: null });
     renderPage();
     expect(screen.getByText("Órdenes abiertas")).toBeInTheDocument();
@@ -53,5 +65,15 @@ describe("DashboardPage", () => {
     mockUseDashboard.mockReturnValue({ data: undefined, isLoading: true, error: null });
     renderPage();
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
+  });
+
+  it("rol operativo (técnico) ve accesos rápidos, no el panel financiero", () => {
+    mockUser.mockReturnValue({ id: 2, email: "t@t.com", full_name: "Tec", role: "technician", is_active: true });
+    mockUseDashboard.mockReturnValue({ data: undefined, isLoading: false, error: null });
+    renderPage();
+    expect(screen.getByText("Accesos rápidos a tu trabajo del día.")).toBeInTheDocument();
+    expect(screen.getByText("Órdenes de servicio")).toBeInTheDocument();
+    // No debe mostrar tarjetas financieras.
+    expect(screen.queryByText("Ventas del mes")).not.toBeInTheDocument();
   });
 });

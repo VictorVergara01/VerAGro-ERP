@@ -35,6 +35,12 @@ def _product(sku, **kwargs):
     return Product.objects.create(sku=sku, name=sku, **kwargs)
 
 
+def _approve(client, order_id):
+    """Lleva una orden de received → approved (precondición para reservar)."""
+    client.post(f"/api/service-orders/{order_id}/start-diagnostic/")
+    client.post(f"/api/service-orders/{order_id}/approve/")
+
+
 @pytest.mark.django_db
 def test_create_service_order(tech_client, customer):
     resp = tech_client.post(
@@ -98,18 +104,14 @@ def test_reserve_and_finish_flow_updates_inventory(tech_client, customer):
         {"product": p.id, "quantity": "3"},
         format="json",
     )
+    _approve(tech_client, o.id)  # reservar exige la orden aprobada
     reserve = tech_client.post(f"/api/service-orders/{o.id}/reserve-parts/")
     assert len(reserve.data["reserved"]) == 1
     p.refresh_from_db()
     assert p.reserved_quantity == Decimal("3")
 
-    # Pasar a in_progress y finalizar.
-    tech_client.post(f"/api/service-orders/{o.id}/start-work/")  # waiting? no pending
-    o.refresh_from_db()
-    # sin pendientes, sigue en received → start-work no aplica; forzamos transición válida
-    if o.status != ServiceOrder.Status.IN_PROGRESS:
-        o.status = ServiceOrder.Status.IN_PROGRESS
-        o.save()
+    # Pasar a in_progress y finalizar (sin pendientes, approved → in_progress).
+    tech_client.post(f"/api/service-orders/{o.id}/start-work/")
     finish = tech_client.post(f"/api/service-orders/{o.id}/finish/")
     assert finish.data["status"] == "finished"
     p.refresh_from_db()
@@ -126,6 +128,7 @@ def test_cancel_releases(tech_client, customer):
         {"product": p.id, "quantity": "4"},
         format="json",
     )
+    _approve(tech_client, o.id)
     tech_client.post(f"/api/service-orders/{o.id}/reserve-parts/")
     resp = tech_client.post(f"/api/service-orders/{o.id}/cancel/")
     assert resp.status_code == 204  # la orden se elimina
@@ -144,6 +147,7 @@ def test_delete_reserved_part_releases(tech_client, customer):
         format="json",
     )
     part_id = add.data["id"]
+    _approve(tech_client, o.id)
     tech_client.post(f"/api/service-orders/{o.id}/reserve-parts/")
     p.refresh_from_db()
     assert p.reserved_quantity == Decimal("2")
@@ -171,9 +175,9 @@ def test_filters_and_search(tech_client, customer):
 
 
 @pytest.mark.django_db
-def test_generate_quote_any_state_invoice_requires_finished(tech_client, customer):
+def test_generate_quote_non_terminal_invoice_requires_finished(tech_client, customer):
     o = ServiceOrder.objects.create(customer=customer)  # received
-    # La cotización puede generarse desde cualquier estado.
+    # La cotización puede generarse desde cualquier estado no terminal.
     assert (
         tech_client.post(f"/api/service-orders/{o.id}/generate-quote/").status_code
         == 201
@@ -189,6 +193,34 @@ def test_generate_quote_any_state_invoice_requires_finished(tech_client, custome
         tech_client.post(f"/api/service-orders/{o.id}/generate-invoice/").status_code
         == 201
     )
+
+
+@pytest.mark.django_db
+def test_generate_quote_blocked_on_terminal_order(tech_client, customer):
+    # Gap #3: no se cotiza una orden ya entregada/cerrada.
+    o = ServiceOrder.objects.create(
+        customer=customer, status=ServiceOrder.Status.DELIVERED
+    )
+    assert (
+        tech_client.post(f"/api/service-orders/{o.id}/generate-quote/").status_code
+        == 400
+    )
+
+
+@pytest.mark.django_db
+def test_reserve_blocked_before_approved(tech_client, customer):
+    # Gap #5: no se reservan piezas antes de aprobar (orden en received).
+    o = ServiceOrder.objects.create(customer=customer)  # received
+    p = _product("RB1", stock_quantity=Decimal("10"))
+    tech_client.post(
+        f"/api/service-orders/{o.id}/add-part/",
+        {"product": p.id, "quantity": "2"},
+        format="json",
+    )
+    resp = tech_client.post(f"/api/service-orders/{o.id}/reserve-parts/")
+    assert resp.status_code == 400
+    p.refresh_from_db()
+    assert p.reserved_quantity == Decimal("0")
 
 
 @pytest.mark.django_db

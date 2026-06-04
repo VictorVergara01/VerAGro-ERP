@@ -24,6 +24,14 @@ TERMINAL_STATUSES = (
     ServiceOrder.Status.CANCELLED,
 )
 
+# Solo se reservan piezas de una orden ya aprobada (no antes de diagnosticar/aprobar):
+# reservar bloquea inventario y no debe hacerse para trabajo aún sin aprobar.
+RESERVABLE_STATUSES = (
+    ServiceOrder.Status.APPROVED,
+    ServiceOrder.Status.WAITING_PARTS,
+    ServiceOrder.Status.IN_PROGRESS,
+)
+
 
 def _int_param(params, key):
     value = params.get(key)
@@ -166,7 +174,10 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="reserve-parts")
     def reserve_parts_action(self, request, pk=None):
         order = self.get_object()
-        _assert_not_terminal(order)
+        if order.status not in RESERVABLE_STATUSES:
+            raise ValidationError(
+                {"status": "Solo se reservan piezas de una orden aprobada o en proceso."}
+            )
         summary = reserve_parts(order, user=request.user)
         order.refresh_from_db()
         return Response({**summary, "status": order.status})
@@ -221,6 +232,8 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         from apps.billing.services import create_quote_from_service_order
 
         order = self.get_object()
+        # No tiene sentido cotizar una orden ya finalizada/facturada/entregada.
+        _assert_not_terminal(order)
         quote = create_quote_from_service_order(order=order, user=request.user)
         return Response(
             QuoteSerializer(quote).data, status=http_status.HTTP_201_CREATED

@@ -187,13 +187,20 @@ def test_permissions(customer, db):
 @pytest.mark.django_db
 def test_generate_quote_and_invoice_from_order(customer):
     tech = _client("technician")
-    order = ServiceOrder.objects.create(
-        customer=customer, status=ServiceOrder.Status.FINISHED, labor_cost=Decimal("50")
+    # Cotización: orden no terminal (en diagnóstico).
+    quoting = ServiceOrder.objects.create(
+        customer=customer,
+        status=ServiceOrder.Status.IN_DIAGNOSTIC,
+        labor_cost=Decimal("50"),
     )
-    gq = tech.post(f"/api/service-orders/{order.id}/generate-quote/")
+    gq = tech.post(f"/api/service-orders/{quoting.id}/generate-quote/")
     assert gq.status_code == 201
     assert Decimal(gq.data["total"]) == Decimal("50.00")
 
+    # Factura: exige la orden finalizada.
+    order = ServiceOrder.objects.create(
+        customer=customer, status=ServiceOrder.Status.FINISHED, labor_cost=Decimal("50")
+    )
     gi = tech.post(f"/api/service-orders/{order.id}/generate-invoice/")
     assert gi.status_code == 201
     assert gi.data["invoice_type"] == "service_invoice"
