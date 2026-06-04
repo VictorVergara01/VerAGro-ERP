@@ -152,6 +152,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
     lines = InvoiceLineSerializer(many=True, required=False)
     payments = PaymentSerializer(many=True, read_only=True)
     customer_name = serializers.CharField(source="customer.name", read_only=True)
+    customer_phone = serializers.CharField(source="customer.phone", read_only=True)
+    customer_whatsapp = serializers.CharField(
+        source="customer.whatsapp", read_only=True
+    )
 
     class Meta:
         model = Invoice
@@ -161,6 +165,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "invoice_type",
             "customer",
             "customer_name",
+            "customer_phone",
+            "customer_whatsapp",
             "service_order",
             "quote",
             "status",

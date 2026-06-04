@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../../lib/api/client";
+import { api, API_BASE_URL } from "../../lib/api/client";
+import { getAccess } from "../../lib/auth/tokens";
 import type { Paginated, Schemas } from "../../lib/api/types";
 
 export type ProductCategory = Schemas["ProductCategory"];
 export type EquipmentType = Schemas["EquipmentType"];
 export type ChecklistTemplate = Schemas["ChecklistTemplate"];
+export type CompanyProfile = Schemas["CompanyProfile"];
 
 // ---------- Categorías de inventario ----------
 
@@ -161,6 +163,64 @@ export function useDeleteTemplate() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["settings", "checklist-templates"] });
       void qc.invalidateQueries({ queryKey: ["checklist-templates"] });
+    },
+  });
+}
+
+// ---------- Perfil de empresa (encabezado de factura) ----------
+
+export function useCompany() {
+  return useQuery({
+    queryKey: ["settings", "company"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/company/");
+      if (error || !data) throw new Error("No se pudo cargar la empresa.");
+      return data as unknown as CompanyProfile;
+    },
+  });
+}
+
+export interface CompanyInput {
+  name: string;
+  legal_name?: string;
+  tax_id?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  whatsapp?: string;
+  invoice_footer?: string;
+  logo?: File | null;
+}
+
+export function useSaveCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    // Multipart: permite enviar el logo junto a los campos de texto.
+    mutationFn: async (input: CompanyInput) => {
+      const form = new FormData();
+      for (const [key, value] of Object.entries(input)) {
+        if (key === "logo") continue;
+        form.append(key, value == null ? "" : String(value));
+      }
+      if (input.logo instanceof File) {
+        form.append("logo", input.logo);
+      }
+      const token = getAccess();
+      const res = await fetch(`${API_BASE_URL}/api/company/`, {
+        method: "PATCH",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: form,
+      });
+      if (!res.ok) {
+        throw new Error(
+          res.status === 403
+            ? "Solo un administrador puede editar la empresa."
+            : "No se pudo guardar la empresa.",
+        );
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["settings", "company"] });
     },
   });
 }

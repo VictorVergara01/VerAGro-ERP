@@ -155,11 +155,14 @@ def test_product_sale_deducts_on_issue(sales_client, customer):
 
 
 @pytest.mark.django_db
-def test_pdf_stubs_501(sales_client, customer):
+def test_pdf_endpoints(sales_client, customer):
+    # La factura genera PDF real; la cotización sigue como stub (501).
     q = Quote.objects.create(customer=customer)
     inv = Invoice.objects.create(customer=customer)
     assert sales_client.get(f"/api/quotes/{q.id}/pdf/").status_code == 501
-    assert sales_client.get(f"/api/invoices/{inv.id}/pdf/").status_code == 501
+    inv_resp = sales_client.get(f"/api/invoices/{inv.id}/pdf/")
+    assert inv_resp.status_code == 200
+    assert inv_resp["Content-Type"] == "application/pdf"
 
 
 @pytest.mark.django_db

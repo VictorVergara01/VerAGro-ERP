@@ -2,6 +2,7 @@ import { Tabs } from "@mantine/core";
 
 import { PageHeader } from "../../components/ui/PageHeader";
 import { ChecklistTemplatesManager } from "./ChecklistTemplatesManager";
+import { CompanySettings } from "./CompanySettings";
 import { LookupManager } from "./LookupManager";
 import {
   useCategoryList,
@@ -42,12 +43,16 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader title="Configuración" />
-      <Tabs defaultValue="categories">
+      <Tabs defaultValue="company">
         <Tabs.List mb="md">
+          <Tabs.Tab value="company">Empresa</Tabs.Tab>
           <Tabs.Tab value="categories">Categorías de inventario</Tabs.Tab>
           <Tabs.Tab value="types">Tipos de equipo</Tabs.Tab>
           <Tabs.Tab value="checklists">Plantillas de checklist</Tabs.Tab>
         </Tabs.List>
+        <Tabs.Panel value="company">
+          <CompanySettings />
+        </Tabs.Panel>
         <Tabs.Panel value="categories">
           <CategoriesTab />
         </Tabs.Panel>

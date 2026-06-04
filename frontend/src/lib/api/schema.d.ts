@@ -124,6 +124,34 @@ export interface paths {
         patch: operations["checklists_templates_partial_update"];
         trace?: never;
     };
+    "/api/company/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Perfil de empresa (singleton). GET para cualquier autenticado; PUT/PATCH
+         *     solo admin. Acepta multipart para subir el logo.
+         */
+        get: operations["company_retrieve"];
+        /**
+         * @description Perfil de empresa (singleton). GET para cualquier autenticado; PUT/PATCH
+         *     solo admin. Acepta multipart para subir el logo.
+         */
+        put: operations["company_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Perfil de empresa (singleton). GET para cualquier autenticado; PUT/PATCH
+         *     solo admin. Acepta multipart para subir el logo.
+         */
+        patch: operations["company_partial_update"];
+        trace?: never;
+    };
     "/api/customers/": {
         parameters: {
             query?: never;
@@ -1531,6 +1559,23 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        CompanyProfile: {
+            name?: string;
+            legal_name?: string;
+            /** RUC */
+            tax_id?: string;
+            address?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            whatsapp?: string;
+            /** Format: uri */
+            logo?: string | null;
+            /** @description Texto al pie de la factura (términos, datos de pago, Yappy…). */
+            invoice_footer?: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
         Customer: {
             readonly id: number;
             /** Format: date-time */
@@ -1610,6 +1655,8 @@ export interface components {
             invoice_type?: components["schemas"]["InvoiceTypeEnum"];
             customer: number;
             readonly customer_name: string;
+            readonly customer_phone: string;
+            readonly customer_whatsapp: string;
             service_order?: number | null;
             quote?: number | null;
             readonly status: components["schemas"]["InvoiceStatusEnum"];
@@ -2024,6 +2071,23 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        PatchedCompanyProfile: {
+            name?: string;
+            legal_name?: string;
+            /** RUC */
+            tax_id?: string;
+            address?: string;
+            phone?: string;
+            /** Format: email */
+            email?: string;
+            whatsapp?: string;
+            /** Format: uri */
+            logo?: string | null;
+            /** @description Texto al pie de la factura (términos, datos de pago, Yappy…). */
+            invoice_footer?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
+        };
         PatchedCustomer: {
             readonly id?: number;
             /** Format: date-time */
@@ -2080,6 +2144,8 @@ export interface components {
             invoice_type?: components["schemas"]["InvoiceTypeEnum"];
             customer?: number;
             readonly customer_name?: string;
+            readonly customer_phone?: string;
+            readonly customer_whatsapp?: string;
             service_order?: number | null;
             quote?: number | null;
             readonly status?: components["schemas"]["InvoiceStatusEnum"];
@@ -3233,6 +3299,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChecklistTemplate"];
+                };
+            };
+        };
+    };
+    company_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfile"];
+                };
+            };
+        };
+    };
+    company_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CompanyProfile"];
+                "multipart/form-data": components["schemas"]["CompanyProfile"];
+                "application/x-www-form-urlencoded": components["schemas"]["CompanyProfile"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfile"];
+                };
+            };
+        };
+    };
+    company_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCompanyProfile"];
+                "multipart/form-data": components["schemas"]["PatchedCompanyProfile"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCompanyProfile"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfile"];
                 };
             };
         };

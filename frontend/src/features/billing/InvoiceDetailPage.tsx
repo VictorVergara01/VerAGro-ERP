@@ -6,6 +6,7 @@ import {
   Grid,
   Group,
   Loader,
+  Menu,
   Stack,
   Table,
   Text,
@@ -15,14 +16,23 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
   IconArrowLeft,
+  IconBrandWhatsapp,
   IconCash,
+  IconChevronDown,
+  IconDownload,
   IconEdit,
+  IconPrinter,
   IconSend,
   IconX,
 } from "@tabler/icons-react";
 import { Link, useParams } from "react-router-dom";
 
 import { formatCurrency, formatDate } from "../../utils/format";
+import {
+  downloadInvoicePdf,
+  printInvoicePdf,
+  whatsappInvoiceUrl,
+} from "./documents";
 import { useInvoice, useInvoiceAction } from "./api";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { PaymentModal } from "./PaymentModal";
@@ -68,6 +78,36 @@ export function InvoiceDetailPage() {
       onConfirm: () => run("cancel", "Factura cancelada."),
     });
 
+  const handleDownload = async () => {
+    try {
+      await downloadInvoicePdf(invoice);
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
+
+  const handlePrint = async () => {
+    try {
+      await printInvoicePdf(invoice);
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
+
+  const handleWhatsapp = async () => {
+    // Descarga el PDF primero (queda listo para adjuntar) y abre WhatsApp con el mensaje.
+    try {
+      await downloadInvoicePdf(invoice);
+    } catch {
+      // Si la descarga falla, igual abrimos WhatsApp con el mensaje.
+    }
+    window.open(whatsappInvoiceUrl(invoice), "_blank");
+    notifications.show({
+      color: "green",
+      message: "PDF descargado. Adjúntalo en el chat de WhatsApp que se abrió.",
+    });
+  };
+
   return (
     <Stack>
       <Group justify="space-between">
@@ -112,6 +152,28 @@ export function InvoiceDetailPage() {
               Cancelar
             </Button>
           )}
+          <Menu position="bottom-end">
+            <Menu.Target>
+              <Button variant="light" rightSection={<IconChevronDown size={16} />}>
+                Compartir
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<IconDownload size={16} />} onClick={handleDownload}>
+                Descargar PDF
+              </Menu.Item>
+              <Menu.Item leftSection={<IconPrinter size={16} />} onClick={handlePrint}>
+                Imprimir
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<IconBrandWhatsapp size={16} />}
+                color="green"
+                onClick={handleWhatsapp}
+              >
+                Enviar por WhatsApp
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </Group>
 

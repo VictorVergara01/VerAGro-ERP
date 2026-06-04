@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from apps.core.views import CompanyProfileView
 from apps.users.views import UserListView
 
 urlpatterns = [
@@ -16,6 +17,7 @@ urlpatterns = [
     ),
     path("api/auth/", include("apps.users.urls")),
     path("api/users/", UserListView.as_view(), name="user-list"),
+    path("api/company/", CompanyProfileView.as_view(), name="company-profile"),
     path("api/", include("apps.customers.urls")),
     path("api/", include("apps.equipment.urls")),
     path("api/", include("apps.inventory.urls")),

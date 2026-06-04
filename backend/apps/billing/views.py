@@ -209,8 +209,11 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
-        self.get_object()
-        return _pdf_stub()
+        from .pdf import render_invoice_pdf
+
+        invoice = self.get_object()
+        download = request.query_params.get("download") in ("1", "true", "yes")
+        return render_invoice_pdf(invoice, download=download)
 
 
 class InvoiceLineViewSet(viewsets.ModelViewSet):
