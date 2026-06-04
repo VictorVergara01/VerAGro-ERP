@@ -180,10 +180,10 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
+        # Cancelar libera reservas y ELIMINA la orden → 204 (ya no existe).
         order = self.get_object()
         cancel_order(order, user=request.user)
-        order.refresh_from_db()
-        return Response(self.get_serializer(order).data)
+        return Response(status=http_status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["get", "post"])
     def checklist(self, request, pk=None):

@@ -128,7 +128,8 @@ def test_cancel_releases(tech_client, customer):
     )
     tech_client.post(f"/api/service-orders/{o.id}/reserve-parts/")
     resp = tech_client.post(f"/api/service-orders/{o.id}/cancel/")
-    assert resp.data["status"] == "cancelled"
+    assert resp.status_code == 204  # la orden se elimina
+    assert not ServiceOrder.objects.filter(id=o.id).exists()
     p.refresh_from_db()
     assert p.reserved_quantity == Decimal("0")
 

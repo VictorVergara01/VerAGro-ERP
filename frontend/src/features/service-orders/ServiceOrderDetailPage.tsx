@@ -24,7 +24,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
@@ -62,6 +62,7 @@ function Field({ label, value }: { label: string; value?: ReactNode }) {
 
 export function ServiceOrderDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const orderId = id ? Number(id) : undefined;
   const { data: order, isLoading, error } = useServiceOrder(orderId);
   const action = useServiceOrderAction(orderId);
@@ -86,6 +87,24 @@ export function ServiceOrderDetailPage() {
       notifications.show({ color: "red", message: (e as Error).message });
     }
   };
+
+  const confirmCancel = () =>
+    modals.openConfirmModal({
+      title: "Cancelar orden",
+      children:
+        "Al cancelar, la orden se ELIMINA permanentemente (se liberan las piezas reservadas). ¿Continuar?",
+      labels: { confirm: "Cancelar y eliminar", cancel: "Volver" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        try {
+          await action.mutateAsync("cancel");
+          notifications.show({ color: "green", message: "Orden cancelada y eliminada." });
+          navigate("/service-orders");
+        } catch (e) {
+          notifications.show({ color: "red", message: (e as Error).message });
+        }
+      },
+    });
 
   const doReserve = async () => {
     try {
@@ -220,7 +239,7 @@ export function ServiceOrderDetailPage() {
                 Generar cotización
               </Menu.Item>
               {!terminal && (
-                <Menu.Item color="red" onClick={() => act("cancel", "Orden cancelada.")}>
+                <Menu.Item color="red" onClick={confirmCancel}>
                   Cancelar orden
                 </Menu.Item>
               )}

@@ -121,7 +121,8 @@ def finish_order(order, user=None):
 
 @transaction.atomic
 def cancel_order(order, user=None):
-    """Cancela la orden y libera las reservas pendientes (reservation_release)."""
+    """Cancela la orden: libera las reservas pendientes (reservation_release) y
+    ELIMINA la orden (no queda como 'cancelada' en la lista)."""
     if order.status == ServiceOrder.Status.DELIVERED:
         raise ValidationError(
             {"status": "No se puede cancelar una orden ya entregada."}
@@ -135,9 +136,4 @@ def cancel_order(order, user=None):
             notes=f"Cancelación orden {order.service_order_number}",
             user=user,
         )
-        part.status = ServiceOrderPart.Status.RETURNED
-        part.save(update_fields=["status", "updated_at"])
-
-    order.status = ServiceOrder.Status.CANCELLED
-    order.save(update_fields=["status", "updated_at"])
-    return order
+    order.delete()

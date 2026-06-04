@@ -134,13 +134,12 @@ def test_cancel_releases_reservations(customer):
     product.refresh_from_db()
     assert product.reserved_quantity == Decimal("4")
 
+    order_id = order.id
     cancel_order(order)
-    order.refresh_from_db()
-    part.refresh_from_db()
     product.refresh_from_db()
 
-    assert order.status == ServiceOrder.Status.CANCELLED
-    assert part.status == ServiceOrderPart.Status.RETURNED
+    # La orden se elimina; sus piezas con ella; las reservas se liberan.
+    assert not ServiceOrder.objects.filter(id=order_id).exists()
     assert product.reserved_quantity == Decimal("0")
     assert product.stock_quantity == Decimal("10")  # nunca se descontó físico
     assert InventoryMovement.objects.filter(
