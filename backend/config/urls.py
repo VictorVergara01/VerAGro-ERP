@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from apps.users.views import UserListView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -11,6 +13,7 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/auth/", include("apps.users.urls")),
+    path("api/users/", UserListView.as_view(), name="user-list"),
     path("api/", include("apps.customers.urls")),
     path("api/", include("apps.equipment.urls")),
     path("api/", include("apps.inventory.urls")),

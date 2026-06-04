@@ -9,6 +9,7 @@ const mockList = vi.fn();
 vi.mock("./api", () => ({
   useServiceOrders: () => mockList(),
   useSaveServiceOrder: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useTechnicians: () => ({ data: [] }),
 }));
 vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
 vi.mock("../equipment/api", () => ({

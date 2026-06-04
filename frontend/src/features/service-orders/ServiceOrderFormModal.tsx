@@ -14,12 +14,13 @@ import { useEffect } from "react";
 
 import { useCustomers } from "../customers/api";
 import { useEquipmentList } from "../equipment/api";
-import { useSaveServiceOrder } from "./api";
+import { useSaveServiceOrder, useTechnicians } from "./api";
 import { SERVICE_TYPE_OPTIONS, type ServiceOrder } from "./types";
 
 interface FormValues {
   customer: string | null;
   equipment: string | null;
+  technician: string | null;
   service_type: string;
   received_date: string;
   estimated_delivery_date: string;
@@ -35,6 +36,7 @@ interface FormValues {
 const EMPTY: FormValues = {
   customer: null,
   equipment: null,
+  technician: null,
   service_type: "diagnostic",
   received_date: "",
   estimated_delivery_date: "",
@@ -58,6 +60,7 @@ export function ServiceOrderFormModal({
 }) {
   const save = useSaveServiceOrder();
   const customers = useCustomers({});
+  const technicians = useTechnicians();
   const editing = Boolean(order?.id);
 
   const form = useForm<FormValues>({
@@ -82,6 +85,7 @@ export function ServiceOrderFormModal({
               estimated_delivery_date: order.estimated_delivery_date ?? "",
             }
           : {}),
+        technician: order?.technician ? String(order.technician) : null,
       } as FormValues);
       form.resetDirty();
     }
@@ -93,6 +97,7 @@ export function ServiceOrderFormModal({
       id: order?.id,
       customer: Number(values.customer),
       equipment: values.equipment ? Number(values.equipment) : null,
+      technician: values.technician ? Number(values.technician) : null,
       service_type: values.service_type,
       received_date: values.received_date || undefined,
       estimated_delivery_date: values.estimated_delivery_date || null,
@@ -161,6 +166,19 @@ export function ServiceOrderFormModal({
               data={SERVICE_TYPE_OPTIONS}
               allowDeselect={false}
               {...form.getInputProps("service_type")}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <Select
+              label="Técnico asignado"
+              placeholder="Sin asignar"
+              data={(technicians.data ?? []).map((t) => ({
+                value: String(t.id),
+                label: t.full_name,
+              }))}
+              searchable
+              clearable
+              {...form.getInputProps("technician")}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>

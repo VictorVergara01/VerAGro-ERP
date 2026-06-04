@@ -245,6 +245,9 @@ export function ServiceOrderDetailPage() {
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Recibida" value={formatDate(order.received_date)} />
           </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}>
+            <Field label="Técnico" value={order.technician_name || "Sin asignar"} />
+          </Grid.Col>
           <Grid.Col span={12}>
             <Field label="Reclamo del cliente" value={order.customer_complaint} />
           </Grid.Col>
