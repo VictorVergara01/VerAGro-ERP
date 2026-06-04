@@ -57,7 +57,6 @@ function nextAction(
       return { action: "start-work", label: "Iniciar trabajo" };
     case "in_progress":
       return { action: "finish", label: "Finalizar" };
-    case "finished":
     case "invoiced":
       return { action: "deliver", label: "Entregar" };
     default:
@@ -270,7 +269,9 @@ export function OrderDetailScreen() {
         </TouchableOpacity>
       ) : (
         <Text style={styles.dimmedCenter}>
-          No hay acciones disponibles en este estado.
+          {status === "finished"
+            ? "Esperando facturación y pago para poder entregar."
+            : "No hay acciones disponibles en este estado."}
         </Text>
       )}
 

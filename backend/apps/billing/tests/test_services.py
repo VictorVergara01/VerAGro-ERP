@@ -137,14 +137,37 @@ def test_create_invoice_requires_finished(customer):
 
 
 @pytest.mark.django_db
-def test_issue_invoice_sets_order_invoiced(customer):
-    order = _finished_order_with_part(customer)
+def test_order_invoiced_when_invoice_paid(customer):
+    # Emitir NO marca la orden; el pago total sí (la deja "facturada").
+    order = _finished_order_with_part(customer)  # total 100
     invoice = create_invoice_from_service_order(order=order)
     issue_invoice(invoice=invoice)
     order.refresh_from_db()
+    assert order.status == ServiceOrder.Status.FINISHED  # aún no facturada
+
+    record_payment(invoice=invoice, amount=Decimal("100"), method="cash")
     invoice.refresh_from_db()
-    assert invoice.status == Invoice.Status.ISSUED
+    order.refresh_from_db()
+    assert invoice.status == Invoice.Status.PAID
     assert order.status == ServiceOrder.Status.INVOICED
+
+
+@pytest.mark.django_db
+def test_finish_autocreates_invoice(customer):
+    from apps.service_orders.services import finish_order
+
+    order = ServiceOrder.objects.create(
+        customer=customer,
+        status=ServiceOrder.Status.IN_PROGRESS,
+        labor_cost=Decimal("80"),
+    )
+    finish_order(order)
+    order.refresh_from_db()
+    assert order.status == ServiceOrder.Status.FINISHED
+    inv = order.invoices.first()
+    assert inv is not None
+    assert inv.invoice_type == Invoice.InvoiceType.SERVICE
+    assert inv.total == Decimal("80.00")
 
 
 @pytest.mark.django_db

@@ -108,6 +108,14 @@ def finish_order(order, user=None):
     order.finished_date = timezone.localdate()
     order.save(update_fields=["status", "finished_date", "updated_at"])
     recalculate_totals(order)
+
+    # Al finalizar se genera la factura automáticamente (si aún no existe).
+    from apps.billing.models import Invoice
+    from apps.billing.services import create_invoice_from_service_order
+
+    has_invoice = order.invoices.exclude(status=Invoice.Status.CANCELLED).exists()
+    if not has_invoice:
+        create_invoice_from_service_order(order=order, user=user)
     return order
 
 

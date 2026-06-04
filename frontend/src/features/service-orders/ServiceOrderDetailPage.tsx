@@ -196,7 +196,12 @@ export function ServiceOrderDetailPage() {
               Finalizar
             </Button>
           )}
-          {(status === "finished" || status === "invoiced") && (
+          {status === "finished" && (
+            <Badge color="teal" variant="light" size="lg">
+              Esperando facturación / pago
+            </Badge>
+          )}
+          {status === "invoiced" && (
             <Button color="green" onClick={() => act("deliver", "Entregada.")}>
               Entregar
             </Button>
@@ -213,13 +218,6 @@ export function ServiceOrderDetailPage() {
                 onClick={() => doGenerate("quote")}
               >
                 Generar cotización
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<IconFileInvoice size={16} />}
-                disabled={status !== "finished"}
-                onClick={() => doGenerate("invoice")}
-              >
-                Generar factura
               </Menu.Item>
               {!terminal && (
                 <Menu.Item color="red" onClick={() => act("cancel", "Orden cancelada.")}>

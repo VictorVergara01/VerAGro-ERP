@@ -161,6 +161,8 @@ def create_invoice_from_service_order(*, order, user=None):
         raise ValidationError(
             {"status": "Solo se factura una orden finalizada (finished)."}
         )
+    if order.invoices.exclude(status=Invoice.Status.CANCELLED).exists():
+        raise ValidationError({"detail": "La orden ya tiene una factura."})
     invoice = Invoice.objects.create(
         invoice_type=Invoice.InvoiceType.SERVICE,
         customer=order.customer,
@@ -218,8 +220,6 @@ def convert_quote_to_invoice(*, quote, user=None):
 
 @transaction.atomic
 def issue_invoice(*, invoice, user=None):
-    from apps.service_orders.models import ServiceOrder
-
     if invoice.status != Invoice.Status.DRAFT:
         raise ValidationError({"status": "Solo se emite una factura en borrador."})
 
@@ -241,14 +241,23 @@ def issue_invoice(*, invoice, user=None):
 
     invoice.status = Invoice.Status.ISSUED
     invoice.save(update_fields=["status", "updated_at"])
-
-    order = invoice.service_order
-    if order is not None and order.status == ServiceOrder.Status.FINISHED:
-        order.status = ServiceOrder.Status.INVOICED
-        order.save(update_fields=["status", "updated_at"])
-
     recalculate_invoice(invoice)
     return invoice
+
+
+def _mark_order_invoiced_if_paid(invoice):
+    """Cuando la factura queda totalmente pagada, la orden de servicio asociada
+    pasa a 'invoiced' (facturada) para que el técnico solo deba entregarla."""
+    from apps.service_orders.models import ServiceOrder
+
+    order = invoice.service_order
+    if (
+        order is not None
+        and invoice.status == Invoice.Status.PAID
+        and order.status == ServiceOrder.Status.FINISHED
+    ):
+        order.status = ServiceOrder.Status.INVOICED
+        order.save(update_fields=["status", "updated_at"])
 
 
 @transaction.atomic
@@ -281,4 +290,5 @@ def record_payment(
         **extra,
     )
     recalculate_invoice(invoice)
+    _mark_order_invoiced_if_paid(invoice)
     return payment
