@@ -31,8 +31,8 @@ const ITEMS: NavItem[] = [
   { label: "Compras", to: "/purchasing", icon: IconShoppingCart, ready: true },
   { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool, ready: true },
   { label: "Checklists", to: "/checklists", icon: IconClipboardList },
-  { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice },
-  { label: "Facturas", to: "/invoices", icon: IconReceipt },
+  { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice, ready: true },
+  { label: "Facturas", to: "/invoices", icon: IconReceipt, ready: true },
   { label: "Reportes", to: "/reports", icon: IconReportAnalytics },
   { label: "Configuración", to: "/settings", icon: IconSettings },
 ];

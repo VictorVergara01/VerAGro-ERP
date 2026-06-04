@@ -2,6 +2,10 @@ import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "../components/layout/AppLayout";
 import { LoginPage } from "../features/auth/LoginPage";
+import { InvoiceDetailPage } from "../features/billing/InvoiceDetailPage";
+import { InvoicesPage } from "../features/billing/InvoicesPage";
+import { QuoteDetailPage } from "../features/billing/QuoteDetailPage";
+import { QuotesPage } from "../features/billing/QuotesPage";
 import { CustomerDetailPage } from "../features/customers/CustomerDetailPage";
 import { CustomersPage } from "../features/customers/CustomersPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
@@ -36,6 +40,10 @@ export function AppRoutes() {
           <Route path="/purchasing/:id" element={<PurchaseOrderDetailPage />} />
           <Route path="/service-orders" element={<ServiceOrdersPage />} />
           <Route path="/service-orders/:id" element={<ServiceOrderDetailPage />} />
+          <Route path="/quotes" element={<QuotesPage />} />
+          <Route path="/quotes/:id" element={<QuoteDetailPage />} />
+          <Route path="/invoices" element={<InvoicesPage />} />
+          <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
         </Route>
       </Route>
     </Routes>
