@@ -171,6 +171,44 @@ def test_finish_autocreates_invoice(customer):
 
 
 @pytest.mark.django_db
+def test_zero_total_invoice_settles_on_issue(customer):
+    # Bug #1: una orden de $0 (diagnóstico gratis) no debe quedar atascada.
+    from apps.service_orders.services import finish_order
+
+    order = ServiceOrder.objects.create(
+        customer=customer, status=ServiceOrder.Status.IN_PROGRESS
+    )  # total 0
+    finish_order(order)
+    inv = order.invoices.first()
+    assert inv.total == Decimal("0.00")
+    issue_invoice(invoice=inv)
+    inv.refresh_from_db()
+    order.refresh_from_db()
+    # La factura de 0 queda pagada al emitir y la orden pasa a facturada.
+    assert inv.status == Invoice.Status.PAID
+    assert order.status == ServiceOrder.Status.INVOICED
+
+
+@pytest.mark.django_db
+def test_convert_blocked_if_order_already_invoiced(customer):
+    # Bug #2: no se puede crear una 2.ª factura de una orden ya facturada.
+    from apps.service_orders.services import finish_order
+
+    order = ServiceOrder.objects.create(
+        customer=customer, status=ServiceOrder.Status.IN_PROGRESS,
+        labor_cost=Decimal("50"),
+    )
+    quote = create_quote_from_service_order(order=order)
+    finish_order(order)  # crea la factura automática
+    quote.status = Quote.Status.APPROVED
+    quote.save()
+    with pytest.raises(ValidationError):
+        convert_quote_to_invoice(quote=quote)
+    # La orden sigue con una sola factura.
+    assert order.invoices.count() == 1
+
+
+@pytest.mark.django_db
 def test_issue_product_sale_deducts_inventory(customer):
     product = _product("PS1", stock_quantity=Decimal("10"))
     inv = Invoice.objects.create(

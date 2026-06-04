@@ -74,7 +74,9 @@ def recalculate_invoice(invoice):
         Invoice.Status.PARTIALLY_PAID,
         Invoice.Status.PAID,
     ):
-        if invoice.paid_amount >= invoice.total and invoice.total > 0:
+        # Una factura de total 0 (p.ej. diagnóstico gratis/garantía) queda saldada:
+        # no hay nada que cobrar.
+        if invoice.total <= 0 or invoice.paid_amount >= invoice.total:
             invoice.status = Invoice.Status.PAID
         elif invoice.paid_amount > 0:
             invoice.status = Invoice.Status.PARTIALLY_PAID
@@ -191,6 +193,17 @@ def convert_quote_to_invoice(*, quote, user=None):
         raise ValidationError(
             {"status": "Solo se convierte una cotización aprobada."}
         )
+    # Evita doble facturación: si la cotización viene de una orden que ya tiene
+    # factura (p.ej. la automática al finalizar), no se crea otra.
+    if (
+        quote.service_order is not None
+        and quote.service_order.invoices.exclude(
+            status=Invoice.Status.CANCELLED
+        ).exists()
+    ):
+        raise ValidationError(
+            {"detail": "La orden de servicio de esta cotización ya tiene una factura."}
+        )
     invoice = Invoice.objects.create(
         invoice_type=Invoice.InvoiceType.FINAL,
         customer=quote.customer,
@@ -242,6 +255,8 @@ def issue_invoice(*, invoice, user=None):
     invoice.status = Invoice.Status.ISSUED
     invoice.save(update_fields=["status", "updated_at"])
     recalculate_invoice(invoice)
+    # Si el total es 0, queda pagada al emitir → la orden pasa a facturada.
+    _mark_order_invoiced_if_paid(invoice)
     return invoice
 
 
