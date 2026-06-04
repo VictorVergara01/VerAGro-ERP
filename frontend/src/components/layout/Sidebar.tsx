@@ -29,7 +29,7 @@ const ITEMS: NavItem[] = [
   { label: "Inventario", to: "/inventory", icon: IconBox, ready: true },
   { label: "Proveedores", to: "/suppliers", icon: IconTruck, ready: true },
   { label: "Compras", to: "/purchasing", icon: IconShoppingCart, ready: true },
-  { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool },
+  { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool, ready: true },
   { label: "Checklists", to: "/checklists", icon: IconClipboardList },
   { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice },
   { label: "Facturas", to: "/invoices", icon: IconReceipt },

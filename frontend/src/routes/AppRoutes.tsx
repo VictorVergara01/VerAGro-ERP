@@ -11,6 +11,8 @@ import { InventoryPage } from "../features/inventory/InventoryPage";
 import { ProductDetailPage } from "../features/inventory/ProductDetailPage";
 import { PurchaseOrderDetailPage } from "../features/purchasing/PurchaseOrderDetailPage";
 import { PurchasingPage } from "../features/purchasing/PurchasingPage";
+import { ServiceOrderDetailPage } from "../features/service-orders/ServiceOrderDetailPage";
+import { ServiceOrdersPage } from "../features/service-orders/ServiceOrdersPage";
 import { SupplierDetailPage } from "../features/suppliers/SupplierDetailPage";
 import { SuppliersPage } from "../features/suppliers/SuppliersPage";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -32,6 +34,8 @@ export function AppRoutes() {
           <Route path="/suppliers/:id" element={<SupplierDetailPage />} />
           <Route path="/purchasing" element={<PurchasingPage />} />
           <Route path="/purchasing/:id" element={<PurchaseOrderDetailPage />} />
+          <Route path="/service-orders" element={<ServiceOrdersPage />} />
+          <Route path="/service-orders/:id" element={<ServiceOrderDetailPage />} />
         </Route>
       </Route>
     </Routes>
