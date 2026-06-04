@@ -19,8 +19,8 @@ import { useNavigate } from "react-router-dom";
 
 import { useCustomers } from "../customers/api";
 import { useProducts } from "../inventory/api";
-import { useCreateInvoice } from "./api";
-import { INVOICE_TYPE_OPTIONS, LINE_TYPE_OPTIONS } from "./types";
+import { useCreateInvoice, useUpdateInvoice } from "./api";
+import { INVOICE_TYPE_OPTIONS, LINE_TYPE_OPTIONS, type Invoice } from "./types";
 
 interface LineRow {
   line_type: string;
@@ -41,36 +41,64 @@ interface FormValues {
   lines: LineRow[];
 }
 
+const EMPTY: FormValues = {
+  customer: null,
+  invoice_type: "product_sale",
+  issue_date: "",
+  due_date: "",
+  discount_amount: 0,
+  tax_amount: 0,
+  notes: "",
+  lines: [],
+};
+
 export function InvoiceCreateModal({
   opened,
   onClose,
+  invoice,
 }: {
   opened: boolean;
   onClose: () => void;
+  invoice?: Invoice | null;
 }) {
   const create = useCreateInvoice();
+  const update = useUpdateInvoice(invoice?.id);
   const customers = useCustomers({});
   const products = useProducts({});
   const navigate = useNavigate();
+  const editing = Boolean(invoice?.id);
 
   const form = useForm<FormValues>({
-    initialValues: {
-      customer: null,
-      invoice_type: "product_sale",
-      issue_date: "",
-      due_date: "",
-      discount_amount: 0,
-      tax_amount: 0,
-      notes: "",
-      lines: [],
-    },
+    initialValues: EMPTY,
     validate: { customer: (v) => (v ? null : "Selecciona un cliente.") },
   });
 
   useEffect(() => {
-    if (opened) form.reset();
+    if (!opened) return;
+    if (invoice) {
+      form.setValues({
+        customer: invoice.customer ? String(invoice.customer) : null,
+        invoice_type: invoice.invoice_type ?? "product_sale",
+        issue_date: invoice.issue_date ?? "",
+        due_date: invoice.due_date ?? "",
+        discount_amount: Number(invoice.discount_amount ?? 0),
+        tax_amount: Number(invoice.tax_amount ?? 0),
+        notes: invoice.notes ?? "",
+        lines: (invoice.lines ?? []).map((l) => ({
+          line_type: l.line_type ?? "product",
+          product: l.product ? String(l.product) : null,
+          description: l.description ?? "",
+          quantity: Number(l.quantity ?? 0),
+          unit_price: Number(l.unit_price ?? 0),
+          unit_cost: Number(l.unit_cost ?? 0),
+        })),
+      });
+    } else {
+      form.setValues(EMPTY);
+    }
+    form.resetDirty();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opened]);
+  }, [opened, invoice]);
 
   const productOptions = (products.data?.results ?? []).map((p) => ({
     value: String(p.id),
@@ -93,34 +121,45 @@ export function InvoiceCreateModal({
       notifications.show({ color: "red", message: "Agrega al menos una línea." });
       return;
     }
+    const payload = {
+      customer: Number(values.customer),
+      invoice_type: values.invoice_type,
+      issue_date: values.issue_date || undefined,
+      due_date: values.due_date || null,
+      discount_amount: String(values.discount_amount || 0),
+      tax_amount: String(values.tax_amount || 0),
+      notes: values.notes,
+      lines: values.lines.map((l) => ({
+        line_type: l.line_type,
+        product: l.product ? Number(l.product) : null,
+        description: l.description,
+        quantity: String(l.quantity || 0),
+        unit_price: String(l.unit_price || 0),
+        unit_cost: String(l.unit_cost || 0),
+      })),
+    };
     try {
-      const invoice = await create.mutateAsync({
-        customer: Number(values.customer),
-        invoice_type: values.invoice_type,
-        issue_date: values.issue_date || undefined,
-        due_date: values.due_date || null,
-        discount_amount: String(values.discount_amount || 0),
-        tax_amount: String(values.tax_amount || 0),
-        notes: values.notes,
-        lines: values.lines.map((l) => ({
-          line_type: l.line_type,
-          product: l.product ? Number(l.product) : null,
-          description: l.description,
-          quantity: String(l.quantity || 0),
-          unit_price: String(l.unit_price || 0),
-          unit_cost: String(l.unit_cost || 0),
-        })),
+      const result = editing
+        ? await update.mutateAsync(payload)
+        : await create.mutateAsync(payload);
+      notifications.show({
+        color: "green",
+        message: editing ? "Factura actualizada." : "Factura creada.",
       });
-      notifications.show({ color: "green", message: "Factura creada." });
       onClose();
-      navigate(`/invoices/${invoice.id}`);
+      navigate(`/invoices/${result.id}`);
     } catch (e) {
       notifications.show({ color: "red", message: (e as Error).message });
     }
   });
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Nueva factura" size="xl">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={editing ? "Editar factura" : "Nueva factura"}
+      size="xl"
+    >
       <form onSubmit={submit}>
         <Grid>
           <Grid.Col span={{ base: 12, sm: 6 }}>
@@ -238,8 +277,8 @@ export function InvoiceCreateModal({
           <Button variant="default" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" loading={create.isPending}>
-            Crear factura
+          <Button type="submit" loading={create.isPending || update.isPending}>
+            {editing ? "Guardar" : "Crear factura"}
           </Button>
         </Group>
       </form>

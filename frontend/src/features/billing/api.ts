@@ -65,6 +65,24 @@ export function useCreateQuote() {
   });
 }
 
+export function useUpdateQuote(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateQuoteInput) => {
+      const { data, error } = await api.PATCH("/api/quotes/{id}/", {
+        params: { path: { id: id as number } },
+        body: input as unknown as Quote,
+      });
+      if (error || !data) throw new Error("No se pudo actualizar la cotización.");
+      return data as Quote;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["quote", id] });
+      void qc.invalidateQueries({ queryKey: ["quotes"] });
+    },
+  });
+}
+
 export function useQuote(id: number | undefined) {
   return useQuery({
     queryKey: ["quote", id],
@@ -176,6 +194,24 @@ export function useCreateInvoice() {
       return data as Invoice;
     },
     onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useUpdateInvoice(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateInvoiceInput) => {
+      const { data, error } = await api.PATCH("/api/invoices/{id}/", {
+        params: { path: { id: id as number } },
+        body: input as unknown as Invoice,
+      });
+      if (error || !data) throw new Error("No se pudo actualizar la factura.");
+      return data as Invoice;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoice", id] });
       void qc.invalidateQueries({ queryKey: ["invoices"] });
     },
   });

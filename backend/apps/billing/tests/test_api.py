@@ -93,6 +93,50 @@ def test_invoice_issue_and_payment(sales_client, customer):
 
 
 @pytest.mark.django_db
+def test_edit_draft_invoice_replaces_lines(sales_client, customer):
+    create = sales_client.post(
+        "/api/invoices/",
+        {
+            "customer": customer.id,
+            "lines": [{"description": "A", "quantity": "1", "unit_price": "100",
+                       "line_type": "service"}],
+        },
+        format="json",
+    )
+    inv_id = create.data["id"]
+    # Editar: cambia impuesto y reemplaza las líneas.
+    patch = sales_client.patch(
+        f"/api/invoices/{inv_id}/",
+        {
+            "tax_amount": "7",
+            "lines": [{"description": "B", "quantity": "2", "unit_price": "30",
+                       "line_type": "service"}],
+        },
+        format="json",
+    )
+    assert patch.status_code == 200, patch.data
+    assert len(patch.data["lines"]) == 1
+    assert patch.data["lines"][0]["description"] == "B"
+    assert Decimal(patch.data["total"]) == Decimal("67.00")  # 2*30 + 7
+
+
+@pytest.mark.django_db
+def test_edit_issued_invoice_blocked(sales_client, customer):
+    create = sales_client.post(
+        "/api/invoices/",
+        {"customer": customer.id, "lines": [{"description": "A", "quantity": "1",
+                                             "unit_price": "10", "line_type": "service"}]},
+        format="json",
+    )
+    inv_id = create.data["id"]
+    sales_client.post(f"/api/invoices/{inv_id}/issue/")
+    patch = sales_client.patch(
+        f"/api/invoices/{inv_id}/", {"notes": "x"}, format="json"
+    )
+    assert patch.status_code == 400
+
+
+@pytest.mark.django_db
 def test_product_sale_deducts_on_issue(sales_client, customer):
     p = _product("API-PS", stock_quantity=Decimal("10"))
     create = sales_client.post(

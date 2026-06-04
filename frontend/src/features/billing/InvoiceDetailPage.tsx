@@ -13,11 +13,18 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconArrowLeft, IconCash, IconSend, IconX } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconCash,
+  IconEdit,
+  IconSend,
+  IconX,
+} from "@tabler/icons-react";
 import { Link, useParams } from "react-router-dom";
 
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useInvoice, useInvoiceAction } from "./api";
+import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { PaymentModal } from "./PaymentModal";
 import {
   INVOICE_STATUS_COLOR,
@@ -32,6 +39,7 @@ export function InvoiceDetailPage() {
   const { data: invoice, isLoading, error } = useInvoice(invoiceId);
   const action = useInvoiceAction(invoiceId);
   const [payOpen, { open, close }] = useDisclosure(false);
+  const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
 
   if (isLoading) return <Loader />;
   if (error || !invoice)
@@ -80,6 +88,15 @@ export function InvoiceDetailPage() {
           </Badge>
         </Group>
         <Group>
+          {canIssue && (
+            <Button
+              variant="default"
+              leftSection={<IconEdit size={18} />}
+              onClick={openEdit}
+            >
+              Editar
+            </Button>
+          )}
           {canIssue && (
             <Button leftSection={<IconSend size={18} />} onClick={() => run("issue", "Factura emitida.")}>
               Emitir
@@ -220,6 +237,7 @@ export function InvoiceDetailPage() {
       </Grid>
 
       <PaymentModal opened={payOpen} onClose={close} invoice={invoice} />
+      <InvoiceCreateModal opened={editOpen} onClose={closeEdit} invoice={invoice} />
     </Stack>
   );
 }

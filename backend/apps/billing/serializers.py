@@ -77,6 +77,23 @@ class QuoteSerializer(serializers.ModelSerializer):
         quote.refresh_from_db()
         return quote
 
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        # Si vienen líneas, se reemplazan por completo (la cotización es editable
+        # solo en borrador/enviada; estrategia simple sin reconciliación por id).
+        lines_data = validated_data.pop("lines", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if lines_data is not None:
+            instance.lines.all().delete()
+            for line in lines_data:
+                line.pop("quote", None)
+                QuoteLine.objects.create(quote=instance, **line)
+        recalculate_quote(instance)
+        instance.refresh_from_db()
+        return instance
+
 
 class InvoiceLineSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
@@ -181,6 +198,23 @@ class InvoiceSerializer(serializers.ModelSerializer):
         recalculate_invoice(invoice)
         invoice.refresh_from_db()
         return invoice
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        # Si vienen líneas, se reemplazan por completo (factura editable solo en
+        # borrador; estrategia simple sin reconciliación por id).
+        lines_data = validated_data.pop("lines", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if lines_data is not None:
+            instance.lines.all().delete()
+            for line in lines_data:
+                line.pop("invoice", None)
+                InvoiceLine.objects.create(invoice=instance, **line)
+        recalculate_invoice(instance)
+        instance.refresh_from_db()
+        return instance
 
 
 class InvoiceSummarySerializer(serializers.ModelSerializer):

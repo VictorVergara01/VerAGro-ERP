@@ -9,12 +9,14 @@ import {
   Table,
   Text,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { IconArrowLeft, IconEdit } from "@tabler/icons-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useConvertQuote, useQuote, useQuoteAction } from "./api";
+import { QuoteCreateModal } from "./QuoteCreateModal";
 import { QUOTE_STATUS_COLOR, QUOTE_STATUS_LABEL } from "./types";
 
 export function QuoteDetailPage() {
@@ -23,6 +25,7 @@ export function QuoteDetailPage() {
   const { data: quote, isLoading, error } = useQuote(quoteId);
   const action = useQuoteAction(quoteId);
   const convert = useConvertQuote(quoteId);
+  const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
   const navigate = useNavigate();
 
   if (isLoading) return <Loader />;
@@ -30,6 +33,7 @@ export function QuoteDetailPage() {
     return <Alert color="red">No se pudo cargar la cotización.</Alert>;
 
   const status = quote.status ?? "draft";
+  const editable = status === "draft" || status === "sent";
   const canApprove = status === "draft" || status === "sent";
   const canReject = !["converted_to_invoice", "rejected"].includes(status);
   const canConvert = status === "approved";
@@ -73,6 +77,15 @@ export function QuoteDetailPage() {
           </Badge>
         </Group>
         <Group>
+          {editable && (
+            <Button
+              variant="default"
+              leftSection={<IconEdit size={18} />}
+              onClick={openEdit}
+            >
+              Editar
+            </Button>
+          )}
           {canApprove && (
             <Button onClick={() => run("approve", "Cotización aprobada.")}>Aprobar</Button>
           )}
@@ -154,6 +167,8 @@ export function QuoteDetailPage() {
           </Stack>
         </Group>
       </Card>
+
+      <QuoteCreateModal opened={editOpen} onClose={closeEdit} quote={quote} />
     </Stack>
   );
 }

@@ -19,8 +19,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useCustomers } from "../customers/api";
-import { useCreateQuote } from "./api";
-import { LINE_TYPE_OPTIONS } from "./types";
+import { useCreateQuote, useUpdateQuote } from "./api";
+import { LINE_TYPE_OPTIONS, type Quote } from "./types";
 
 interface LineRow {
   line_type: string;
@@ -39,67 +39,104 @@ interface FormValues {
   lines: LineRow[];
 }
 
+const EMPTY: FormValues = {
+  customer: null,
+  issue_date: "",
+  expiration_date: "",
+  discount_amount: 0,
+  tax_amount: 0,
+  notes: "",
+  terms: "",
+  lines: [],
+};
+
 export function QuoteCreateModal({
   opened,
   onClose,
+  quote,
 }: {
   opened: boolean;
   onClose: () => void;
+  quote?: Quote | null;
 }) {
   const create = useCreateQuote();
+  const update = useUpdateQuote(quote?.id);
   const customers = useCustomers({});
   const navigate = useNavigate();
+  const editing = Boolean(quote?.id);
 
   const form = useForm<FormValues>({
-    initialValues: {
-      customer: null,
-      issue_date: "",
-      expiration_date: "",
-      discount_amount: 0,
-      tax_amount: 0,
-      notes: "",
-      terms: "",
-      lines: [],
-    },
+    initialValues: EMPTY,
     validate: { customer: (v) => (v ? null : "Selecciona un cliente.") },
   });
 
   useEffect(() => {
-    if (opened) form.reset();
+    if (!opened) return;
+    if (quote) {
+      form.setValues({
+        customer: quote.customer ? String(quote.customer) : null,
+        issue_date: quote.issue_date ?? "",
+        expiration_date: quote.expiration_date ?? "",
+        discount_amount: Number(quote.discount_amount ?? 0),
+        tax_amount: Number(quote.tax_amount ?? 0),
+        notes: quote.notes ?? "",
+        terms: quote.terms ?? "",
+        lines: (quote.lines ?? []).map((l) => ({
+          line_type: l.line_type ?? "service",
+          description: l.description ?? "",
+          quantity: Number(l.quantity ?? 0),
+          unit_price: Number(l.unit_price ?? 0),
+        })),
+      });
+    } else {
+      form.setValues(EMPTY);
+    }
+    form.resetDirty();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opened]);
+  }, [opened, quote]);
 
   const submit = form.onSubmit(async (values) => {
     if (values.lines.length === 0) {
       notifications.show({ color: "red", message: "Agrega al menos una línea." });
       return;
     }
+    const payload = {
+      customer: Number(values.customer),
+      issue_date: values.issue_date || undefined,
+      expiration_date: values.expiration_date || null,
+      discount_amount: String(values.discount_amount || 0),
+      tax_amount: String(values.tax_amount || 0),
+      notes: values.notes,
+      terms: values.terms,
+      lines: values.lines.map((l) => ({
+        line_type: l.line_type,
+        description: l.description,
+        quantity: String(l.quantity || 0),
+        unit_price: String(l.unit_price || 0),
+      })),
+    };
     try {
-      const quote = await create.mutateAsync({
-        customer: Number(values.customer),
-        issue_date: values.issue_date || undefined,
-        expiration_date: values.expiration_date || null,
-        discount_amount: String(values.discount_amount || 0),
-        tax_amount: String(values.tax_amount || 0),
-        notes: values.notes,
-        terms: values.terms,
-        lines: values.lines.map((l) => ({
-          line_type: l.line_type,
-          description: l.description,
-          quantity: String(l.quantity || 0),
-          unit_price: String(l.unit_price || 0),
-        })),
+      const result = editing
+        ? await update.mutateAsync(payload)
+        : await create.mutateAsync(payload);
+      notifications.show({
+        color: "green",
+        message: editing ? "Cotización actualizada." : "Cotización creada.",
       });
-      notifications.show({ color: "green", message: "Cotización creada." });
       onClose();
-      navigate(`/quotes/${quote.id}`);
+      navigate(`/quotes/${result.id}`);
     } catch (e) {
       notifications.show({ color: "red", message: (e as Error).message });
     }
   });
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Nueva cotización" size="xl">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={editing ? "Editar cotización" : "Nueva cotización"}
+      size="xl"
+    >
       <form onSubmit={submit}>
         <Grid>
           <Grid.Col span={{ base: 12, sm: 6 }}>
@@ -199,8 +236,8 @@ export function QuoteCreateModal({
           <Button variant="default" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" loading={create.isPending}>
-            Crear cotización
+          <Button type="submit" loading={create.isPending || update.isPending}>
+            {editing ? "Guardar" : "Crear cotización"}
           </Button>
         </Group>
       </form>
