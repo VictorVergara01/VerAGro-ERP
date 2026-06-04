@@ -51,6 +51,53 @@ export type OrderAction =
   | "finish"
   | "deliver";
 
+function invalidateOrder(qc: ReturnType<typeof useQueryClient>, id?: number) {
+  void qc.invalidateQueries({ queryKey: ["order", id] });
+  void qc.invalidateQueries({ queryKey: ["my-orders"] });
+}
+
+export function useAddPart(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { product: number; quantity: string }) => {
+      const { error } = await api.POST("/api/service-orders/{id}/add-part/", {
+        params: { path: { id: orderId as number } },
+        body: input as unknown as ServiceOrder,
+      });
+      if (error) throw new Error("No se pudo agregar la pieza.");
+    },
+    onSuccess: () => invalidateOrder(qc, orderId),
+  });
+}
+
+export function useReserveParts(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST(
+        "/api/service-orders/{id}/reserve-parts/",
+        { params: { path: { id: orderId as number } }, body: {} as unknown as ServiceOrder },
+      );
+      if (error) throw new Error("No se pudieron reservar las piezas.");
+      return data as unknown as { reserved: number[]; pending: number[] };
+    },
+    onSuccess: () => invalidateOrder(qc, orderId),
+  });
+}
+
+export function useDeletePart(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (partId: number) => {
+      const { error } = await api.DELETE("/api/service-order-parts/{id}/", {
+        params: { path: { id: partId } },
+      });
+      if (error) throw new Error("No se pudo quitar la pieza.");
+    },
+    onSuccess: () => invalidateOrder(qc, orderId),
+  });
+}
+
 export function useOrderAction(id: number | undefined) {
   const qc = useQueryClient();
   return useMutation({

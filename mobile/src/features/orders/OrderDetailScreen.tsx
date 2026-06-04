@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRoute } from "@react-navigation/native";
 import {
   ActivityIndicator,
@@ -12,12 +13,17 @@ import {
 import { colors, statusColors, statusLabels } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { OrderDetailRoute } from "../../navigation/types";
+import { AddPartModal } from "./AddPartModal";
 import {
+  useDeletePart,
   useOrder,
   useOrderAction,
+  useReserveParts,
   type OrderAction,
   type ServiceOrderPart,
 } from "./api";
+
+const TERMINAL = ["finished", "invoiced", "delivered", "cancelled"];
 
 const SERVICE_TYPE_LABEL: Record<string, string> = {
   diagnostic: "Diagnóstico",
@@ -68,9 +74,20 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PartRow({ part }: { part: ServiceOrderPart }) {
+function PartRow({
+  part,
+  onDelete,
+}: {
+  part: ServiceOrderPart;
+  onDelete?: () => void;
+}) {
   return (
-    <View style={styles.partRow}>
+    <TouchableOpacity
+      style={styles.partRow}
+      activeOpacity={onDelete ? 0.6 : 1}
+      onLongPress={onDelete}
+      delayLongPress={350}
+    >
       <View style={{ flex: 1 }}>
         <Text style={styles.partName}>{part.product_name}</Text>
         <Text style={styles.partMeta}>
@@ -78,7 +95,7 @@ function PartRow({ part }: { part: ServiceOrderPart }) {
         </Text>
       </View>
       <Text style={styles.partTotal}>{formatCurrency(part.total_price)}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -87,6 +104,9 @@ export function OrderDetailScreen() {
   const { id } = route.params;
   const { data: order, isLoading, error, isRefetching } = useOrder(id);
   const action = useOrderAction(id);
+  const reserve = useReserveParts(id);
+  const deletePart = useDeletePart(id);
+  const [addVisible, setAddVisible] = useState(false);
 
   if (isLoading) {
     return (
@@ -105,6 +125,32 @@ export function OrderDetailScreen() {
 
   const status = order.status ?? "received";
   const next = nextAction(status);
+  const editable = !TERMINAL.includes(status);
+
+  const doReserve = () =>
+    reserve.mutate(undefined, {
+      onSuccess: (res) =>
+        Alert.alert(
+          "Reserva",
+          `Reservadas: ${res.reserved.length} · Pendientes de compra: ${res.pending.length}`,
+        ),
+      onError: (e) => Alert.alert("Error", (e as Error).message),
+    });
+
+  const confirmDeletePart = (part: ServiceOrderPart) => {
+    if (!editable) return;
+    Alert.alert("Quitar pieza", `¿Quitar "${part.product_name}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Quitar",
+        style: "destructive",
+        onPress: () =>
+          deletePart.mutate(part.id, {
+            onError: (e) => Alert.alert("Error", (e as Error).message),
+          }),
+      },
+    ]);
+  };
 
   const runAction = () => {
     if (!next) return;
@@ -156,11 +202,39 @@ export function OrderDetailScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Piezas</Text>
+        {editable ? (
+          <View style={styles.partActions}>
+            <TouchableOpacity
+              style={styles.smallBtnOutline}
+              onPress={doReserve}
+              disabled={reserve.isPending}
+            >
+              <Text style={styles.smallBtnOutlineText}>
+                {reserve.isPending ? "Reservando…" : "Reservar piezas"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.smallBtn}
+              onPress={() => setAddVisible(true)}
+            >
+              <Text style={styles.smallBtnText}>+ Agregar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
         {(order.parts ?? []).length === 0 ? (
           <Text style={styles.dimmed}>Sin piezas.</Text>
         ) : (
-          (order.parts ?? []).map((p) => <PartRow key={p.id} part={p} />)
+          (order.parts ?? []).map((p) => (
+            <PartRow
+              key={p.id}
+              part={p}
+              onDelete={editable ? () => confirmDeletePart(p) : undefined}
+            />
+          ))
         )}
+        {editable ? (
+          <Text style={styles.hint}>Mantén pulsada una pieza para quitarla.</Text>
+        ) : null}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>{formatCurrency(order.total_amount)}</Text>
@@ -184,6 +258,12 @@ export function OrderDetailScreen() {
           No hay acciones disponibles en este estado.
         </Text>
       )}
+
+      <AddPartModal
+        visible={addVisible}
+        onClose={() => setAddVisible(false)}
+        orderId={id}
+      />
     </ScrollView>
   );
 }
@@ -214,6 +294,23 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: "700", color: colors.text, marginBottom: 8 },
   bodyText: { color: colors.text, fontSize: 14, lineHeight: 20 },
   dimmed: { color: colors.dimmed, fontSize: 14 },
+  hint: { color: colors.dimmed, fontSize: 12, marginTop: 8, fontStyle: "italic" },
+  partActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8, marginBottom: 6 },
+  smallBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  smallBtnText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  smallBtnOutline: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  smallBtnOutlineText: { color: colors.primary, fontWeight: "600", fontSize: 13 },
   dimmedCenter: { color: colors.dimmed, fontSize: 14, textAlign: "center", marginTop: 8 },
   partRow: {
     flexDirection: "row",
