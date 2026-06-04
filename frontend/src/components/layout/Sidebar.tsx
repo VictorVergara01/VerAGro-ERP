@@ -24,7 +24,7 @@ interface NavItem {
 
 const ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/", icon: IconHome, ready: true },
-  { label: "Clientes", to: "/customers", icon: IconUsers },
+  { label: "Clientes", to: "/customers", icon: IconUsers, ready: true },
   { label: "Equipos", to: "/equipment", icon: IconDeviceDesktop },
   { label: "Inventario", to: "/inventory", icon: IconBox },
   { label: "Proveedores", to: "/suppliers", icon: IconTruck },
