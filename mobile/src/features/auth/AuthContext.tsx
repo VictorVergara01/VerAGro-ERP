@@ -53,20 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      // El fetch rechaza si el dispositivo no alcanza el backend → result = null.
-      const result = await api
-        .POST("/api/auth/login/", {
+      // El fetch rechaza si el dispositivo no alcanza el backend; capturamos el
+      // detalle real para diagnosticar.
+      let result;
+      try {
+        result = await api.POST("/api/auth/login/", {
           body: { email, password } as unknown as {
             email: string;
             password: string;
             access: string;
             refresh: string;
           },
-        })
-        .catch(() => null);
-      if (!result) {
-        // Fetch rechazado → el dispositivo no alcanza el backend.
-        throw new Error(`No se pudo conectar al servidor (${API_BASE_URL}).`);
+        });
+      } catch (e) {
+        const detail = (e as Error)?.message ?? String(e);
+        throw new Error(`No se pudo conectar (${API_BASE_URL}). ${detail}`);
       }
       const { data, error } = result;
       if (error || !data) {
