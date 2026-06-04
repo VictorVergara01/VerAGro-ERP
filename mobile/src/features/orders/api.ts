@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
 import type { components } from "../../lib/api/schema";
 
 export type ServiceOrder = components["schemas"]["ServiceOrder"];
+export type ServiceOrderPart = components["schemas"]["ServiceOrderPart"];
 
 interface Paginated<T> {
   count: number;
@@ -25,6 +26,55 @@ export function useMyOrders(technicianId: number | undefined, all: boolean) {
       });
       if (error || !data) throw new Error("No se pudieron cargar las órdenes.");
       return (data as unknown as Paginated<ServiceOrder>).results;
+    },
+  });
+}
+
+export function useOrder(id: number | undefined) {
+  return useQuery({
+    queryKey: ["order", id],
+    enabled: id != null,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/service-orders/{id}/", {
+        params: { path: { id: id as number } },
+      });
+      if (error || !data) throw new Error("No se pudo cargar la orden.");
+      return data as ServiceOrder;
+    },
+  });
+}
+
+export type OrderAction =
+  | "start-diagnostic"
+  | "approve"
+  | "start-work"
+  | "finish"
+  | "deliver";
+
+export function useOrderAction(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (action: OrderAction) => {
+      const params = { path: { id: id as number } };
+      const empty = {} as unknown as ServiceOrder;
+      const calls: Record<OrderAction, () => ReturnType<typeof api.POST>> = {
+        "start-diagnostic": () =>
+          api.POST("/api/service-orders/{id}/start-diagnostic/", { params, body: empty }),
+        approve: () =>
+          api.POST("/api/service-orders/{id}/approve/", { params, body: empty }),
+        "start-work": () =>
+          api.POST("/api/service-orders/{id}/start-work/", { params, body: empty }),
+        finish: () =>
+          api.POST("/api/service-orders/{id}/finish/", { params, body: empty }),
+        deliver: () =>
+          api.POST("/api/service-orders/{id}/deliver/", { params, body: empty }),
+      };
+      const { error } = await calls[action]();
+      if (error) throw new Error("No se pudo ejecutar la acción.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["order", id] });
+      void qc.invalidateQueries({ queryKey: ["my-orders"] });
     },
   });
 }

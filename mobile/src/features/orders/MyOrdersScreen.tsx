@@ -10,8 +10,11 @@ import {
   View,
 } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
+
 import { useAuth } from "../auth/useAuth";
 import { colors, statusColors, statusLabels } from "../../theme";
+import type { AppNav } from "../../navigation/types";
 import { useMyOrders, type ServiceOrder } from "./api";
 
 const SERVICE_TYPE_LABEL: Record<string, string> = {
@@ -24,10 +27,16 @@ const SERVICE_TYPE_LABEL: Record<string, string> = {
   other: "Otro",
 };
 
-function OrderCard({ order }: { order: ServiceOrder }) {
+function OrderCard({
+  order,
+  onPress,
+}: {
+  order: ServiceOrder;
+  onPress: () => void;
+}) {
   const status = order.status ?? "received";
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardNumber}>{order.service_order_number}</Text>
         <View style={[styles.badge, { backgroundColor: statusColors[status] }]}>
@@ -39,12 +48,13 @@ function OrderCard({ order }: { order: ServiceOrder }) {
         {order.equipment_name || "Sin equipo"} ·{" "}
         {SERVICE_TYPE_LABEL[order.service_type ?? "diagnostic"]}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 export function MyOrdersScreen() {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<AppNav>();
   const [all, setAll] = useState(false);
   const { data, isLoading, error, refetch, isRefetching } = useMyOrders(
     user?.id,
@@ -71,7 +81,17 @@ export function MyOrdersScreen() {
         <FlatList
           data={data ?? []}
           keyExtractor={(o) => String(o.id)}
-          renderItem={({ item }) => <OrderCard order={item} />}
+          renderItem={({ item }) => (
+            <OrderCard
+              order={item}
+              onPress={() =>
+                navigation.navigate("OrderDetail", {
+                  id: item.id,
+                  title: item.service_order_number,
+                })
+              }
+            />
+          )}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />
