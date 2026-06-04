@@ -145,7 +145,10 @@ class Invoice(TimeStampedModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if not self.invoice_number:
-            self.invoice_number = f"FAC-{self.pk:06d}"
+            # Prefijo según el tipo: facturas de orden de servicio con OS-,
+            # ventas de producto (y demás) con FAC-.
+            prefix = "OS" if self.invoice_type == self.InvoiceType.SERVICE else "FAC"
+            self.invoice_number = f"{prefix}-{self.pk:06d}"
             super().save(update_fields=["invoice_number"])
 
 
