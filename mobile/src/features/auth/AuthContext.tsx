@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { api, onAuthExpired } from "../../lib/api/client";
+import { API_BASE_URL } from "../../lib/api/baseUrl";
 import { clearTokens, getAccess, setTokens } from "../../lib/auth/tokens";
 
 export interface AuthUser {
@@ -52,15 +53,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { data, error } = await api.POST("/api/auth/login/", {
-        body: { email, password } as unknown as {
-          email: string;
-          password: string;
-          access: string;
-          refresh: string;
-        },
-      });
-      if (error || !data) throw new Error("Credenciales inválidas.");
+      let result;
+      try {
+        result = await api.POST("/api/auth/login/", {
+          body: { email, password } as unknown as {
+            email: string;
+            password: string;
+            access: string;
+            refresh: string;
+          },
+        });
+      } catch {
+        // El fetch rechazó: típicamente el dispositivo no alcanza el backend.
+        throw new Error(`No se pudo conectar al servidor (${API_BASE_URL}).`);
+      }
+      const { data, error, response } = result;
+      if (error || !data) {
+        if (response?.status === 401) throw new Error("Credenciales inválidas.");
+        throw new Error("No se pudo iniciar sesión. Intenta de nuevo.");
+      }
       await setTokens(data.access, data.refresh);
       await loadMe();
     },

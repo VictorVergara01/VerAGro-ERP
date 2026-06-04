@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { API_BASE_URL } from "../../lib/api/baseUrl";
 import { colors } from "../../theme";
 import { useAuth } from "./useAuth";
 
@@ -25,8 +26,8 @@ export function LoginScreen() {
     setLoading(true);
     try {
       await login(email.trim(), password);
-    } catch {
-      setError("Credenciales inválidas. Verifica correo y contraseña.");
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -72,6 +73,8 @@ export function LoginScreen() {
             <Text style={styles.buttonText}>Entrar</Text>
           )}
         </TouchableOpacity>
+
+        <Text style={styles.apiHint}>API: {API_BASE_URL}</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -113,4 +116,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  apiHint: { color: colors.dimmed, fontSize: 11, marginTop: 16, textAlign: "center" },
 });
