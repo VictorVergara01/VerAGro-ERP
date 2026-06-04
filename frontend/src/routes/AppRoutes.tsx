@@ -9,6 +9,8 @@ import { EquipmentDetailPage } from "../features/equipment/EquipmentDetailPage";
 import { EquipmentPage } from "../features/equipment/EquipmentPage";
 import { InventoryPage } from "../features/inventory/InventoryPage";
 import { ProductDetailPage } from "../features/inventory/ProductDetailPage";
+import { PurchaseOrderDetailPage } from "../features/purchasing/PurchaseOrderDetailPage";
+import { PurchasingPage } from "../features/purchasing/PurchasingPage";
 import { SupplierDetailPage } from "../features/suppliers/SupplierDetailPage";
 import { SuppliersPage } from "../features/suppliers/SuppliersPage";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -28,6 +30,8 @@ export function AppRoutes() {
           <Route path="/inventory/:id" element={<ProductDetailPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/suppliers/:id" element={<SupplierDetailPage />} />
+          <Route path="/purchasing" element={<PurchasingPage />} />
+          <Route path="/purchasing/:id" element={<PurchaseOrderDetailPage />} />
         </Route>
       </Route>
     </Routes>
