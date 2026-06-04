@@ -31,6 +31,40 @@ export function useQuotes(params: QuoteListParams) {
   });
 }
 
+export interface QuoteLineInput {
+  product?: number | null;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  line_type: string;
+}
+export interface CreateQuoteInput {
+  customer: number;
+  issue_date?: string;
+  expiration_date?: string | null;
+  discount_amount?: string;
+  tax_amount?: string;
+  notes?: string;
+  terms?: string;
+  lines: QuoteLineInput[];
+}
+
+export function useCreateQuote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateQuoteInput) => {
+      const { data, error } = await api.POST("/api/quotes/", {
+        body: input as unknown as Quote,
+      });
+      if (error || !data) throw new Error("No se pudo crear la cotización.");
+      return data as Quote;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["quotes"] });
+    },
+  });
+}
+
 export function useQuote(id: number | undefined) {
   return useQuery({
     queryKey: ["quote", id],
@@ -108,6 +142,41 @@ export function useInvoices(params: InvoiceListParams) {
       });
       if (error || !data) throw new Error("No se pudieron cargar las facturas.");
       return data as unknown as Paginated<Invoice>;
+    },
+  });
+}
+
+export interface InvoiceLineInput {
+  product?: number | null;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  unit_cost: string;
+  line_type: string;
+}
+export interface CreateInvoiceInput {
+  customer: number;
+  invoice_type: string;
+  issue_date?: string;
+  due_date?: string | null;
+  discount_amount?: string;
+  tax_amount?: string;
+  notes?: string;
+  lines: InvoiceLineInput[];
+}
+
+export function useCreateInvoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateInvoiceInput) => {
+      const { data, error } = await api.POST("/api/invoices/", {
+        body: input as unknown as Invoice,
+      });
+      if (error || !data) throw new Error("No se pudo crear la factura.");
+      return data as Invoice;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
     },
   });
 }

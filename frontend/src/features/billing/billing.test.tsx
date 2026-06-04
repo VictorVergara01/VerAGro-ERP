@@ -6,7 +6,12 @@ import { describe, expect, it, vi } from "vitest";
 import { InvoicesPage } from "./InvoicesPage";
 
 const mockList = vi.fn();
-vi.mock("./api", () => ({ useInvoices: () => mockList() }));
+vi.mock("./api", () => ({
+  useInvoices: () => mockList(),
+  useCreateInvoice: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
+vi.mock("../inventory/api", () => ({ useProducts: () => ({ data: { results: [] } }) }));
 
 function renderPage() {
   return render(

@@ -2,16 +2,19 @@ import {
   ActionIcon,
   Alert,
   Badge,
+  Button,
   Group,
   Pagination,
   Select,
   Stack,
   TextInput,
 } from "@mantine/core";
-import { useDebouncedValue } from "@mantine/hooks";
-import { IconEye, IconSearch } from "@tabler/icons-react";
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
+import { IconEye, IconPlus, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { QuoteCreateModal } from "./QuoteCreateModal";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -30,6 +33,7 @@ export function QuotesPage() {
   const [debounced] = useDebouncedValue(search, 300);
   const [status, setStatus] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [createOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
 
   const { data, isLoading, error } = useQuotes({
@@ -66,7 +70,14 @@ export function QuotesPage() {
 
   return (
     <Stack>
-      <PageHeader title="Cotizaciones" />
+      <PageHeader
+        title="Cotizaciones"
+        action={
+          <Button leftSection={<IconPlus size={18} />} onClick={open}>
+            Nueva cotización
+          </Button>
+        }
+      />
       <Group>
         <TextInput
           placeholder="Buscar por número"
@@ -108,6 +119,8 @@ export function QuotesPage() {
           <Pagination value={page} onChange={setPage} total={totalPages} />
         </Group>
       )}
+
+      <QuoteCreateModal opened={createOpen} onClose={close} />
     </Stack>
   );
 }

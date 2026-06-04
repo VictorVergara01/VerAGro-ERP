@@ -2,16 +2,19 @@ import {
   ActionIcon,
   Alert,
   Badge,
+  Button,
   Group,
   Pagination,
   Select,
   Stack,
   TextInput,
 } from "@mantine/core";
-import { useDebouncedValue } from "@mantine/hooks";
-import { IconEye, IconSearch } from "@tabler/icons-react";
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
+import { IconEye, IconPlus, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { InvoiceCreateModal } from "./InvoiceCreateModal";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -31,6 +34,7 @@ export function InvoicesPage() {
   const [debounced] = useDebouncedValue(search, 300);
   const [status, setStatus] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [createOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
 
   const { data, isLoading, error } = useInvoices({
@@ -72,7 +76,14 @@ export function InvoicesPage() {
 
   return (
     <Stack>
-      <PageHeader title="Facturas" />
+      <PageHeader
+        title="Facturas"
+        action={
+          <Button leftSection={<IconPlus size={18} />} onClick={open}>
+            Nueva factura
+          </Button>
+        }
+      />
       <Group>
         <TextInput
           placeholder="Buscar por número"
@@ -114,6 +125,8 @@ export function InvoicesPage() {
           <Pagination value={page} onChange={setPage} total={totalPages} />
         </Group>
       )}
+
+      <InvoiceCreateModal opened={createOpen} onClose={close} />
     </Stack>
   );
 }

@@ -61,3 +61,17 @@ export const PAYMENT_METHOD_OPTIONS = [
 export const PAYMENT_METHOD_LABEL: Record<string, string> = Object.fromEntries(
   PAYMENT_METHOD_OPTIONS.map((o) => [o.value, o.label]),
 );
+
+export const LINE_TYPE_OPTIONS = [
+  { value: "product", label: "Producto" },
+  { value: "service", label: "Servicio" },
+  { value: "labor", label: "Mano de obra" },
+  { value: "diagnostic", label: "Diagnóstico" },
+  { value: "other", label: "Otro" },
+];
+
+export const INVOICE_TYPE_OPTIONS = [
+  { value: "service_invoice", label: "Servicio" },
+  { value: "final_invoice", label: "Final" },
+  { value: "product_sale", label: "Venta de producto" },
+];
