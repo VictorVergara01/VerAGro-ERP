@@ -7,6 +7,8 @@ import { CustomersPage } from "../features/customers/CustomersPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { EquipmentDetailPage } from "../features/equipment/EquipmentDetailPage";
 import { EquipmentPage } from "../features/equipment/EquipmentPage";
+import { InventoryPage } from "../features/inventory/InventoryPage";
+import { ProductDetailPage } from "../features/inventory/ProductDetailPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export function AppRoutes() {
@@ -20,6 +22,8 @@ export function AppRoutes() {
           <Route path="/customers/:id" element={<CustomerDetailPage />} />
           <Route path="/equipment" element={<EquipmentPage />} />
           <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/inventory/:id" element={<ProductDetailPage />} />
         </Route>
       </Route>
     </Routes>

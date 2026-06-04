@@ -26,7 +26,7 @@ const ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/", icon: IconHome, ready: true },
   { label: "Clientes", to: "/customers", icon: IconUsers, ready: true },
   { label: "Equipos", to: "/equipment", icon: IconDeviceDesktop, ready: true },
-  { label: "Inventario", to: "/inventory", icon: IconBox },
+  { label: "Inventario", to: "/inventory", icon: IconBox, ready: true },
   { label: "Proveedores", to: "/suppliers", icon: IconTruck },
   { label: "Compras", to: "/purchasing", icon: IconShoppingCart },
   { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool },
