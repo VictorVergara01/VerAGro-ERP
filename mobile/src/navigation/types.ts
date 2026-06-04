@@ -6,6 +6,7 @@ export type AppStackParamList = {
   MyOrders: undefined;
   OrderDetail: { id: number; title: string };
   OrderChecklist: { id: number };
+  OrderPhotos: { id: number };
   InventorySearch: undefined;
 };
 

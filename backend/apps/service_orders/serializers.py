@@ -1,6 +1,20 @@
 from rest_framework import serializers
 
-from .models import ServiceOrder, ServiceOrderPart
+from .models import ServiceOrder, ServiceOrderPart, ServiceOrderPhoto
+
+
+class ServiceOrderPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceOrderPhoto
+        fields = (
+            "id",
+            "service_order",
+            "image",
+            "caption",
+            "uploaded_by",
+            "created_at",
+        )
+        read_only_fields = ("id", "uploaded_by", "created_at")
 
 
 class ServiceOrderPartSerializer(serializers.ModelSerializer):

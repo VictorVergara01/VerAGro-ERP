@@ -1114,6 +1114,41 @@ export interface paths {
         patch: operations["service_order_parts_partial_update"];
         trace?: never;
     };
+    "/api/service-order-photos/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Fotos de una orden de servicio (subida multipart desde el móvil). */
+        get: operations["service_order_photos_list"];
+        put?: never;
+        /** @description Fotos de una orden de servicio (subida multipart desde el móvil). */
+        post: operations["service_order_photos_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-order-photos/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Fotos de una orden de servicio (subida multipart desde el móvil). */
+        delete: operations["service_order_photos_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/service-orders/": {
         parameters: {
             query?: never;
@@ -1916,6 +1951,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["ServiceOrderPart"][];
         };
+        PaginatedServiceOrderPhotoList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["ServiceOrderPhoto"][];
+        };
         PaginatedSupplierList: {
             /** @example 123 */
             count: number;
@@ -2696,6 +2746,16 @@ export interface components {
          * @enum {string}
          */
         ServiceOrderPartStatusEnum: "required" | "reserved" | "used" | "pending_purchase" | "returned";
+        ServiceOrderPhoto: {
+            readonly id: number;
+            service_order: number;
+            /** Format: uri */
+            image: string;
+            caption?: string;
+            readonly uploaded_by: number | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         /**
          * @description * `received` - Recibida
          *     * `in_diagnostic` - En diagnóstico
@@ -5936,6 +5996,73 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ServiceOrderPart"];
                 };
+            };
+        };
+    };
+    service_order_photos_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedServiceOrderPhotoList"];
+                };
+            };
+        };
+    };
+    service_order_photos_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ServiceOrderPhoto"];
+                "application/x-www-form-urlencoded": components["schemas"]["ServiceOrderPhoto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderPhoto"];
+                };
+            };
+        };
+    };
+    service_order_photos_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service order photo. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

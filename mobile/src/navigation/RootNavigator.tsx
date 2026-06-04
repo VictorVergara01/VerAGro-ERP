@@ -6,6 +6,7 @@ import { LoginScreen } from "../features/auth/LoginScreen";
 import { MyOrdersScreen } from "../features/orders/MyOrdersScreen";
 import { OrderDetailScreen } from "../features/orders/OrderDetailScreen";
 import { ChecklistScreen } from "../features/checklists/ChecklistScreen";
+import { PhotosScreen } from "../features/orders/PhotosScreen";
 import { InventorySearchScreen } from "../features/inventory/InventorySearchScreen";
 import type { AppStackParamList } from "./types";
 import { colors } from "../theme";
@@ -47,6 +48,11 @@ export function RootNavigator() {
             name="OrderChecklist"
             component={ChecklistScreen}
             options={{ title: "Checklist" }}
+          />
+          <Stack.Screen
+            name="OrderPhotos"
+            component={PhotosScreen}
+            options={{ title: "Fotos" }}
           />
           <Stack.Screen
             name="InventorySearch"

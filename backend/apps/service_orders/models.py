@@ -114,3 +114,24 @@ class ServiceOrderPart(TimeStampedModel):
 
     def __str__(self):
         return f"{self.product} x{self.quantity} ({self.status})"
+
+
+def service_order_photo_path(instance, filename):
+    return f"service_orders/{instance.service_order_id}/{filename}"
+
+
+class ServiceOrderPhoto(TimeStampedModel):
+    service_order = models.ForeignKey(
+        ServiceOrder, on_delete=models.CASCADE, related_name="photos"
+    )
+    image = models.ImageField(upload_to=service_order_photo_path)
+    caption = models.CharField(max_length=255, blank=True)
+    uploaded_by = models.ForeignKey(
+        "users.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Foto orden {self.service_order_id}"

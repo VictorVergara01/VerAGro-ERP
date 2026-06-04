@@ -249,6 +249,13 @@ export function OrderDetailScreen() {
         <Text style={styles.checklistText}>Checklist ›</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.checklistBtn}
+        onPress={() => navigation.navigate("OrderPhotos", { id })}
+      >
+        <Text style={styles.checklistText}>Fotos ›</Text>
+      </TouchableOpacity>
+
       {next ? (
         <TouchableOpacity
           style={[styles.actionBtn, action.isPending && styles.actionBtnDisabled]}

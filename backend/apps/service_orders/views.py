@@ -1,13 +1,18 @@
-from rest_framework import filters, status as http_status, viewsets
+from rest_framework import filters, mixins, status as http_status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.core.permissions import RoleWriteOrReadOnly
 from apps.inventory.services import release_reservation
 
-from .models import ServiceOrder, ServiceOrderPart
-from .serializers import ServiceOrderPartSerializer, ServiceOrderSerializer
+from .models import ServiceOrder, ServiceOrderPart, ServiceOrderPhoto
+from .serializers import (
+    ServiceOrderPartSerializer,
+    ServiceOrderPhotoSerializer,
+    ServiceOrderSerializer,
+)
 from .services import cancel_order, finish_order, recalculate_totals, reserve_parts
 
 ServiceWrite = RoleWriteOrReadOnly("admin", "technician")
@@ -274,4 +279,28 @@ class ServiceOrderPartViewSet(viewsets.ModelViewSet):
                 notes=f"Baja de pieza orden {order.service_order_number}",
             )
         instance.delete()
-        recalculate_totals(order)
+
+
+class ServiceOrderPhotoViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Fotos de una orden de servicio (subida multipart desde el móvil)."""
+
+    serializer_class = ServiceOrderPhotoSerializer
+    permission_classes = [ServiceWrite]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        qs = ServiceOrderPhoto.objects.select_related("service_order")
+        order = _int_param(self.request.query_params, "service_order")
+        if order is not None:
+            qs = qs.filter(service_order_id=order)
+        return qs
+
+    def perform_create(self, serializer):
+        if serializer.validated_data.get("service_order") is None:
+            raise ValidationError({"service_order": "Este campo es obligatorio."})
+        serializer.save(uploaded_by=self.request.user)
