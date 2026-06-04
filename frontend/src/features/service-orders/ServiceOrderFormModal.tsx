@@ -29,8 +29,8 @@ interface FormValues {
   technical_notes: string;
   labor_cost: number | string;
   diagnostic_fee: number | string;
-  discount_amount: number | string;
-  tax_amount: number | string;
+  discount_percentage: number | string;
+  tax_percentage: number | string;
 }
 
 const EMPTY: FormValues = {
@@ -45,8 +45,8 @@ const EMPTY: FormValues = {
   technical_notes: "",
   labor_cost: 0,
   diagnostic_fee: 0,
-  discount_amount: 0,
-  tax_amount: 0,
+  discount_percentage: 0,
+  tax_percentage: 0,
 };
 
 export function ServiceOrderFormModal({
@@ -106,8 +106,8 @@ export function ServiceOrderFormModal({
       technical_notes: values.technical_notes,
       labor_cost: String(values.labor_cost || 0),
       diagnostic_fee: String(values.diagnostic_fee || 0),
-      discount_amount: String(values.discount_amount || 0),
-      tax_amount: String(values.tax_amount || 0),
+      discount_percentage: String(values.discount_percentage || 0),
+      tax_percentage: String(values.tax_percentage || 0),
     };
     try {
       await save.mutateAsync(payload as unknown as Partial<ServiceOrder> & { id?: number });
@@ -218,10 +218,10 @@ export function ServiceOrderFormModal({
             <NumberInput label="Diagnóstico $" min={0} decimalScale={2} {...form.getInputProps("diagnostic_fee")} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <NumberInput label="Descuento" min={0} decimalScale={2} {...form.getInputProps("discount_amount")} />
+            <NumberInput label="Descuento %" min={0} decimalScale={2} {...form.getInputProps("discount_percentage")} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <NumberInput label="Impuesto" min={0} decimalScale={2} {...form.getInputProps("tax_amount")} />
+            <NumberInput label="Impuesto %" min={0} decimalScale={2} {...form.getInputProps("tax_percentage")} />
           </Grid.Col>
         </Grid>
         <Group justify="flex-end" mt="md">

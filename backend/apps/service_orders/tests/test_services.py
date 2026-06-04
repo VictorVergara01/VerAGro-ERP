@@ -39,15 +39,17 @@ def test_recalculate_totals(customer):
         customer,
         labor_cost=Decimal("100"),
         diagnostic_fee=Decimal("20"),
-        discount_amount=Decimal("10"),
-        tax_amount=Decimal("5"),
+        discount_percentage=Decimal("10"),
+        tax_percentage=Decimal("5"),
     )
     p = _product("T1")
     _part(order, p, Decimal("2"), unit_price=Decimal("30"))  # 60
     recalculate_totals(order)
     order.refresh_from_db()
-    # 100 + 20 + 60 - 10 + 5 = 175
-    assert order.total_amount == Decimal("175.00")
+    # base 180; desc 10% = 18; gravable 162; imp 5% = 8.10; total 170.10
+    assert order.discount_amount == Decimal("18.00")
+    assert order.tax_amount == Decimal("8.10")
+    assert order.total_amount == Decimal("170.10")
 
 
 @pytest.mark.django_db

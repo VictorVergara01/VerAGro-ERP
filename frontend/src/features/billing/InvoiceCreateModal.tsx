@@ -35,8 +35,8 @@ interface FormValues {
   invoice_type: string;
   issue_date: string;
   due_date: string;
-  discount_amount: number | string;
-  tax_amount: number | string;
+  discount_percentage: number | string;
+  tax_percentage: number | string;
   notes: string;
   lines: LineRow[];
 }
@@ -46,8 +46,8 @@ const EMPTY: FormValues = {
   invoice_type: "product_sale",
   issue_date: "",
   due_date: "",
-  discount_amount: 0,
-  tax_amount: 0,
+  discount_percentage: 0,
+  tax_percentage: 0,
   notes: "",
   lines: [],
 };
@@ -81,8 +81,8 @@ export function InvoiceCreateModal({
         invoice_type: invoice.invoice_type ?? "product_sale",
         issue_date: invoice.issue_date ?? "",
         due_date: invoice.due_date ?? "",
-        discount_amount: Number(invoice.discount_amount ?? 0),
-        tax_amount: Number(invoice.tax_amount ?? 0),
+        discount_percentage: Number(invoice.discount_percentage ?? 0),
+        tax_percentage: Number(invoice.tax_percentage ?? 0),
         notes: invoice.notes ?? "",
         lines: (invoice.lines ?? []).map((l) => ({
           line_type: l.line_type ?? "product",
@@ -126,8 +126,8 @@ export function InvoiceCreateModal({
       invoice_type: values.invoice_type,
       issue_date: values.issue_date || undefined,
       due_date: values.due_date || null,
-      discount_amount: String(values.discount_amount || 0),
-      tax_amount: String(values.tax_amount || 0),
+      discount_percentage: String(values.discount_percentage || 0),
+      tax_percentage: String(values.tax_percentage || 0),
       notes: values.notes,
       lines: values.lines.map((l) => ({
         line_type: l.line_type,
@@ -189,10 +189,10 @@ export function InvoiceCreateModal({
             <TextInput label="Vence" type="date" {...form.getInputProps("due_date")} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <NumberInput label="Descuento" min={0} decimalScale={2} {...form.getInputProps("discount_amount")} />
+            <NumberInput label="Descuento %" min={0} decimalScale={2} {...form.getInputProps("discount_percentage")} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <NumberInput label="Impuesto" min={0} decimalScale={2} {...form.getInputProps("tax_amount")} />
+            <NumberInput label="Impuesto %" min={0} decimalScale={2} {...form.getInputProps("tax_percentage")} />
           </Grid.Col>
         </Grid>
 

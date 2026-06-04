@@ -42,8 +42,8 @@ export interface CreateQuoteInput {
   customer: number;
   issue_date?: string;
   expiration_date?: string | null;
-  discount_amount?: string;
-  tax_amount?: string;
+  discount_percentage?: string;
+  tax_percentage?: string;
   notes?: string;
   terms?: string;
   lines: QuoteLineInput[];
@@ -177,8 +177,8 @@ export interface CreateInvoiceInput {
   invoice_type: string;
   issue_date?: string;
   due_date?: string | null;
-  discount_amount?: string;
-  tax_amount?: string;
+  discount_percentage?: string;
+  tax_percentage?: string;
   notes?: string;
   lines: InvoiceLineInput[];
 }

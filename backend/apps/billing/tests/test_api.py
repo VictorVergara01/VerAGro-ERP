@@ -104,11 +104,11 @@ def test_edit_draft_invoice_replaces_lines(sales_client, customer):
         format="json",
     )
     inv_id = create.data["id"]
-    # Editar: cambia impuesto y reemplaza las líneas.
+    # Editar: cambia el impuesto (porcentaje) y reemplaza las líneas.
     patch = sales_client.patch(
         f"/api/invoices/{inv_id}/",
         {
-            "tax_amount": "7",
+            "tax_percentage": "7",
             "lines": [{"description": "B", "quantity": "2", "unit_price": "30",
                        "line_type": "service"}],
         },
@@ -117,7 +117,7 @@ def test_edit_draft_invoice_replaces_lines(sales_client, customer):
     assert patch.status_code == 200, patch.data
     assert len(patch.data["lines"]) == 1
     assert patch.data["lines"][0]["description"] == "B"
-    assert Decimal(patch.data["total"]) == Decimal("67.00")  # 2*30 + 7
+    assert Decimal(patch.data["total"]) == Decimal("64.20")  # 60 + 7% = 64.20
 
 
 @pytest.mark.django_db

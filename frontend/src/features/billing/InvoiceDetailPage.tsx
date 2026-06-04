@@ -212,11 +212,11 @@ export function InvoiceDetailPage() {
                 <Text>{formatCurrency(invoice.subtotal)}</Text>
               </Group>
               <Group justify="space-between">
-                <Text c="dimmed">Descuento</Text>
+                <Text c="dimmed">Descuento ({Number(invoice.discount_percentage)}%)</Text>
                 <Text>−{formatCurrency(invoice.discount_amount)}</Text>
               </Group>
               <Group justify="space-between">
-                <Text c="dimmed">Impuesto</Text>
+                <Text c="dimmed">Impuesto ({Number(invoice.tax_percentage)}%)</Text>
                 <Text>{formatCurrency(invoice.tax_amount)}</Text>
               </Group>
               <Group justify="space-between">

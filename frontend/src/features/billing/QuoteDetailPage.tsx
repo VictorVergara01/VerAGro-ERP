@@ -153,11 +153,11 @@ export function QuoteDetailPage() {
               <Text>{formatCurrency(quote.subtotal)}</Text>
             </Group>
             <Group justify="space-between">
-              <Text c="dimmed">Descuento</Text>
+              <Text c="dimmed">Descuento ({Number(quote.discount_percentage)}%)</Text>
               <Text>−{formatCurrency(quote.discount_amount)}</Text>
             </Group>
             <Group justify="space-between">
-              <Text c="dimmed">Impuesto</Text>
+              <Text c="dimmed">Impuesto ({Number(quote.tax_percentage)}%)</Text>
               <Text>{formatCurrency(quote.tax_amount)}</Text>
             </Group>
             <Group justify="space-between">

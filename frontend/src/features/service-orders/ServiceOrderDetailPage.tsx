@@ -311,11 +311,11 @@ export function ServiceOrderDetailPage() {
               <Text>{formatCurrency(order.diagnostic_fee)}</Text>
             </Group>
             <Group justify="space-between">
-              <Text c="dimmed">Descuento</Text>
+              <Text c="dimmed">Descuento ({Number(order.discount_percentage)}%)</Text>
               <Text>−{formatCurrency(order.discount_amount)}</Text>
             </Group>
             <Group justify="space-between">
-              <Text c="dimmed">Impuesto</Text>
+              <Text c="dimmed">Impuesto ({Number(order.tax_percentage)}%)</Text>
               <Text>{formatCurrency(order.tax_amount)}</Text>
             </Group>
             <Group justify="space-between">

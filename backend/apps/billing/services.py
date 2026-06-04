@@ -31,8 +31,19 @@ def recalculate_quote(quote):
         line.save(update_fields=["total", "updated_at"])
         subtotal += line_base
     quote.subtotal = _q(subtotal)
-    quote.total = _q(subtotal - quote.discount_amount + quote.tax_amount)
-    quote.save(update_fields=["subtotal", "total", "updated_at"])
+    quote.discount_amount = _q(subtotal * quote.discount_percentage / Decimal("100"))
+    taxable = quote.subtotal - quote.discount_amount
+    quote.tax_amount = _q(taxable * quote.tax_percentage / Decimal("100"))
+    quote.total = _q(quote.subtotal - quote.discount_amount + quote.tax_amount)
+    quote.save(
+        update_fields=[
+            "subtotal",
+            "discount_amount",
+            "tax_amount",
+            "total",
+            "updated_at",
+        ]
+    )
     return quote
 
 
@@ -50,7 +61,10 @@ def recalculate_invoice(invoice):
         (p.amount for p in Payment.objects.filter(invoice=invoice)), Decimal("0")
     )
     invoice.subtotal = _q(subtotal)
-    invoice.total = _q(subtotal - invoice.discount_amount + invoice.tax_amount)
+    invoice.discount_amount = _q(subtotal * invoice.discount_percentage / Decimal("100"))
+    taxable = invoice.subtotal - invoice.discount_amount
+    invoice.tax_amount = _q(taxable * invoice.tax_percentage / Decimal("100"))
+    invoice.total = _q(invoice.subtotal - invoice.discount_amount + invoice.tax_amount)
     invoice.paid_amount = _q(paid)
     invoice.balance_due = _q(invoice.total - invoice.paid_amount)
 
@@ -70,6 +84,8 @@ def recalculate_invoice(invoice):
     invoice.save(
         update_fields=[
             "subtotal",
+            "discount_amount",
+            "tax_amount",
             "total",
             "paid_amount",
             "balance_due",
@@ -120,8 +136,8 @@ def create_quote_from_service_order(*, order, user=None):
     quote = Quote.objects.create(
         customer=order.customer,
         service_order=order,
-        discount_amount=order.discount_amount,
-        tax_amount=order.tax_amount,
+        discount_percentage=order.discount_percentage,
+        tax_percentage=order.tax_percentage,
         created_by=user,
     )
     for data in _service_order_lines(order):
@@ -149,8 +165,8 @@ def create_invoice_from_service_order(*, order, user=None):
         invoice_type=Invoice.InvoiceType.SERVICE,
         customer=order.customer,
         service_order=order,
-        discount_amount=order.discount_amount,
-        tax_amount=order.tax_amount,
+        discount_percentage=order.discount_percentage,
+        tax_percentage=order.tax_percentage,
         created_by=user,
     )
     for data in _service_order_lines(order):
@@ -178,8 +194,8 @@ def convert_quote_to_invoice(*, quote, user=None):
         customer=quote.customer,
         service_order=quote.service_order,
         quote=quote,
-        discount_amount=quote.discount_amount,
-        tax_amount=quote.tax_amount,
+        discount_percentage=quote.discount_percentage,
+        tax_percentage=quote.tax_percentage,
         created_by=user,
     )
     for line in quote.lines.all():

@@ -84,7 +84,13 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        order = serializer.save(created_by=self.request.user)
+        # Calcula totales (descuento/impuesto derivados de los porcentajes) al crear.
+        recalculate_totals(order)
+
+    def perform_update(self, serializer):
+        order = serializer.save()
+        recalculate_totals(order)
 
     def update(self, request, *args, **kwargs):
         _assert_not_terminal(self.get_object())

@@ -35,14 +35,19 @@ def recalculate_totals(order):
         if part.status != ServiceOrderPart.Status.RETURNED:
             parts_subtotal += part.total_price
 
-    order.total_amount = _q(
-        order.labor_cost
-        + order.diagnostic_fee
-        + parts_subtotal
-        - order.discount_amount
-        + order.tax_amount
+    base = order.labor_cost + order.diagnostic_fee + parts_subtotal
+    order.discount_amount = _q(base * order.discount_percentage / Decimal("100"))
+    taxable = base - order.discount_amount
+    order.tax_amount = _q(taxable * order.tax_percentage / Decimal("100"))
+    order.total_amount = _q(base - order.discount_amount + order.tax_amount)
+    order.save(
+        update_fields=[
+            "discount_amount",
+            "tax_amount",
+            "total_amount",
+            "updated_at",
+        ]
     )
-    order.save(update_fields=["total_amount", "updated_at"])
     return order
 
 

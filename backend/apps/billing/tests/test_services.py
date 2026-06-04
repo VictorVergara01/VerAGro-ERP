@@ -30,14 +30,19 @@ def _product(sku, **kwargs):
 @pytest.mark.django_db
 def test_recalculate_quote(customer):
     q = Quote.objects.create(
-        customer=customer, discount_amount=Decimal("10"), tax_amount=Decimal("5")
+        customer=customer,
+        discount_percentage=Decimal("10"),
+        tax_percentage=Decimal("5"),
     )
     QuoteLine.objects.create(quote=q, description="A", quantity=2, unit_price=30)  # 60
     QuoteLine.objects.create(quote=q, description="B", quantity=1, unit_price=40)  # 40
     recalculate_quote(q)
     q.refresh_from_db()
     assert q.subtotal == Decimal("100.00")
-    assert q.total == Decimal("95.00")  # 100 - 10 + 5
+    # desc 10% = 10; gravable 90; imp 5% = 4.50; total 94.50
+    assert q.discount_amount == Decimal("10.00")
+    assert q.tax_amount == Decimal("4.50")
+    assert q.total == Decimal("94.50")
 
 
 @pytest.mark.django_db

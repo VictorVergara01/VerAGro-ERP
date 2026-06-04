@@ -62,6 +62,8 @@ class ServiceOrder(TimeStampedModel):
     internal_notes = models.TextField(blank=True)
     labor_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     diagnostic_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    tax_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
