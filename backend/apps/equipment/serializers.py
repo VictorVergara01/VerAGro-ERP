@@ -11,6 +11,13 @@ class EquipmentTypeSerializer(serializers.ModelSerializer):
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(
+        source="customer.name", read_only=True, default=None
+    )
+    equipment_type_name = serializers.CharField(
+        source="equipment_type.name", read_only=True, default=None
+    )
+
     class Meta:
         model = Equipment
         fields = "__all__"

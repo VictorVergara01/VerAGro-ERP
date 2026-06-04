@@ -1414,6 +1414,8 @@ export interface components {
         CustomerTypeEnum: "person" | "company";
         Equipment: {
             readonly id: number;
+            readonly customer_name: string;
+            readonly equipment_type_name: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1879,6 +1881,8 @@ export interface components {
         };
         PatchedEquipment: {
             readonly id?: number;
+            readonly customer_name?: string;
+            readonly equipment_type_name?: string;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */

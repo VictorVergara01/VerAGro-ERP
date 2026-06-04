@@ -5,6 +5,8 @@ import { LoginPage } from "../features/auth/LoginPage";
 import { CustomerDetailPage } from "../features/customers/CustomerDetailPage";
 import { CustomersPage } from "../features/customers/CustomersPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { EquipmentDetailPage } from "../features/equipment/EquipmentDetailPage";
+import { EquipmentPage } from "../features/equipment/EquipmentPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export function AppRoutes() {
@@ -16,6 +18,8 @@ export function AppRoutes() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/customers/:id" element={<CustomerDetailPage />} />
+          <Route path="/equipment" element={<EquipmentPage />} />
+          <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
         </Route>
       </Route>
     </Routes>
