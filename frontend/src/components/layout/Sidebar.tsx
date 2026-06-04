@@ -33,7 +33,7 @@ const ITEMS: NavItem[] = [
   { label: "Checklists", to: "/checklists", icon: IconClipboardList },
   { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice, ready: true },
   { label: "Facturas", to: "/invoices", icon: IconReceipt, ready: true },
-  { label: "Reportes", to: "/reports", icon: IconReportAnalytics },
+  { label: "Reportes", to: "/reports", icon: IconReportAnalytics, ready: true },
   { label: "Configuración", to: "/settings", icon: IconSettings },
 ];
 
