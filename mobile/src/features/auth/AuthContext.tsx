@@ -53,24 +53,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      let result;
-      try {
-        result = await api.POST("/api/auth/login/", {
+      // El fetch rechaza si el dispositivo no alcanza el backend → result = null.
+      const result = await api
+        .POST("/api/auth/login/", {
           body: { email, password } as unknown as {
             email: string;
             password: string;
             access: string;
             refresh: string;
           },
-        });
-      } catch {
-        // El fetch rechazó: típicamente el dispositivo no alcanza el backend.
+        })
+        .catch(() => null);
+      if (!result) {
+        // Fetch rechazado → el dispositivo no alcanza el backend.
         throw new Error(`No se pudo conectar al servidor (${API_BASE_URL}).`);
       }
-      const { data, error, response } = result;
+      const { data, error } = result;
       if (error || !data) {
-        if (response?.status === 401) throw new Error("Credenciales inválidas.");
-        throw new Error("No se pudo iniciar sesión. Intenta de nuevo.");
+        // Respuesta del backend con error (típicamente 401): credenciales.
+        throw new Error("Credenciales inválidas. Verifica correo y contraseña.");
       }
       await setTokens(data.access, data.refresh);
       await loadMe();
