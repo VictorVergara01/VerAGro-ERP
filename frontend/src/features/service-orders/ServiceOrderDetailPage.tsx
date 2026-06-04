@@ -9,6 +9,7 @@ import {
   Loader,
   Menu,
   Stack,
+  Tabs,
   Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -26,6 +27,7 @@ import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AddPartModal } from "./AddPartModal";
 import {
@@ -254,32 +256,45 @@ export function ServiceOrderDetailPage() {
         </Grid>
       </Card>
 
-      <Card withBorder radius="md">
-        <Group justify="space-between" mb="sm">
-          <Text fw={600}>Piezas</Text>
-          {!terminal && (
-            <Group>
-              <Button
-                size="xs"
-                variant="light"
-                onClick={doReserve}
-                loading={reserve.isPending}
-              >
-                Reservar piezas
-              </Button>
-              <Button size="xs" leftSection={<IconPlus size={16} />} onClick={openAdd}>
-                Agregar pieza
-              </Button>
+      <Tabs defaultValue="parts">
+        <Tabs.List>
+          <Tabs.Tab value="parts">Piezas</Tabs.Tab>
+          <Tabs.Tab value="checklist">Checklist</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="parts" pt="md">
+          <Card withBorder radius="md">
+            <Group justify="space-between" mb="sm">
+              <Text fw={600}>Piezas</Text>
+              {!terminal && (
+                <Group>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    onClick={doReserve}
+                    loading={reserve.isPending}
+                  >
+                    Reservar piezas
+                  </Button>
+                  <Button size="xs" leftSection={<IconPlus size={16} />} onClick={openAdd}>
+                    Agregar pieza
+                  </Button>
+                </Group>
+              )}
             </Group>
+            <DataTable
+              columns={partColumns}
+              rows={order.parts ?? []}
+              rowKey={(p) => p.id}
+              emptyText="Sin piezas."
+            />
+          </Card>
+        </Tabs.Panel>
+        <Tabs.Panel value="checklist" pt="md">
+          {orderId != null && (
+            <ServiceOrderChecklistCard orderId={orderId} editable={!terminal} />
           )}
-        </Group>
-        <DataTable
-          columns={partColumns}
-          rows={order.parts ?? []}
-          rowKey={(p) => p.id}
-          emptyText="Sin piezas."
-        />
-      </Card>
+        </Tabs.Panel>
+      </Tabs>
 
       <Group justify="flex-end">
         <Card withBorder radius="md" w={320}>
