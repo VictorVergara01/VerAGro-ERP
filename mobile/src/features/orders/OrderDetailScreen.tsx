@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Alert,
@@ -12,7 +12,7 @@ import {
 
 import { colors, statusColors, statusLabels } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
-import type { OrderDetailRoute } from "../../navigation/types";
+import type { AppNav, OrderDetailRoute } from "../../navigation/types";
 import { AddPartModal } from "./AddPartModal";
 import {
   useDeletePart,
@@ -101,6 +101,7 @@ function PartRow({
 
 export function OrderDetailScreen() {
   const route = useRoute<OrderDetailRoute>();
+  const navigation = useNavigation<AppNav>();
   const { id } = route.params;
   const { data: order, isLoading, error, isRefetching } = useOrder(id);
   const action = useOrderAction(id);
@@ -241,6 +242,13 @@ export function OrderDetailScreen() {
         </View>
       </View>
 
+      <TouchableOpacity
+        style={styles.checklistBtn}
+        onPress={() => navigation.navigate("OrderChecklist", { id })}
+      >
+        <Text style={styles.checklistText}>Checklist ›</Text>
+      </TouchableOpacity>
+
       {next ? (
         <TouchableOpacity
           style={[styles.actionBtn, action.isPending && styles.actionBtnDisabled]}
@@ -311,6 +319,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   smallBtnOutlineText: { color: colors.primary, fontWeight: "600", fontSize: 13 },
+  checklistBtn: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  checklistText: { color: colors.primary, fontSize: 15, fontWeight: "700" },
   dimmedCenter: { color: colors.dimmed, fontSize: 14, textAlign: "center", marginTop: 8 },
   partRow: {
     flexDirection: "row",

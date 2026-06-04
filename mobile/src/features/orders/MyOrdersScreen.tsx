@@ -68,9 +68,14 @@ export function MyOrdersScreen() {
           <Text style={styles.toggleLabel}>Ver todas</Text>
           <Switch value={all} onValueChange={setAll} />
         </View>
-        <TouchableOpacity onPress={() => void logout()}>
-          <Text style={styles.logout}>Salir</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => navigation.navigate("InventorySearch")}>
+            <Text style={styles.headerLink}>Inventario</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => void logout()}>
+            <Text style={styles.logout}>Salir</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading ? (
@@ -121,6 +126,8 @@ const styles = StyleSheet.create({
   },
   toggle: { flexDirection: "row", alignItems: "center", gap: 8 },
   toggleLabel: { color: colors.text, fontSize: 14 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 16 },
+  headerLink: { color: colors.primary, fontWeight: "600", fontSize: 14 },
   logout: { color: colors.danger, fontWeight: "600", fontSize: 14 },
   list: { padding: 16, gap: 12 },
   card: {
