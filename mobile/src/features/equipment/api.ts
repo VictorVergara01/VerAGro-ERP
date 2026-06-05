@@ -36,6 +36,19 @@ export function useEquipmentTypes() {
   });
 }
 
+export function useDeleteEquipment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/equipment/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo eliminar el equipo.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["equipment"] }),
+  });
+}
+
 export function useSaveEquipment() {
   const qc = useQueryClient();
   return useMutation({
