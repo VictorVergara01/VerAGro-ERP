@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 
@@ -16,6 +17,7 @@ import { colors, font, quoteStatusColors, quoteStatusLabels, spacing } from "../
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreNav, MoreStackParamList } from "../../navigation/types";
 import { useConvertQuote, useQuote, useQuoteAction } from "./api";
+import { QuoteFormModal } from "./QuoteFormModal";
 
 export function QuoteDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "QuoteDetail">>();
@@ -23,6 +25,7 @@ export function QuoteDetailScreen() {
   const { data: q, isLoading, error } = useQuote(params.id);
   const action = useQuoteAction(params.id);
   const convert = useConvertQuote(params.id);
+  const [editOpen, setEditOpen] = useState(false);
 
   if (isLoading) return <Loading />;
   if (error || !q) return <Screen><ErrorState text="No se pudo cargar la cotización." /></Screen>;
@@ -31,6 +34,7 @@ export function QuoteDetailScreen() {
   const canApprove = st === "draft" || st === "sent";
   const canReject = st !== "converted_to_invoice" && st !== "rejected";
   const canConvert = st === "approved";
+  const canEdit = st === "draft" || st === "sent";
 
   const run = (a: "approve" | "reject", msg: string) =>
     Alert.alert("Confirmar", msg, [
@@ -46,9 +50,10 @@ export function QuoteDetailScreen() {
 
   return (
     <Screen scroll>
-      {(canApprove || canReject || canConvert) && (
+      {(canApprove || canReject || canConvert || canEdit) && (
         <Card style={styles.actions}>
           {canApprove && <Button title="Aprobar" icon="checkmark" onPress={() => run("approve", "¿Aprobar la cotización?")} />}
+          {canEdit && <Button title="Editar" icon="create" variant="subtle" onPress={() => setEditOpen(true)} />}
           {canConvert && (
             <Button title="Convertir en factura" icon="receipt" color={colors.grape} loading={convert.isPending} onPress={doConvert} />
           )}
@@ -88,6 +93,8 @@ export function QuoteDetailScreen() {
         )}
         <DetailRow label="Total" value={formatCurrency(q.total)} strong />
       </Card>
+
+      <QuoteFormModal visible={editOpen} onClose={() => setEditOpen(false)} quote={q} />
     </Screen>
   );
 }

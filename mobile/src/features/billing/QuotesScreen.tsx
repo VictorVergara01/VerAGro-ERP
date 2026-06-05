@@ -3,15 +3,17 @@ import { StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
-import { Badge, Card, SearchBar } from "../../components/ui";
+import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import { colors, font, quoteStatusColors, quoteStatusLabels } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import type { MoreNav } from "../../navigation/types";
 import { useQuotes, type Quote } from "./api";
+import { QuoteFormModal } from "./QuoteFormModal";
 
 export function QuotesScreen() {
   const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = useQuotes(search);
 
@@ -46,6 +48,8 @@ export function QuotesScreen() {
           );
         }}
       />
+      <FAB onPress={() => setFormOpen(true)} />
+      <QuoteFormModal visible={formOpen} onClose={() => setFormOpen(false)} quote={null} />
     </Screen>
   );
 }
