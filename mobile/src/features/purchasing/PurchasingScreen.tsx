@@ -5,7 +5,14 @@ import { useNavigation } from "@react-navigation/native";
 import { Screen } from "../../components/ui/Screen";
 import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
-import { colors, font, poStatusColors, poStatusLabels } from "../../theme";
+import {
+  font,
+  poStatusColors,
+  poStatusLabels,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreNav } from "../../navigation/types";
 import { usePurchaseOrders, type PurchaseOrder } from "./api";
@@ -16,6 +23,8 @@ export function PurchasingScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = usePurchaseOrders(search);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <Screen padded={false}>
@@ -56,9 +65,10 @@ export function PurchasingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  num: { fontSize: font.md, fontWeight: "700", color: colors.text },
-  meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2, flexShrink: 1 },
-  total: { fontSize: font.md, fontWeight: "700", color: colors.text, marginTop: 2 },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    num: { fontSize: font.md, fontWeight: "700", color: colors.text },
+    meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2, flexShrink: 1 },
+    total: { fontSize: font.md, fontWeight: "700", color: colors.text, marginTop: 2 },
+  });

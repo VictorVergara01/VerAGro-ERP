@@ -6,10 +6,12 @@ import { Screen } from "../../components/ui/Screen";
 import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import {
-  colors,
   font,
   invoiceStatusColors,
   invoiceStatusLabels,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
 } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import type { MoreNav } from "../../navigation/types";
@@ -21,6 +23,8 @@ export function InvoicesScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = useInvoices(search);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <Screen padded={false}>
@@ -62,9 +66,10 @@ export function InvoicesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  num: { fontSize: font.md, fontWeight: "700", color: colors.text },
-  meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
-  balance: { fontSize: font.sm, fontWeight: "700", color: colors.text, marginTop: 2 },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    num: { fontSize: font.md, fontWeight: "700", color: colors.text },
+    meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
+    balance: { fontSize: font.sm, fontWeight: "700", color: colors.text, marginTop: 2 },
+  });

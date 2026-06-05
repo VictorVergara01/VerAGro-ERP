@@ -12,7 +12,15 @@ import {
   Loading,
   SectionTitle,
 } from "../../components/ui";
-import { colors, font, poStatusColors, poStatusLabels, spacing } from "../../theme";
+import {
+  font,
+  poStatusColors,
+  poStatusLabels,
+  spacing,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreStackParamList } from "../../navigation/types";
 import { usePOAction, usePurchaseOrder } from "./api";
@@ -21,6 +29,8 @@ export function PurchaseOrderDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "PurchaseOrderDetail">>();
   const { data: o, isLoading, error } = usePurchaseOrder(params.id);
   const action = usePOAction(params.id);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   if (isLoading) return <Loading />;
   if (error || !o) return <Screen><ErrorState text="No se pudo cargar la orden." /></Screen>;
@@ -80,16 +90,17 @@ export function PurchaseOrderDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  actions: { gap: spacing.sm },
-  lineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  lineDesc: { fontSize: font.md, color: colors.text },
-  lineMeta: { fontSize: font.sm, color: colors.dimmed },
-  lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    actions: { gap: spacing.sm },
+    lineRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 6,
+    },
+    lineDesc: { fontSize: font.md, color: colors.text },
+    lineMeta: { fontSize: font.sm, color: colors.dimmed },
+    lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
+    divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
+  });

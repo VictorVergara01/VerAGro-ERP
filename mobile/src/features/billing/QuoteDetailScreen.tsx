@@ -13,7 +13,15 @@ import {
   Loading,
   SectionTitle,
 } from "../../components/ui";
-import { colors, font, quoteStatusColors, quoteStatusLabels, spacing } from "../../theme";
+import {
+  font,
+  quoteStatusColors,
+  quoteStatusLabels,
+  spacing,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreNav, MoreStackParamList } from "../../navigation/types";
 import { useConvertQuote, useQuote, useQuoteAction } from "./api";
@@ -27,6 +35,8 @@ export function QuoteDetailScreen() {
   const action = useQuoteAction(params.id);
   const convert = useConvertQuote(params.id);
   const [editOpen, setEditOpen] = useState(false);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   if (isLoading) return <Loading />;
   if (error || !q) return <Screen><ErrorState text="No se pudo cargar la cotización." /></Screen>;
@@ -109,16 +119,17 @@ export function QuoteDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  actions: { gap: spacing.sm },
-  lineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  lineDesc: { fontSize: font.md, color: colors.text },
-  lineMeta: { fontSize: font.sm, color: colors.dimmed },
-  lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    actions: { gap: spacing.sm },
+    lineRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 6,
+    },
+    lineDesc: { fontSize: font.md, color: colors.text },
+    lineMeta: { fontSize: font.sm, color: colors.dimmed },
+    lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
+    divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
+  });

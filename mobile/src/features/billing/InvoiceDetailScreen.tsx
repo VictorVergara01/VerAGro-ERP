@@ -14,11 +14,13 @@ import {
   SectionTitle,
 } from "../../components/ui";
 import {
-  colors,
   font,
   invoiceStatusColors,
   invoiceStatusLabels,
   spacing,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
 } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreStackParamList } from "../../navigation/types";
@@ -43,6 +45,8 @@ export function InvoiceDetailScreen() {
   const action = useInvoiceAction(params.id);
   const [payOpen, setPayOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   if (isLoading) return <Loading />;
   if (error || !inv) return <Screen><ErrorState text="No se pudo cargar la factura." /></Screen>;
@@ -146,16 +150,17 @@ export function InvoiceDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  actions: { gap: spacing.sm },
-  lineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  lineDesc: { fontSize: font.md, color: colors.text },
-  lineMeta: { fontSize: font.sm, color: colors.dimmed },
-  lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    actions: { gap: spacing.sm },
+    lineRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 6,
+    },
+    lineDesc: { fontSize: font.md, color: colors.text },
+    lineMeta: { fontSize: font.sm, color: colors.dimmed },
+    lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
+    divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
+  });

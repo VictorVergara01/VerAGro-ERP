@@ -3,7 +3,7 @@ import { Alert, Text } from "react-native";
 
 import { FormModal, Picker } from "../../components/ui/form";
 import { LabeledInput } from "../../components/ui";
-import { colors, font } from "../../theme";
+import { font, useTheme } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import { useRecordPayment, type Invoice } from "./api";
 
@@ -25,6 +25,7 @@ export function PaymentModal({
   onClose: () => void;
   invoice: Invoice;
 }) {
+  const { colors } = useTheme();
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("cash");
   const [reference, setReference] = useState("");
