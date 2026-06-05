@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -10,7 +9,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import { IconEye, IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -61,15 +60,6 @@ export function InvoicesPage() {
     { header: "Fecha", render: (i) => formatDate(i.issue_date) },
     { header: "Total", align: "right", render: (i) => formatCurrency(i.total) },
     { header: "Saldo", align: "right", render: (i) => formatCurrency(i.balance_due) },
-    {
-      header: "",
-      align: "right",
-      render: (i) => (
-        <ActionIcon variant="subtle" onClick={() => navigate(`/invoices/${i.id}`)}>
-          <IconEye size={18} />
-        </ActionIcon>
-      ),
-    },
   ];
 
   const totalPages = data ? Math.max(1, Math.ceil(data.count / PAGE_SIZE)) : 1;
@@ -78,35 +68,13 @@ export function InvoicesPage() {
     <Stack>
       <PageHeader
         title="Facturas"
+        subtitle="Facturas de servicio y venta de productos."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={open}>
             Nueva factura
           </Button>
         }
       />
-      <Group>
-        <TextInput
-          placeholder="Buscar por número"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={300}
-        />
-        <Select
-          placeholder="Estado"
-          data={INVOICE_STATUS_OPTIONS}
-          value={status}
-          onChange={(v) => {
-            setStatus(v);
-            setPage(1);
-          }}
-          clearable
-          w={200}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar las facturas.</Alert>
@@ -117,13 +85,40 @@ export function InvoicesPage() {
           loading={isLoading}
           rowKey={(i) => i.id}
           emptyText="No hay facturas."
+          onRowClick={(i) => navigate(`/invoices/${i.id}`)}
+          toolbar={
+            <Group>
+              <TextInput
+                placeholder="Buscar por número"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={300}
+              />
+              <Select
+                placeholder="Estado"
+                data={INVOICE_STATUS_OPTIONS}
+                value={status}
+                onChange={(v) => {
+                  setStatus(v);
+                  setPage(1);
+                }}
+                clearable
+                w={200}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <InvoiceCreateModal opened={createOpen} onClose={close} />

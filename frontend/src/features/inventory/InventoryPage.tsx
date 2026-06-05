@@ -162,65 +162,13 @@ export function InventoryPage() {
     <Stack>
       <PageHeader
         title="Inventario"
+        subtitle="Productos, repuestos y niveles de stock."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
             Nuevo producto
           </Button>
         }
       />
-      <Group justify="space-between">
-        <Group>
-          <TextInput
-            placeholder="Buscar por SKU, nombre, código, marca o modelo"
-            leftSection={<IconSearch size={16} />}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.currentTarget.value);
-              setPage(1);
-            }}
-            w={360}
-            disabled={lowStockOnly}
-          />
-          <Select
-            placeholder="Categoría"
-            data={(categories.data ?? []).map((c) => ({
-              value: String(c.id),
-              label: c.name,
-            }))}
-            value={category}
-            onChange={(v) => {
-              setCategory(v);
-              setPage(1);
-            }}
-            clearable
-            searchable
-            disabled={lowStockOnly}
-            w={200}
-          />
-        </Group>
-        <Group>
-          <Switch
-            label="Solo bajo stock"
-            checked={lowStockOnly}
-            onChange={(e) => setLowStockOnly(e.currentTarget.checked)}
-          />
-          <Switch
-            label="Incluir inactivos"
-            checked={includeInactive}
-            onChange={(e) => {
-              setIncludeInactive(e.currentTarget.checked);
-              setPage(1);
-            }}
-            disabled={lowStockOnly}
-          />
-        </Group>
-      </Group>
-
-      {lowStockOnly && (
-        <Text size="sm" c="dimmed">
-          Productos con stock disponible ≤ stock mínimo.
-        </Text>
-      )}
 
       {error ? (
         <Alert color="red">No se pudo cargar el inventario.</Alert>
@@ -231,13 +179,71 @@ export function InventoryPage() {
           loading={loading}
           rowKey={(p) => p.id}
           emptyText="No hay productos."
+          minWidth={900}
+          toolbar={
+            <Stack gap="sm">
+              <Group justify="space-between">
+                <Group>
+                  <TextInput
+                    placeholder="Buscar por SKU, nombre, código, marca o modelo"
+                    leftSection={<IconSearch size={16} />}
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.currentTarget.value);
+                      setPage(1);
+                    }}
+                    w={360}
+                    disabled={lowStockOnly}
+                  />
+                  <Select
+                    placeholder="Categoría"
+                    data={(categories.data ?? []).map((c) => ({
+                      value: String(c.id),
+                      label: c.name,
+                    }))}
+                    value={category}
+                    onChange={(v) => {
+                      setCategory(v);
+                      setPage(1);
+                    }}
+                    clearable
+                    searchable
+                    disabled={lowStockOnly}
+                    w={200}
+                  />
+                </Group>
+                <Group>
+                  <Switch
+                    label="Solo bajo stock"
+                    checked={lowStockOnly}
+                    onChange={(e) => setLowStockOnly(e.currentTarget.checked)}
+                  />
+                  <Switch
+                    label="Incluir inactivos"
+                    checked={includeInactive}
+                    onChange={(e) => {
+                      setIncludeInactive(e.currentTarget.checked);
+                      setPage(1);
+                    }}
+                    disabled={lowStockOnly}
+                  />
+                </Group>
+              </Group>
+              {lowStockOnly && (
+                <Text size="sm" c="dimmed">
+                  Productos con stock disponible ≤ stock mínimo.
+                </Text>
+              )}
+            </Stack>
+          }
+          footer={
+            !lowStockOnly && totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {!lowStockOnly && totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <ProductFormModal opened={formOpen} onClose={closeForm} product={editing} />

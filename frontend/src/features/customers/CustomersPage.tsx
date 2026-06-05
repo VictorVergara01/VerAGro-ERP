@@ -112,32 +112,13 @@ export function CustomersPage() {
     <Stack>
       <PageHeader
         title="Clientes"
+        subtitle="Personas y empresas a las que prestas servicio."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
             Nuevo cliente
           </Button>
         }
       />
-      <Group justify="space-between">
-        <TextInput
-          placeholder="Buscar por nombre, identificación, teléfono o correo"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={420}
-        />
-        <Switch
-          label="Incluir inactivos"
-          checked={includeInactive}
-          onChange={(e) => {
-            setIncludeInactive(e.currentTarget.checked);
-            setPage(1);
-          }}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar los clientes.</Alert>
@@ -148,13 +129,36 @@ export function CustomersPage() {
           loading={isLoading}
           rowKey={(c) => c.id}
           emptyText="No hay clientes."
+          toolbar={
+            <Group justify="space-between">
+              <TextInput
+                placeholder="Buscar por nombre, identificación, teléfono o correo"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={420}
+              />
+              <Switch
+                label="Incluir inactivos"
+                checked={includeInactive}
+                onChange={(e) => {
+                  setIncludeInactive(e.currentTarget.checked);
+                  setPage(1);
+                }}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <CustomerFormModal opened={formOpen} onClose={close} customer={editing} />

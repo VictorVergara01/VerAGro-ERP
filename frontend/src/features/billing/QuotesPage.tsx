@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -10,7 +9,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import { IconEye, IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -55,15 +54,6 @@ export function QuotesPage() {
     },
     { header: "Fecha", render: (q) => formatDate(q.issue_date) },
     { header: "Total", align: "right", render: (q) => formatCurrency(q.total) },
-    {
-      header: "",
-      align: "right",
-      render: (q) => (
-        <ActionIcon variant="subtle" onClick={() => navigate(`/quotes/${q.id}`)}>
-          <IconEye size={18} />
-        </ActionIcon>
-      ),
-    },
   ];
 
   const totalPages = data ? Math.max(1, Math.ceil(data.count / PAGE_SIZE)) : 1;
@@ -72,35 +62,13 @@ export function QuotesPage() {
     <Stack>
       <PageHeader
         title="Cotizaciones"
+        subtitle="Presupuestos enviados a clientes."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={open}>
             Nueva cotización
           </Button>
         }
       />
-      <Group>
-        <TextInput
-          placeholder="Buscar por número"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={300}
-        />
-        <Select
-          placeholder="Estado"
-          data={QUOTE_STATUS_OPTIONS}
-          value={status}
-          onChange={(v) => {
-            setStatus(v);
-            setPage(1);
-          }}
-          clearable
-          w={200}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar las cotizaciones.</Alert>
@@ -111,13 +79,40 @@ export function QuotesPage() {
           loading={isLoading}
           rowKey={(q) => q.id}
           emptyText="No hay cotizaciones."
+          onRowClick={(q) => navigate(`/quotes/${q.id}`)}
+          toolbar={
+            <Group>
+              <TextInput
+                placeholder="Buscar por número"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={300}
+              />
+              <Select
+                placeholder="Estado"
+                data={QUOTE_STATUS_OPTIONS}
+                value={status}
+                onChange={(v) => {
+                  setStatus(v);
+                  setPage(1);
+                }}
+                clearable
+                w={200}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <QuoteCreateModal opened={createOpen} onClose={close} />

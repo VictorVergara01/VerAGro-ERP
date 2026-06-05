@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -10,7 +9,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import { IconEye, IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -49,15 +48,6 @@ export function PurchasingPage() {
       ),
     },
     { header: "Total", align: "right", render: (o) => formatCurrency(o.grand_total) },
-    {
-      header: "",
-      align: "right",
-      render: (o) => (
-        <ActionIcon variant="subtle" onClick={() => navigate(`/purchasing/${o.id}`)}>
-          <IconEye size={18} />
-        </ActionIcon>
-      ),
-    },
   ];
 
   const totalPages = data ? Math.max(1, Math.ceil(data.count / PAGE_SIZE)) : 1;
@@ -66,35 +56,13 @@ export function PurchasingPage() {
     <Stack>
       <PageHeader
         title="Compras"
+        subtitle="Órdenes de compra y recepción de inventario."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={open}>
             Nueva orden
           </Button>
         }
       />
-      <Group>
-        <TextInput
-          placeholder="Buscar por número o notas"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={320}
-        />
-        <Select
-          placeholder="Estado"
-          data={PO_STATUS_OPTIONS}
-          value={status}
-          onChange={(v) => {
-            setStatus(v);
-            setPage(1);
-          }}
-          clearable
-          w={220}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar las órdenes.</Alert>
@@ -105,13 +73,40 @@ export function PurchasingPage() {
           loading={isLoading}
           rowKey={(o) => o.id}
           emptyText="No hay órdenes de compra."
+          onRowClick={(o) => navigate(`/purchasing/${o.id}`)}
+          toolbar={
+            <Group>
+              <TextInput
+                placeholder="Buscar por número o notas"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={320}
+              />
+              <Select
+                placeholder="Estado"
+                data={PO_STATUS_OPTIONS}
+                value={status}
+                onChange={(v) => {
+                  setStatus(v);
+                  setPage(1);
+                }}
+                clearable
+                w={220}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <PurchaseOrderCreateModal opened={createOpen} onClose={close} />

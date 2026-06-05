@@ -109,32 +109,13 @@ export function SuppliersPage() {
     <Stack>
       <PageHeader
         title="Proveedores"
+        subtitle="Quién te vende piezas y repuestos."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
             Nuevo proveedor
           </Button>
         }
       />
-      <Group justify="space-between">
-        <TextInput
-          placeholder="Buscar por nombre, razón social, correo o contacto"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={420}
-        />
-        <Switch
-          label="Incluir inactivos"
-          checked={includeInactive}
-          onChange={(e) => {
-            setIncludeInactive(e.currentTarget.checked);
-            setPage(1);
-          }}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar los proveedores.</Alert>
@@ -145,13 +126,36 @@ export function SuppliersPage() {
           loading={isLoading}
           rowKey={(s) => s.id}
           emptyText="No hay proveedores."
+          toolbar={
+            <Group justify="space-between">
+              <TextInput
+                placeholder="Buscar por nombre, razón social, correo o contacto"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={420}
+              />
+              <Switch
+                label="Incluir inactivos"
+                checked={includeInactive}
+                onChange={(e) => {
+                  setIncludeInactive(e.currentTarget.checked);
+                  setPage(1);
+                }}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <SupplierFormModal opened={formOpen} onClose={close} supplier={editing} />

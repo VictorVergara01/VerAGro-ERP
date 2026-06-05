@@ -120,47 +120,13 @@ export function EquipmentPage() {
     <Stack>
       <PageHeader
         title="Equipos"
+        subtitle="Drones y maquinaria de tus clientes."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
             Nuevo equipo
           </Button>
         }
       />
-      <Group>
-        <TextInput
-          placeholder="Buscar por nombre, serie, código, marca o modelo"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={380}
-        />
-        <Select
-          placeholder="Estado"
-          data={STATUS_OPTIONS}
-          value={status}
-          onChange={(v) => {
-            setStatus(v);
-            setPage(1);
-          }}
-          clearable
-          w={180}
-        />
-        <Select
-          placeholder="Tipo"
-          data={(types.data ?? []).map((t) => ({ value: String(t.id), label: t.name }))}
-          value={typeId}
-          onChange={(v) => {
-            setTypeId(v);
-            setPage(1);
-          }}
-          clearable
-          searchable
-          w={180}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar los equipos.</Alert>
@@ -171,13 +137,54 @@ export function EquipmentPage() {
           loading={isLoading}
           rowKey={(e) => e.id}
           emptyText="No hay equipos."
+          toolbar={
+            <Group>
+              <TextInput
+                placeholder="Buscar por nombre, serie, código, marca o modelo"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={380}
+              />
+              <Select
+                placeholder="Estado"
+                data={STATUS_OPTIONS}
+                value={status}
+                onChange={(v) => {
+                  setStatus(v);
+                  setPage(1);
+                }}
+                clearable
+                w={180}
+              />
+              <Select
+                placeholder="Tipo"
+                data={(types.data ?? []).map((t) => ({
+                  value: String(t.id),
+                  label: t.name,
+                }))}
+                value={typeId}
+                onChange={(v) => {
+                  setTypeId(v);
+                  setPage(1);
+                }}
+                clearable
+                searchable
+                w={180}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <EquipmentFormModal opened={formOpen} onClose={close} equipment={editing} />

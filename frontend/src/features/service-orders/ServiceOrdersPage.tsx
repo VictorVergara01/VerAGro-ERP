@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -10,7 +9,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import { IconEye, IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -60,15 +59,6 @@ export function ServiceOrdersPage() {
     },
     { header: "Recibida", render: (o) => formatDate(o.received_date) },
     { header: "Total", align: "right", render: (o) => formatCurrency(o.total_amount) },
-    {
-      header: "",
-      align: "right",
-      render: (o) => (
-        <ActionIcon variant="subtle" onClick={() => navigate(`/service-orders/${o.id}`)}>
-          <IconEye size={18} />
-        </ActionIcon>
-      ),
-    },
   ];
 
   const totalPages = data ? Math.max(1, Math.ceil(data.count / PAGE_SIZE)) : 1;
@@ -77,36 +67,13 @@ export function ServiceOrdersPage() {
     <Stack>
       <PageHeader
         title="Órdenes de servicio"
+        subtitle="Diagnóstico, reparación y entrega de equipos."
         action={
           <Button leftSection={<IconPlus size={18} />} onClick={open}>
             Nueva orden
           </Button>
         }
       />
-      <Group>
-        <TextInput
-          placeholder="Buscar por número o reclamo"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          w={340}
-        />
-        <Select
-          placeholder="Estado"
-          data={SO_STATUS_OPTIONS}
-          value={status}
-          onChange={(v) => {
-            setStatus(v);
-            setPage(1);
-          }}
-          clearable
-          searchable
-          w={220}
-        />
-      </Group>
 
       {error ? (
         <Alert color="red">No se pudieron cargar las órdenes.</Alert>
@@ -117,13 +84,41 @@ export function ServiceOrdersPage() {
           loading={isLoading}
           rowKey={(o) => o.id}
           emptyText="No hay órdenes de servicio."
+          onRowClick={(o) => navigate(`/service-orders/${o.id}`)}
+          toolbar={
+            <Group>
+              <TextInput
+                placeholder="Buscar por número o reclamo"
+                leftSection={<IconSearch size={16} />}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.currentTarget.value);
+                  setPage(1);
+                }}
+                w={340}
+              />
+              <Select
+                placeholder="Estado"
+                data={SO_STATUS_OPTIONS}
+                value={status}
+                onChange={(v) => {
+                  setStatus(v);
+                  setPage(1);
+                }}
+                clearable
+                searchable
+                w={220}
+              />
+            </Group>
+          }
+          footer={
+            totalPages > 1 ? (
+              <Group justify="flex-end">
+                <Pagination value={page} onChange={setPage} total={totalPages} />
+              </Group>
+            ) : undefined
+          }
         />
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="flex-end">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
-        </Group>
       )}
 
       <ServiceOrderFormModal opened={formOpen} onClose={close} order={null} />
