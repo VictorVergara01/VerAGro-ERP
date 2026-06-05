@@ -53,7 +53,7 @@ function OrderCard({
 }
 
 export function MyOrdersScreen() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigation = useNavigation<AppNav>();
   const [all, setAll] = useState(false);
   const { data, isLoading, error, refetch, isRefetching } = useMyOrders(
@@ -65,16 +65,10 @@ export function MyOrdersScreen() {
     <View style={styles.container}>
       <View style={styles.toolbar}>
         <View style={styles.toggle}>
-          <Text style={styles.toggleLabel}>Ver todas</Text>
+          <Text style={styles.toggleLabel}>
+            {all ? "Todas las órdenes" : "Solo mis órdenes"}
+          </Text>
           <Switch value={all} onValueChange={setAll} />
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => navigation.navigate("InventorySearch")}>
-            <Text style={styles.headerLink}>Inventario</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => void logout()}>
-            <Text style={styles.logout}>Salir</Text>
-          </TouchableOpacity>
         </View>
       </View>
 

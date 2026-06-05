@@ -13,7 +13,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NavigationContainer>
-            <StatusBar style="light" />
+            <StatusBar style="dark" />
             <RootNavigator />
           </NavigationContainer>
         </AuthProvider>
