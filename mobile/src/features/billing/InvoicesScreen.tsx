@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
-import { Badge, Card, SearchBar } from "../../components/ui";
+import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import {
   colors,
@@ -14,9 +14,11 @@ import {
 import { formatCurrency } from "../../utils/format";
 import type { MoreNav } from "../../navigation/types";
 import { INVOICE_TYPE_LABEL, useInvoices, type Invoice } from "./api";
+import { InvoiceFormModal } from "./InvoiceFormModal";
 
 export function InvoicesScreen() {
   const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = useInvoices(search);
 
@@ -54,6 +56,8 @@ export function InvoicesScreen() {
           );
         }}
       />
+      <FAB onPress={() => setFormOpen(true)} />
+      <InvoiceFormModal visible={formOpen} onClose={() => setFormOpen(false)} invoice={null} />
     </Screen>
   );
 }

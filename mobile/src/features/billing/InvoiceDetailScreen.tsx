@@ -23,6 +23,7 @@ import {
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreStackParamList } from "../../navigation/types";
 import { INVOICE_TYPE_LABEL, useInvoice, useInvoiceAction } from "./api";
+import { InvoiceFormModal } from "./InvoiceFormModal";
 import { PaymentModal } from "./PaymentModal";
 import { sendInvoiceWhatsapp } from "./whatsapp";
 
@@ -40,12 +41,14 @@ export function InvoiceDetailScreen() {
   const { data: inv, isLoading, error } = useInvoice(params.id);
   const action = useInvoiceAction(params.id);
   const [payOpen, setPayOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   if (isLoading) return <Loading />;
   if (error || !inv) return <Screen><ErrorState text="No se pudo cargar la factura." /></Screen>;
 
   const st = inv.status ?? "draft";
   const canIssue = st === "draft";
+  const canEdit = st === "draft";
   const canPay = st === "issued" || st === "partially_paid";
   const canCancel = st !== "paid" && st !== "cancelled";
 
@@ -63,6 +66,7 @@ export function InvoiceDetailScreen() {
     <Screen scroll>
       <Card style={styles.actions}>
         {canIssue && <Button title="Emitir" icon="send" onPress={() => run("issue", "¿Emitir esta factura?")} />}
+        {canEdit && <Button title="Editar" icon="create" variant="subtle" onPress={() => setEditOpen(true)} />}
         {canPay && (
           <Button title="Registrar pago" icon="cash" color={colors.primary} onPress={() => setPayOpen(true)} />
         )}
@@ -125,6 +129,7 @@ export function InvoiceDetailScreen() {
       )}
 
       <PaymentModal visible={payOpen} onClose={() => setPayOpen(false)} invoice={inv} />
+      <InvoiceFormModal visible={editOpen} onClose={() => setEditOpen(false)} invoice={inv} />
     </Screen>
   );
 }
