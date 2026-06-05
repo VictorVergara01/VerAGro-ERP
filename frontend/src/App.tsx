@@ -1,7 +1,10 @@
+import "@fontsource-variable/inter";
 import "@mantine/core/styles.css";
+import "@mantine/charts/styles.css";
 import "@mantine/notifications/styles.css";
+import "@mantine/spotlight/styles.css";
 
-import { MantineProvider, createTheme } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -10,10 +13,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./features/auth/AuthContext";
 import { queryClient } from "./lib/api/queryClient";
 import { AppRoutes } from "./routes/AppRoutes";
-
-const theme = createTheme({
-  primaryColor: "green",
-});
+import { theme } from "./theme";
 
 export default function App() {
   return (

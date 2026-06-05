@@ -1,78 +1,97 @@
-import { Group, NavLink as MantineNavLink, Stack, Text } from "@mantine/core";
 import {
-  IconBox,
-  IconClipboardList,
-  IconFileInvoice,
-  IconHome,
-  IconReceipt,
-  IconReportAnalytics,
-  IconSettings,
-  IconShoppingCart,
-  IconTool,
-  IconTruck,
-  IconUsers,
-  IconDeviceDesktop,
-} from "@tabler/icons-react";
-import { NavLink } from "react-router-dom";
+  Box,
+  Card,
+  Group,
+  NavLink as MantineNavLink,
+  Stack,
+  Text,
+  ThemeIcon,
+} from "@mantine/core";
+import { IconDeviceMobile } from "@tabler/icons-react";
+import { Link, useLocation } from "react-router-dom";
 
 import { Logo } from "../ui/Logo";
+import { NAV_GROUPS } from "./navItems";
 
-interface NavItem {
-  label: string;
-  to: string;
-  icon: typeof IconHome;
-  ready?: boolean;
+function isActive(pathname: string, to: string) {
+  return to === "/" ? pathname === "/" : pathname.startsWith(to);
 }
 
-const ITEMS: NavItem[] = [
-  { label: "Dashboard", to: "/", icon: IconHome, ready: true },
-  { label: "Clientes", to: "/customers", icon: IconUsers, ready: true },
-  { label: "Equipos", to: "/equipment", icon: IconDeviceDesktop, ready: true },
-  { label: "Inventario", to: "/inventory", icon: IconBox, ready: true },
-  { label: "Proveedores", to: "/suppliers", icon: IconTruck, ready: true },
-  { label: "Compras", to: "/purchasing", icon: IconShoppingCart, ready: true },
-  { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool, ready: true },
-  { label: "Checklists", to: "/checklists", icon: IconClipboardList },
-  { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice, ready: true },
-  { label: "Facturas", to: "/invoices", icon: IconReceipt, ready: true },
-  { label: "Reportes", to: "/reports", icon: IconReportAnalytics, ready: true },
-  { label: "Configuración", to: "/settings", icon: IconSettings, ready: true },
-];
-
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { pathname } = useLocation();
+
   return (
-    <Stack gap={4}>
-      <Group justify="center" pb="sm">
-        <Logo height={56} />
+    <Stack gap="lg" h="100%">
+      <Group justify="center" pt={4} pb="xs">
+        <Logo height={44} />
       </Group>
-      {ITEMS.map((item) => {
-        const Icon = item.icon;
-        if (!item.ready) {
-          return (
-            <MantineNavLink
-              key={item.to}
-              label={item.label}
-              description="Próximamente"
-              leftSection={<Icon size={18} />}
-              disabled
-            />
-          );
-        }
-        return (
-          <MantineNavLink
-            key={item.to}
-            component={NavLink}
-            to={item.to}
-            end
-            label={item.label}
-            leftSection={<Icon size={18} />}
-            onClick={onNavigate}
-          />
-        );
-      })}
-      <Text c="dimmed" size="xs" mt="md" px="sm">
-        Veragro ERP · v0.1
-      </Text>
+
+      <Stack gap="lg" style={{ flex: 1 }}>
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title}>
+            <Text
+              size="xs"
+              c="dimmed"
+              fw={700}
+              tt="uppercase"
+              mb={6}
+              px="xs"
+              style={{ letterSpacing: "0.05em" }}
+            >
+              {group.title}
+            </Text>
+            <Stack gap={2}>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(pathname, item.to);
+                return (
+                  <MantineNavLink
+                    key={item.to}
+                    component={Link}
+                    to={item.to}
+                    label={item.label}
+                    active={active}
+                    variant="light"
+                    leftSection={<Icon size={20} stroke={1.8} />}
+                    onClick={onNavigate}
+                    styles={{
+                      root: { borderRadius: "var(--mantine-radius-md)" },
+                      label: { fontWeight: active ? 600 : 500 },
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          </div>
+        ))}
+      </Stack>
+
+      <Card
+        radius="lg"
+        p="md"
+        withBorder={false}
+        style={{
+          background:
+            "linear-gradient(135deg, var(--mantine-color-green-8), var(--mantine-color-green-6))",
+          color: "white",
+        }}
+      >
+        <ThemeIcon variant="white" color="green" radius="md" size={36} mb="xs">
+          <IconDeviceMobile size={20} />
+        </ThemeIcon>
+        <Text fw={700} size="sm">
+          App de campo
+        </Text>
+        <Text size="xs" opacity={0.9} mt={2}>
+          Los técnicos gestionan sus órdenes desde el móvil.
+        </Text>
+      </Card>
+
+      <Box>
+        <Text c="dimmed" size="xs" ta="center">
+          Veragro ERP · v0.1
+        </Text>
+      </Box>
     </Stack>
   );
 }

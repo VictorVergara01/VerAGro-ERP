@@ -1,6 +1,7 @@
 import {
   Alert,
   Card,
+  Grid,
   Group,
   SimpleGrid,
   Skeleton,
@@ -9,6 +10,7 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
+import { BarChart, DonutChart } from "@mantine/charts";
 import {
   IconAlertTriangle,
   IconBox,
@@ -23,6 +25,7 @@ import {
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../auth/useAuth";
+import { SO_STATUS_LABEL } from "../service-orders/types";
 import { formatCurrency } from "../../utils/format";
 import { StatCard } from "./StatCard";
 import { OPEN_STATUSES, sumStatuses, useDashboard } from "./useDashboard";
@@ -32,12 +35,21 @@ const FINANCIAL_ROLES = ["admin", "sales"];
 
 export function DashboardPage() {
   const { user } = useAuth();
-  // Roles operativos (técnico, inventario, solo-lectura) no acceden al panel
-  // financiero: en vez del 403 ven un panel de accesos rápidos a su trabajo.
   if (user && !FINANCIAL_ROLES.includes(user.role)) {
     return <OperationalDashboard />;
   }
   return <FinancialDashboard />;
+}
+
+function PageTitle({ subtitle }: { subtitle: string }) {
+  return (
+    <div>
+      <Title order={2}>Dashboard</Title>
+      <Text c="dimmed" size="sm">
+        {subtitle}
+      </Text>
+    </div>
+  );
 }
 
 function FinancialDashboard() {
@@ -46,12 +58,13 @@ function FinancialDashboard() {
   if (isLoading) {
     return (
       <Stack>
-        <Title order={2}>Dashboard</Title>
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} height={120} radius="md" />
+        <PageTitle subtitle="Resumen de la operación." />
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} height={150} radius="lg" />
           ))}
         </SimpleGrid>
+        <Skeleton height={320} radius="lg" />
       </Stack>
     );
   }
@@ -60,7 +73,7 @@ function FinancialDashboard() {
     const forbidden = (error as Error).message === "forbidden";
     return (
       <Stack>
-        <Title order={2}>Dashboard</Title>
+        <PageTitle subtitle="Resumen de la operación." />
         <Alert
           color={forbidden ? "yellow" : "red"}
           icon={<IconAlertTriangle size={18} />}
@@ -78,20 +91,32 @@ function FinancialDashboard() {
 
   const openOrders = sumStatuses(data.service_orders_by_status, OPEN_STATUSES);
   const waitingParts = data.service_orders_by_status["waiting_parts"] ?? 0;
-  const finishedThisMonth =
-    data.service_orders_by_status["finished"] ?? 0;
+  const finishedThisMonth = data.service_orders_by_status["finished"] ?? 0;
+
+  const ordersByStatus = Object.entries(data.service_orders_by_status)
+    .filter(([, n]) => n > 0)
+    .map(([status, n]) => ({
+      estado: SO_STATUS_LABEL[status] ?? status,
+      Órdenes: n,
+    }));
+
+  const sales = Number(data.invoices.sales_this_month) || 0;
+  const pending = Number(data.invoices.pending_amount) || 0;
+  const billing = [
+    { name: "Cobrado", value: sales, color: "green.6" },
+    { name: "Pendiente", value: pending, color: "orange.5" },
+  ].filter((d) => d.value > 0);
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Dashboard</Title>
-      </Group>
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+    <Stack gap="lg">
+      <PageTitle subtitle="Resumen de la operación del mes." />
+
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
         <StatCard
           label="Órdenes abiertas"
           value={openOrders}
           icon={<IconTool size={24} />}
-          color="blue"
+          highlight
         />
         <StatCard
           label="Esperando piezas"
@@ -107,22 +132,96 @@ function FinancialDashboard() {
           color="grape"
         />
         <StatCard
+          label="Ventas del mes"
+          value={formatCurrency(data.invoices.sales_this_month)}
+          icon={<IconCash size={24} />}
+          color="green"
+        />
+      </SimpleGrid>
+
+      <Grid>
+        <Grid.Col span={{ base: 12, lg: 8 }}>
+          <Card>
+            <Text fw={600} mb="md">
+              Órdenes por estado
+            </Text>
+            {ordersByStatus.length ? (
+              <BarChart
+                h={300}
+                data={ordersByStatus}
+                dataKey="estado"
+                series={[{ name: "Órdenes", color: "green.6" }]}
+                tickLine="y"
+                gridAxis="y"
+                barProps={{ radius: 6 }}
+              />
+            ) : (
+              <Text c="dimmed" size="sm">
+                Sin órdenes registradas.
+              </Text>
+            )}
+          </Card>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, lg: 4 }}>
+          <Card h="100%">
+            <Text fw={600} mb="md">
+              Facturación del mes
+            </Text>
+            {billing.length ? (
+              <Stack align="center" gap="xs">
+                <DonutChart
+                  data={billing}
+                  h={200}
+                  thickness={26}
+                  chartLabel={formatCurrency(sales + pending)}
+                  withTooltip
+                />
+                <Group gap="lg">
+                  {billing.map((b) => (
+                    <Group key={b.name} gap={6}>
+                      <ThemeIcon size={12} radius="xl" color={b.color}>
+                        <span />
+                      </ThemeIcon>
+                      <Text size="sm" c="dimmed">
+                        {b.name}
+                      </Text>
+                    </Group>
+                  ))}
+                </Group>
+              </Stack>
+            ) : (
+              <Text c="dimmed" size="sm">
+                Sin facturación este mes.
+              </Text>
+            )}
+          </Card>
+        </Grid.Col>
+      </Grid>
+
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
+        <StatCard
           label="Piezas bajo stock"
           value={data.inventory.low_stock_count}
           icon={<IconBox size={24} />}
           color="red"
         />
         <StatCard
-          label="Ventas del mes"
-          value={formatCurrency(data.invoices.sales_this_month)}
-          icon={<IconCash size={24} />}
-          color="green"
-        />
-        <StatCard
           label="Servicios terminados"
           value={finishedThisMonth}
           icon={<IconCircleCheck size={24} />}
           color="teal"
+        />
+        <StatCard
+          label="Productos en catálogo"
+          value={data.inventory.total_products}
+          icon={<IconBox size={24} />}
+          color="blue"
+        />
+        <StatCard
+          label="Valor de inventario"
+          value={formatCurrency(data.inventory.total_stock_value)}
+          icon={<IconCash size={24} />}
+          color="green"
         />
       </SimpleGrid>
     </Stack>
@@ -143,7 +242,7 @@ const QUICK_LINKS: QuickLink[] = [
     description: "Diagnostica, reserva piezas, finaliza y entrega.",
     to: "/service-orders",
     icon: IconTool,
-    color: "blue",
+    color: "green",
   },
   {
     label: "Inventario",
@@ -170,24 +269,16 @@ const QUICK_LINKS: QuickLink[] = [
 
 function OperationalDashboard() {
   return (
-    <Stack>
-      <Title order={2}>Inicio</Title>
-      <Text c="dimmed">Accesos rápidos a tu trabajo del día.</Text>
+    <Stack gap="lg">
+      <PageTitle subtitle="Accesos rápidos a tu trabajo del día." />
       <SimpleGrid cols={{ base: 1, sm: 2 }}>
         {QUICK_LINKS.map((link) => {
           const Icon = link.icon;
           return (
-            <Card
-              key={link.to}
-              component={Link}
-              to={link.to}
-              withBorder
-              radius="md"
-              padding="lg"
-            >
+            <Card key={link.to} component={Link} to={link.to} padding="lg">
               <Group>
-                <ThemeIcon color={link.color} variant="light" size={44} radius="md">
-                  <Icon size={24} />
+                <ThemeIcon color={link.color} variant="light" size={48} radius="md">
+                  <Icon size={26} />
                 </ThemeIcon>
                 <div>
                   <Text fw={600}>{link.label}</Text>

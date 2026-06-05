@@ -2,6 +2,7 @@ import { AppShell, ScrollArea } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Outlet } from "react-router-dom";
 
+import { AppSpotlight } from "./AppSpotlight";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -10,13 +11,13 @@ export function AppLayout() {
 
   return (
     <AppShell
-      header={{ height: 56 }}
+      header={{ height: 64 }}
       navbar={{
-        width: 260,
+        width: 280,
         breakpoint: "sm",
         collapsed: { mobile: !opened },
       }}
-      padding="md"
+      padding="lg"
     >
       <AppShell.Header>
         <Topbar opened={opened} onToggle={toggle} />
@@ -24,7 +25,8 @@ export function AppLayout() {
       <AppShell.Navbar p="md" component={ScrollArea}>
         <Sidebar onNavigate={close} />
       </AppShell.Navbar>
-      <AppShell.Main>
+      <AppShell.Main bg="light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8))">
+        <AppSpotlight />
         <Outlet />
       </AppShell.Main>
     </AppShell>
