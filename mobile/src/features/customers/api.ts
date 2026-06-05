@@ -74,6 +74,19 @@ export function useSaveCustomer() {
   });
 }
 
+export function useDeleteCustomer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/customers/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo eliminar el cliente.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["customers"] }),
+  });
+}
+
 export const CUSTOMER_TYPE_LABEL: Record<string, string> = {
   person: "Persona",
   company: "Empresa",

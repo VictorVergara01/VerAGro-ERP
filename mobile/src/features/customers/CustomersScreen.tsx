@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
@@ -7,7 +7,7 @@ import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import { colors, font } from "../../theme";
 import type { MoreNav } from "../../navigation/types";
-import { CUSTOMER_TYPE_LABEL, useCustomers, type Customer } from "./api";
+import { CUSTOMER_TYPE_LABEL, useCustomers, useDeleteCustomer, type Customer } from "./api";
 import { CustomerFormModal } from "./CustomerFormModal";
 
 export function CustomersScreen() {
@@ -15,6 +15,24 @@ export function CustomersScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = useCustomers(search);
+  const del = useDeleteCustomer();
+
+  const confirmDelete = (c: Customer) =>
+    Alert.alert(
+      "Eliminar cliente",
+      `¿Eliminar "${c.name}"? Se desactivará y dejará de aparecer en la lista.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () =>
+            del.mutate(c.id, {
+              onError: (e) => Alert.alert("Error", (e as Error).message),
+            }),
+        },
+      ],
+    );
 
   return (
     <Screen padded={false}>
@@ -32,11 +50,15 @@ export function CustomersScreen() {
               value={search}
               onChangeText={setSearch}
             />
+            <Text style={styles.hint}>Mantén pulsada una fila para eliminar.</Text>
           </View>
         }
         emptyText="No hay clientes."
         renderItem={(c: Customer) => (
-          <Card onPress={() => nav.navigate("CustomerDetail", { id: c.id, title: c.name })}>
+          <Card
+            onPress={() => nav.navigate("CustomerDetail", { id: c.id, title: c.name })}
+            onLongPress={() => confirmDelete(c)}
+          >
             <View style={styles.row}>
               <Text style={styles.name}>{c.name}</Text>
               <Badge
@@ -61,4 +83,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   name: { fontSize: font.md, fontWeight: "700", color: colors.text, flexShrink: 1 },
   meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
+  hint: { fontSize: font.xs, color: colors.dimmed, marginTop: 6, fontStyle: "italic" },
 });
