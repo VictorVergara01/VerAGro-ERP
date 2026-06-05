@@ -154,8 +154,63 @@ export function FormModal({
   );
 }
 
+// ---------- LineCard (una línea de un documento, con eliminar) ----------
+export function LineCard({
+  title,
+  onRemove,
+  children,
+}: {
+  title: string;
+  onRemove: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <View style={styles.lineCard}>
+      <View style={styles.lineHeader}>
+        <Text style={styles.lineTitle}>{title}</Text>
+        <TouchableOpacity onPress={onRemove} hitSlop={8}>
+          <Ionicons name="trash-outline" size={18} color={colors.danger} />
+        </TouchableOpacity>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+// ---------- AddRowButton (botón "+ Agregar") ----------
+export function AddRowButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.addRow} onPress={onPress}>
+      <Ionicons name="add" size={18} color={colors.primary} />
+      <Text style={styles.addRowText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   label: { fontSize: font.sm, fontWeight: "600", color: colors.text },
+  lineCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  lineHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  lineTitle: { fontSize: font.sm, fontWeight: "700", color: colors.dimmed },
+  addRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+  },
+  addRowText: { color: colors.primary, fontWeight: "600", fontSize: font.sm },
   segment: {
     flexDirection: "row",
     backgroundColor: colors.bg,
