@@ -69,32 +69,6 @@ def test_doc_example_proportional_costing(supplier):
 
 
 @pytest.mark.django_db
-def test_margin_and_manual_final_price(supplier):
-    order = PurchaseOrder.objects.create(supplier=supplier)
-    p = _product("M1")
-    line = PurchaseOrderLine.objects.create(
-        purchase_order=order,
-        product=p,
-        quantity_ordered=1,
-        unit_purchase_cost=100,
-        margin_percentage=50,
-    )
-    recalculate_costs(order)
-    line.refresh_from_db()
-    assert line.landed_unit_cost == Decimal("100.0000")
-    assert line.calculated_sale_price == Decimal("150.00")
-    # final_sale_price arranca igual al calculado cuando no se fijó.
-    assert line.final_sale_price == Decimal("150.00")
-
-    # Un precio final manual se respeta en recálculos posteriores.
-    line.final_sale_price = Decimal("175.00")
-    line.save(update_fields=["final_sale_price"])
-    recalculate_costs(order)
-    line.refresh_from_db()
-    assert line.final_sale_price == Decimal("175.00")
-
-
-@pytest.mark.django_db
 def test_zero_subtotal_no_division_error(supplier):
     order = PurchaseOrder.objects.create(supplier=supplier, shipping_cost=Decimal("50"))
     p = _product("Z1")
@@ -112,13 +86,13 @@ def test_receive_full_updates_inventory_and_status(supplier):
     order = PurchaseOrder.objects.create(
         supplier=supplier, status=PurchaseOrder.Status.SENT
     )
-    p = _product("R1", stock_quantity=Decimal("0"))
+    # El margen ahora vive en inventario (producto/categoría), no en la línea de OC.
+    p = _product("R1", stock_quantity=Decimal("0"), default_margin_percentage=Decimal("25"))
     line = PurchaseOrderLine.objects.create(
         purchase_order=order,
         product=p,
         quantity_ordered=10,
         unit_purchase_cost=20,
-        margin_percentage=25,
     )
     receive_lines(
         purchase_order=order, receipts=[{"line": line.id, "quantity": 10}]
@@ -131,7 +105,7 @@ def test_receive_full_updates_inventory_and_status(supplier):
     assert line.quantity_received == Decimal("10.00")
     assert p.stock_quantity == Decimal("10.00")
     assert p.last_purchase_cost == Decimal("20.00")
-    assert p.sale_price == Decimal("25.00")  # 20 * 1.25
+    assert p.sale_price == Decimal("25.00")  # 20 * 1.25 (margen del producto)
     mov = InventoryMovement.objects.get(product=p)
     assert mov.movement_type == InventoryMovement.MovementType.PURCHASE_IN
     assert mov.quantity == Decimal("10.00")

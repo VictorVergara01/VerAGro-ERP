@@ -4,6 +4,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.inventory.models import InventoryMovement, Product
+from apps.inventory.services import effective_margin
 from apps.suppliers.models import SupplierProduct
 
 from .models import PurchaseOrder
@@ -22,7 +23,8 @@ def recalculate_costs(purchase_order):
     Distribuye envío + costos adicionales proporcionalmente al valor de cada
     línea, calcula el costo unitario real (landed) y el precio de venta sugerido.
     El residuo de redondeo se asigna a la última línea para que la suma de los
-    costos asignados sea exacta. Respeta ``final_sale_price`` si ya fue fijado.
+    costos asignados sea exacta. El margen/precio de venta ya no se calcula aquí:
+    el precio vive en inventario (margen por producto/categoría) y se fija al recibir.
     """
     lines = list(purchase_order.lines.all())
     additional_costs = list(purchase_order.additional_costs.all())
@@ -55,18 +57,11 @@ def recalculate_costs(purchase_order):
         else:
             line.landed_unit_cost = Decimal("0.0000")
 
-        margin_factor = Decimal("1") + (line.margin_percentage / Decimal("100"))
-        line.calculated_sale_price = _q(line.landed_unit_cost * margin_factor)
-        if line.final_sale_price == 0:
-            line.final_sale_price = line.calculated_sale_price
-
         line.save(
             update_fields=[
                 "line_subtotal",
                 "allocated_extra_cost",
                 "landed_unit_cost",
-                "calculated_sale_price",
-                "final_sale_price",
                 "updated_at",
             ]
         )
@@ -143,13 +138,19 @@ def receive_lines(*, purchase_order, receipts, user=None):
             )
         product.stock_quantity = new_stock
         product.last_purchase_cost = _q(cost)
-        product.sale_price = line.final_sale_price
+        # Precio de venta: margen vive en inventario (producto o categoría).
+        margin = effective_margin(product)
+        product.sale_price = _q(cost * (Decimal("1") + margin / Decimal("100")))
+        # Primera compra del producto: el proveedor de la orden queda como principal.
+        if product.main_supplier_id is None:
+            product.main_supplier_id = purchase_order.supplier_id
         product.save(
             update_fields=[
                 "stock_quantity",
                 "average_cost",
                 "last_purchase_cost",
                 "sale_price",
+                "main_supplier",
                 "updated_at",
             ]
         )
@@ -165,10 +166,12 @@ def receive_lines(*, purchase_order, receipts, user=None):
             created_by=user,
         )
 
-        # Cierra el lazo con Proveedores: actualiza el último costo conocido.
-        SupplierProduct.objects.filter(
-            supplier=purchase_order.supplier_id, product=line.product_id
-        ).update(last_cost=line.unit_purchase_cost)
+        # Cierra el lazo con Proveedores: crea o actualiza la relación con su costo.
+        SupplierProduct.objects.update_or_create(
+            supplier_id=purchase_order.supplier_id,
+            product_id=line.product_id,
+            defaults={"last_cost": line.unit_purchase_cost},
+        )
 
         line.quantity_received += quantity
         line.save(update_fields=["quantity_received", "updated_at"])

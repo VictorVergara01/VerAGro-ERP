@@ -64,11 +64,6 @@ class PurchaseOrderLine(TimeStampedModel):
     )
     # 4 decimales: el costo unitario real puede tener fracciones por la distribución.
     landed_unit_cost = models.DecimalField(max_digits=14, decimal_places=4, default=0)
-    margin_percentage = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    calculated_sale_price = models.DecimalField(
-        max_digits=14, decimal_places=2, default=0
-    )
-    final_sale_price = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
     class Meta:
         ordering = ("id",)

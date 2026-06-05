@@ -41,9 +41,6 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
             "line_subtotal",
             "allocated_extra_cost",
             "landed_unit_cost",
-            "margin_percentage",
-            "calculated_sale_price",
-            "final_sale_price",
             "created_at",
             "updated_at",
         )
@@ -53,11 +50,13 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
             "line_subtotal",
             "allocated_extra_cost",
             "landed_unit_cost",
-            "calculated_sale_price",
             "created_at",
             "updated_at",
         )
-        extra_kwargs = {"purchase_order": {"required": False}}
+        extra_kwargs = {
+            "purchase_order": {"required": False},
+            "product": {"required": False, "allow_null": True},
+        }
 
     def validate_quantity_ordered(self, value):
         if value <= 0:
@@ -68,12 +67,6 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
         if value < 0:
             raise serializers.ValidationError("No puede ser negativo.")
         return value
-
-    def validate(self, attrs):
-        # Margen por defecto desde el producto si no se envía explícitamente.
-        if "margin_percentage" not in attrs and attrs.get("product") is not None:
-            attrs["margin_percentage"] = attrs["product"].default_margin_percentage
-        return attrs
 
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):

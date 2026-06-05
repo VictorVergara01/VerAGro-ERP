@@ -10,7 +10,6 @@ class PurchaseOrderLineInline(admin.TabularInline):
         "line_subtotal",
         "allocated_extra_cost",
         "landed_unit_cost",
-        "calculated_sale_price",
         "quantity_received",
     )
 
