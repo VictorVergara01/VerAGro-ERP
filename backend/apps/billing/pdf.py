@@ -91,13 +91,17 @@ def _logo_flowable(company):
         return Paragraph(company.name, _styles()["company_name"])
     try:
         # Reducir el logo antes de incrustarlo mantiene el PDF liviano
-        # (los originales pueden ser de >1000px y pesar >1 MB).
+        # (los originales pueden ser de >1000px). Se compone sobre blanco
+        # usando el canal alfa: así un PNG transparente no queda con fondo
+        # negro (los píxeles transparentes suelen guardarse como (0,0,0,0)).
         from PIL import Image as PILImage
 
-        pil = PILImage.open(path)
+        pil = PILImage.open(path).convert("RGBA")
         pil.thumbnail((500, 500))
+        canvas = PILImage.new("RGBA", pil.size, (255, 255, 255, 255))
+        canvas.alpha_composite(pil)
         bio = BytesIO()
-        pil.convert("RGB").save(bio, format="PNG")
+        canvas.convert("RGB").save(bio, format="PNG")
         bio.seek(0)
         img = Image(bio)
     except Exception:

@@ -40,7 +40,7 @@ export function LoginPage() {
   };
 
   return (
-    <Center mih="100vh" bg="gray.0">
+    <Center mih="100vh" bg="var(--mantine-color-body)">
       <Paper withBorder shadow="md" p="xl" radius="md" w={380}>
         <Stack>
           <Stack align="center" gap={4}>
