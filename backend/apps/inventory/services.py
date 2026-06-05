@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
@@ -9,6 +9,40 @@ ADJUSTMENT_TYPES = {
     InventoryMovement.MovementType.ADJUSTMENT_IN,
     InventoryMovement.MovementType.ADJUSTMENT_OUT,
 }
+
+_CENT = Decimal("0.01")
+
+
+def _q(value):
+    return Decimal(value).quantize(_CENT, rounding=ROUND_HALF_UP)
+
+
+def effective_margin(product):
+    """Margen efectivo: el del producto si > 0; si no, el de su categoría; si ninguno, 0."""
+    if product.default_margin_percentage and product.default_margin_percentage > 0:
+        return product.default_margin_percentage
+    category = product.category
+    if (
+        category
+        and category.default_margin_percentage
+        and category.default_margin_percentage > 0
+    ):
+        return category.default_margin_percentage
+    return Decimal("0")
+
+
+def apply_margin(product):
+    """Recalcula sale_price = average_cost * (1 + margen efectivo / 100) y guarda."""
+    margin = effective_margin(product)
+    product.sale_price = _q(product.average_cost * (Decimal("1") + margin / Decimal("100")))
+    product.save(update_fields=["sale_price", "updated_at"])
+    return product
+
+
+def apply_category_margin(category):
+    """Recalcula el precio de los productos de la categoría que NO tienen margen propio."""
+    for product in category.products.filter(default_margin_percentage=0):
+        apply_margin(product)
 
 
 @transaction.atomic

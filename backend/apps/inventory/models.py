@@ -6,6 +6,9 @@ from apps.core.models import TimeStampedModel
 class ProductCategory(TimeStampedModel):
     name = models.CharField(max_length=100, unique=True)
     is_active = models.BooleanField(default=True)
+    default_margin_percentage = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
 
     class Meta:
         ordering = ("name",)

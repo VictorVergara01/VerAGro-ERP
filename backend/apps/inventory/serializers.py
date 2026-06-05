@@ -7,8 +7,17 @@ from .services import apply_adjustment
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = ("id", "name", "is_active")
+        fields = ("id", "name", "is_active", "default_margin_percentage")
         read_only_fields = ("id",)
+
+    def update(self, instance, validated_data):
+        old = instance.default_margin_percentage
+        category = super().update(instance, validated_data)
+        if category.default_margin_percentage != old:
+            from .services import apply_category_margin
+
+            apply_category_margin(category)
+        return category
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -26,6 +35,15 @@ class ProductSerializer(serializers.ModelSerializer):
             "stock_quantity",
             "reserved_quantity",
         )
+
+    def update(self, instance, validated_data):
+        old = instance.default_margin_percentage
+        product = super().update(instance, validated_data)
+        if product.default_margin_percentage != old:
+            from .services import apply_margin
+
+            apply_margin(product)
+        return product
 
 
 class InventoryMovementSerializer(serializers.ModelSerializer):
