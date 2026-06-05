@@ -47,6 +47,19 @@ export function useSupplier(id: number | undefined) {
   });
 }
 
+export function useDeleteSupplier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/suppliers/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo eliminar el proveedor.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["suppliers"] }),
+  });
+}
+
 export function useSaveSupplier() {
   const qc = useQueryClient();
   return useMutation({
