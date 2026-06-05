@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { FlatList, RefreshControl } from "react-native";
 
-import { colors, spacing } from "../../theme";
+import { spacing, useTheme } from "../../theme";
 import { EmptyState, ErrorState, Loading } from "./index";
 
 /** Lista estándar: maneja loading/error/empty/refresh y renderiza tarjetas. */
@@ -28,6 +28,7 @@ export function ListView<T>({
   emptyText?: string;
   errorText?: string;
 }) {
+  const { colors } = useTheme();
   if (loading) return <Loading />;
   if (error) return <ErrorState text={errorText} />;
   return (

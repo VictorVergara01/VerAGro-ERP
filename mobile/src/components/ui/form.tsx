@@ -10,7 +10,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { colors, font, radius, spacing } from "../../theme";
+import {
+  font,
+  radius,
+  spacing,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 
 // ---------- Segmented (selección entre pocas opciones) ----------
 export function Segmented<T extends string>({
@@ -24,6 +31,7 @@ export function Segmented<T extends string>({
   options: { value: T; label: string }[];
   onChange: (v: T) => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={{ gap: 4 }}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
@@ -63,6 +71,8 @@ export function Picker<T extends string | number>({
   placeholder?: string;
   clearable?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
   return (
@@ -132,6 +142,8 @@ export function FormModal({
   submitLabel?: string;
   children: ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.formHeader}>
@@ -164,6 +176,8 @@ export function LineCard({
   onRemove: () => void;
   children: ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.lineCard}>
       <View style={styles.lineHeader}>
@@ -179,6 +193,8 @@ export function LineCard({
 
 // ---------- AddRowButton (botón "+ Agregar") ----------
 export function AddRowButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <TouchableOpacity style={styles.addRow} onPress={onPress}>
       <Ionicons name="add" size={18} color={colors.primary} />
@@ -187,77 +203,78 @@ export function AddRowButton({ label, onPress }: { label: string; onPress: () =>
   );
 }
 
-const styles = StyleSheet.create({
-  label: { fontSize: font.sm, fontWeight: "600", color: colors.text },
-  lineCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  lineHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  lineTitle: { fontSize: font.sm, fontWeight: "700", color: colors.dimmed },
-  addRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: 10,
-  },
-  addRowText: { color: colors.primary, fontWeight: "600", fontSize: font.sm },
-  segment: {
-    flexDirection: "row",
-    backgroundColor: colors.bg,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 3,
-  },
-  segmentItem: { flex: 1, paddingVertical: 8, borderRadius: radius.sm, alignItems: "center" },
-  segmentActive: { backgroundColor: colors.primary },
-  segmentText: { fontSize: font.sm, fontWeight: "600", color: colors.dimmed },
-  segmentTextActive: { color: "#fff" },
-  pickerBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-  },
-  pickerText: { fontSize: font.md, color: colors.text, flexShrink: 1 },
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: spacing.xl },
-  sheet: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
-  sheetTitle: { fontSize: font.md, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  optionText: { fontSize: font.md, color: colors.text },
-  formHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.headerBg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  formTitle: { fontSize: font.lg, fontWeight: "700", color: colors.text },
-  save: { fontSize: font.md, fontWeight: "700", color: colors.primary },
-  formBody: { padding: spacing.lg, gap: spacing.md, paddingBottom: 48 },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    label: { fontSize: font.sm, fontWeight: "600", color: colors.text },
+    segment: {
+      flexDirection: "row",
+      backgroundColor: colors.bg,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 3,
+    },
+    segmentItem: { flex: 1, paddingVertical: 8, borderRadius: radius.sm, alignItems: "center" },
+    segmentActive: { backgroundColor: colors.primary },
+    segmentText: { fontSize: font.sm, fontWeight: "600", color: colors.dimmed },
+    segmentTextActive: { color: "#fff" },
+    pickerBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
+    },
+    pickerText: { fontSize: font.md, color: colors.text, flexShrink: 1 },
+    backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: spacing.xl },
+    sheet: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
+    sheetTitle: { fontSize: font.md, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
+    option: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    optionText: { fontSize: font.md, color: colors.text },
+    formHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      backgroundColor: colors.headerBg,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    formTitle: { fontSize: font.lg, fontWeight: "700", color: colors.text },
+    save: { fontSize: font.md, fontWeight: "700", color: colors.primary },
+    formBody: { padding: spacing.lg, gap: spacing.md, paddingBottom: 48 },
+    lineCard: {
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.md,
+      gap: spacing.sm,
+    },
+    lineHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    lineTitle: { fontSize: font.sm, fontWeight: "700", color: colors.dimmed },
+    addRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.primary,
+      borderRadius: radius.md,
+      paddingVertical: 10,
+    },
+    addRowText: { color: colors.primary, fontWeight: "600", fontSize: font.sm },
+  });

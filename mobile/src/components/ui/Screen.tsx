@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { colors, spacing } from "../../theme";
+import { spacing, useTheme, useThemedStyles, type ThemeColors } from "../../theme";
 
 /** Contenedor base de pantalla: fondo gris y padding consistente.
  * `scroll` envuelve el contenido en un ScrollView (con pull-to-refresh opcional). */
@@ -26,6 +26,8 @@ export function Screen({
   padded?: boolean;
   style?: ViewStyle;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   if (scroll) {
     return (
       <ScrollView
@@ -44,7 +46,8 @@ export function Screen({
   return <View style={[styles.bg, padded && styles.padded, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: colors.bg },
-  padded: { padding: spacing.lg, gap: spacing.md },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    bg: { flex: 1, backgroundColor: colors.bg },
+    padded: { padding: spacing.lg, gap: spacing.md },
+  });
