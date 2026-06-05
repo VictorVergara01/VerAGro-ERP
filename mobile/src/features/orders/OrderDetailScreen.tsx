@@ -12,6 +12,7 @@ import {
 
 import { colors, statusColors, statusLabels } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { useAuth } from "../auth/useAuth";
 import type { AppNav, OrderDetailRoute } from "../../navigation/types";
 import { AddPartModal } from "./AddPartModal";
 import {
@@ -110,6 +111,8 @@ export function OrderDetailScreen() {
   const deletePart = useDeletePart(id);
   const generate = useGenerateDoc(id);
   const cancelOrder = useCancelOrder(id);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [addVisible, setAddVisible] = useState(false);
 
   if (isLoading) {
@@ -169,6 +172,23 @@ export function OrderDetailScreen() {
       },
     ]);
   };
+
+  const deliverWithoutCharge = () =>
+    Alert.alert(
+      "Entregar sin cobro",
+      "La orden se marcará como entregada sin factura pagada. ¿Continuar?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Entregar",
+          style: "destructive",
+          onPress: () =>
+            action.mutate("deliver", {
+              onError: (e) => Alert.alert("Error", (e as Error).message),
+            }),
+        },
+      ],
+    );
 
   const doGenerate = (kind: "quote" | "invoice") =>
     generate.mutate(kind, {
@@ -310,6 +330,14 @@ export function OrderDetailScreen() {
           ) : (
             <Text style={styles.actionText}>{next.label}</Text>
           )}
+        </TouchableOpacity>
+      ) : status === "finished" && isAdmin ? (
+        <TouchableOpacity
+          style={styles.docBtn}
+          onPress={deliverWithoutCharge}
+          disabled={action.isPending}
+        >
+          <Text style={styles.docText}>Entregar sin cobro</Text>
         </TouchableOpacity>
       ) : (
         <Text style={styles.dimmedCenter}>
