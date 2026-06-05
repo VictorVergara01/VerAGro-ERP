@@ -24,13 +24,6 @@ from .services import (
 BillingWrite = RoleWriteOrReadOnly("admin", "sales")
 
 
-def _pdf_stub():
-    return Response(
-        {"detail": "Pendiente: generación de PDF."},
-        status=http_status.HTTP_501_NOT_IMPLEMENTED,
-    )
-
-
 def _int_param(params, key):
     value = params.get(key)
     if not value:
@@ -100,8 +93,11 @@ class QuoteViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
-        self.get_object()
-        return _pdf_stub()
+        from .pdf import render_quote_pdf
+
+        quote = self.get_object()
+        download = request.query_params.get("download") in ("1", "true", "yes")
+        return render_quote_pdf(quote, download=download)
 
 
 class QuoteLineViewSet(viewsets.ModelViewSet):

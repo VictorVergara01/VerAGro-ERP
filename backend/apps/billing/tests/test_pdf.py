@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from apps.billing.models import Invoice, InvoiceLine
+from apps.billing.models import Invoice, InvoiceLine, Quote, QuoteLine
 from apps.customers.models import Customer
 
 User = get_user_model()
@@ -55,6 +55,45 @@ def test_invoice_pdf_download_disposition(invoice):
 @pytest.mark.django_db
 def test_invoice_pdf_requires_auth(invoice):
     resp = APIClient().get(f"/api/invoices/{invoice.id}/pdf/")
+    assert resp.status_code == 401
+
+
+@pytest.fixture
+def quote(db):
+    customer = Customer.objects.create(name="Cliente COT", phone="61234567")
+    q = Quote.objects.create(customer=customer, status=Quote.Status.SENT)
+    QuoteLine.objects.create(
+        quote=q, description="Servicio", quantity=1, unit_price=Decimal("120")
+    )
+    from apps.billing.services import recalculate_quote
+
+    recalculate_quote(q)
+    return q
+
+
+@pytest.mark.django_db
+def test_quote_pdf_returns_pdf(quote):
+    client = _client("sales")
+    resp = client.get(f"/api/quotes/{quote.id}/pdf/")
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "application/pdf"
+    assert resp["Content-Disposition"].startswith("inline")
+    assert quote.quote_number in resp["Content-Disposition"]
+    content = b"".join(resp.streaming_content) if resp.streaming else resp.content
+    assert content[:4] == b"%PDF"
+
+
+@pytest.mark.django_db
+def test_quote_pdf_download_disposition(quote):
+    client = _client("sales")
+    resp = client.get(f"/api/quotes/{quote.id}/pdf/?download=1")
+    assert resp.status_code == 200
+    assert resp["Content-Disposition"].startswith("attachment")
+
+
+@pytest.mark.django_db
+def test_quote_pdf_requires_auth(quote):
+    resp = APIClient().get(f"/api/quotes/{quote.id}/pdf/")
     assert resp.status_code == 401
 
 

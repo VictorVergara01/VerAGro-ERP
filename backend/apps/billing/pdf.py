@@ -378,3 +378,155 @@ def render_invoice_pdf(invoice, *, download=False):
         f'{disposition}; filename="{invoice.invoice_number}.pdf"'
     )
     return response
+
+
+# ---------------------------------------------------------------------------
+# Cotización: mismo estilo que la factura, sin pagos ni saldo.
+# ---------------------------------------------------------------------------
+def _quote_header(quote, company, st):
+    right = [
+        Paragraph("COTIZACIÓN", st["invoice_title"]),
+        Paragraph("Cotización", st["doc_type"]),
+        Spacer(1, 4),
+        Paragraph(quote.quote_number, st["number"]),
+    ]
+    table = Table([[_logo_flowable(company), right]], colWidths=[9 * cm, 9 * cm])
+    table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (0, 0), "MIDDLE"),
+        ("VALIGN", (1, 0), (1, 0), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    return table
+
+
+def _quote_summary(quote, st):
+    vence = f"{quote.expiration_date:%d/%m/%Y}" if quote.expiration_date else "—"
+    emision = f"{quote.issue_date:%d/%m/%Y}"
+    labels = ["TOTAL", "VENCE", "COTIZACIÓN #", "EMISIÓN"]
+    values = [_money(quote.total), vence, quote.quote_number, emision]
+    rows = [
+        [Paragraph(l, st["label"]) for l in labels],
+        [Paragraph(f"<b>{v}</b>", st["value"]) for v in values],
+    ]
+    table = Table(rows, colWidths=[CONTENT_W / 4] * 4)
+    table.setStyle(TableStyle([
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, 0), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("TOPPADDING", (0, 1), (-1, 1), 0),
+    ]))
+    return table
+
+
+def _quote_bill_to(quote, st):
+    c = quote.customer
+    left = [Paragraph("COTIZAR A", st["label"]), Spacer(1, 2),
+            Paragraph(f"<b>{c.name}</b>", st["value"])]
+    if getattr(c, "identification_number", ""):
+        left.append(Paragraph(c.identification_number, st["small"]))
+    contact = " · ".join(x for x in (c.phone, c.email) if x)
+    if contact:
+        left.append(Paragraph(contact, st["small"]))
+
+    right = []
+    if quote.service_order_id:
+        right = [
+            Paragraph("ORDEN DE SERVICIO", st["label"]), Spacer(1, 2),
+            Paragraph(quote.service_order.service_order_number, st["value"]),
+        ]
+    table = Table([[left, right]], colWidths=[10.5 * cm, 7.5 * cm])
+    table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    return table
+
+
+def _quote_bottom(quote, company, st):
+    left = []
+    if quote.terms:
+        left.append(Paragraph("TÉRMINOS", st["label"]))
+        left.append(Spacer(1, 2))
+        left.append(Paragraph(quote.terms.replace("\n", "<br/>"), st["small"]))
+    if quote.notes:
+        left.append(Spacer(1, 8))
+        left.append(Paragraph("NOTAS", st["label"]))
+        left.append(Spacer(1, 2))
+        left.append(Paragraph(quote.notes.replace("\n", "<br/>"), st["small"]))
+
+    totals = [["Subtotal", _money(quote.subtotal)]]
+    if quote.discount_amount:
+        totals.append([
+            f"Descuento ({quote.discount_percentage:.2f}%)",
+            "−" + _money(quote.discount_amount),
+        ])
+    if quote.tax_amount:
+        totals.append([
+            f"Impuesto ({quote.tax_percentage:.2f}%)",
+            _money(quote.tax_amount),
+        ])
+    totals.append(["Total", _money(quote.total)])
+    total_row = len(totals) - 1
+
+    box = Table(totals, colWidths=[4.2 * cm, 3.3 * cm])
+    box.setStyle(TableStyle([
+        ("FONTSIZE", (0, 0), (-1, -1), 9.5),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("TEXTCOLOR", (0, 0), (0, -1), GREY),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LINEABOVE", (0, total_row), (-1, total_row), 1.2, BRAND),
+        ("FONTNAME", (0, total_row), (-1, total_row), "Helvetica-Bold"),
+        ("TEXTCOLOR", (0, total_row), (-1, total_row), INK),
+        ("FONTSIZE", (0, total_row), (-1, total_row), 12),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+
+    outer = Table([[left, box]], colWidths=[10.5 * cm, 7.5 * cm])
+    outer.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    return outer
+
+
+def build_quote_pdf_bytes(quote):
+    company = CompanyProfile.load()
+    st = _styles()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=1.5 * cm, rightMargin=1.5 * cm,
+        topMargin=1.4 * cm, bottomMargin=1.4 * cm,
+        title=quote.quote_number,
+    )
+    story = [
+        _quote_header(quote, company, st),
+        Spacer(1, 10),
+        _company_contact(company, st),
+        _rule(space_before=12, space_after=12),
+        _quote_summary(quote, st),
+        _rule(space_before=12, space_after=12),
+        _quote_bill_to(quote, st),
+        Spacer(1, 14),
+        _items(quote, st),
+        Spacer(1, 14),
+        _quote_bottom(quote, company, st),
+    ]
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def render_quote_pdf(quote, *, download=False):
+    """HttpResponse con el PDF de la cotización. download=True → adjunto."""
+    pdf = build_quote_pdf_bytes(quote)
+    disposition = "attachment" if download else "inline"
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'{disposition}; filename="{quote.quote_number}.pdf"'
+    )
+    return response
