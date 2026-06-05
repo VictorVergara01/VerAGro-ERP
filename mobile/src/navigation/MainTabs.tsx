@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { colors } from "../theme";
+import { useTheme, type ThemeColors } from "../theme";
 import { DashboardScreen } from "../features/dashboard/DashboardScreen";
 import { MyOrdersScreen } from "../features/orders/MyOrdersScreen";
 import { OrderDetailScreen } from "../features/orders/OrderDetailScreen";
@@ -32,18 +32,19 @@ import type {
   RootTabParamList,
 } from "./types";
 
-const stackOptions = {
+const makeStackOptions = (colors: ThemeColors) => ({
   headerStyle: { backgroundColor: colors.headerBg },
   headerTintColor: colors.text,
   headerTitleStyle: { fontWeight: "700" as const },
   headerShadowVisible: false,
   contentStyle: { backgroundColor: colors.bg },
-};
+});
 
 const DashboardStack = createNativeStackNavigator<DashboardStackParamList>();
 function DashboardNavigator() {
+  const { colors } = useTheme();
   return (
-    <DashboardStack.Navigator screenOptions={stackOptions}>
+    <DashboardStack.Navigator screenOptions={makeStackOptions(colors)}>
       <DashboardStack.Screen
         name="Dashboard"
         component={DashboardScreen}
@@ -55,8 +56,9 @@ function DashboardNavigator() {
 
 const OrdersStack = createNativeStackNavigator<OrdersStackParamList>();
 function OrdersNavigator() {
+  const { colors } = useTheme();
   return (
-    <OrdersStack.Navigator screenOptions={stackOptions}>
+    <OrdersStack.Navigator screenOptions={makeStackOptions(colors)}>
       <OrdersStack.Screen
         name="OrdersList"
         component={MyOrdersScreen}
@@ -83,8 +85,9 @@ function OrdersNavigator() {
 
 const InventoryStack = createNativeStackNavigator<InventoryStackParamList>();
 function InventoryNavigator() {
+  const { colors } = useTheme();
   return (
-    <InventoryStack.Navigator screenOptions={stackOptions}>
+    <InventoryStack.Navigator screenOptions={makeStackOptions(colors)}>
       <InventoryStack.Screen
         name="InventoryList"
         component={InventorySearchScreen}
@@ -96,8 +99,9 @@ function InventoryNavigator() {
 
 const MoreStack = createNativeStackNavigator<MoreStackParamList>();
 function MoreNavigator() {
+  const { colors } = useTheme();
   return (
-    <MoreStack.Navigator screenOptions={stackOptions}>
+    <MoreStack.Navigator screenOptions={makeStackOptions(colors)}>
       <MoreStack.Screen name="Menu" component={MenuScreen} options={{ title: "Más" }} />
       <MoreStack.Screen name="Customers" component={CustomersScreen} options={{ title: "Clientes" }} />
       <MoreStack.Screen
@@ -144,6 +148,7 @@ function MoreNavigator() {
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export function MainTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{

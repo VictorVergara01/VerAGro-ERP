@@ -5,12 +5,13 @@ import { useAuth } from "../features/auth/useAuth";
 import { LoginScreen } from "../features/auth/LoginScreen";
 import { MainTabs } from "./MainTabs";
 import type { AuthStackParamList } from "./types";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export function RootNavigator() {
   const { status } = useAuth();
+  const { colors } = useTheme();
 
   if (status === "loading") {
     return (
