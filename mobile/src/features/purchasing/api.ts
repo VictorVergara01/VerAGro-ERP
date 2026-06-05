@@ -37,6 +37,41 @@ export function usePurchaseOrder(id: number | undefined) {
   });
 }
 
+export interface POLineInput {
+  product: number | null;
+  quantity_ordered: string;
+  unit_purchase_cost: string;
+  margin_percentage: string;
+}
+export interface POCostInput {
+  name: string;
+  amount: string;
+}
+export interface PurchaseOrderInput {
+  supplier: number;
+  order_date?: string;
+  expected_date?: string | null;
+  currency: string;
+  shipping_cost: string;
+  notes: string;
+  lines: POLineInput[];
+  additional_costs: POCostInput[];
+}
+
+export function useCreatePurchaseOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: PurchaseOrderInput) => {
+      const { data, error } = await api.POST("/api/purchase-orders/", {
+        body: input as unknown as PurchaseOrder,
+      });
+      if (error || !data) throw new Error("No se pudo crear la orden de compra.");
+      return data as PurchaseOrder;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["purchase-orders"] }),
+  });
+}
+
 export function usePOAction(id: number | undefined) {
   const qc = useQueryClient();
   return useMutation({

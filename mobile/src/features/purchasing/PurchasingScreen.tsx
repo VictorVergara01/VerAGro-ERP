@@ -3,15 +3,17 @@ import { StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
-import { Badge, Card, SearchBar } from "../../components/ui";
+import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import { colors, font, poStatusColors, poStatusLabels } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreNav } from "../../navigation/types";
 import { usePurchaseOrders, type PurchaseOrder } from "./api";
+import { PurchaseOrderFormModal } from "./PurchaseOrderFormModal";
 
 export function PurchasingScreen() {
   const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = usePurchaseOrders(search);
 
@@ -48,6 +50,8 @@ export function PurchasingScreen() {
           );
         }}
       />
+      <FAB onPress={() => setFormOpen(true)} />
+      <PurchaseOrderFormModal visible={formOpen} onClose={() => setFormOpen(false)} />
     </Screen>
   );
 }
