@@ -1,19 +1,49 @@
-export const colors = {
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import * as SecureStore from "expo-secure-store";
+
+const accent = {
   primary: "#2f9e44",
   primaryDark: "#1d7531",
   primarySoft: "#e7f8ee",
-  bg: "#f1f3f5",
-  card: "#ffffff",
-  text: "#1a1b1e",
-  dimmed: "#868e96",
-  border: "#e9ecef",
-  headerBg: "#f8f9fa",
   danger: "#e03131",
   warning: "#f08c00",
   info: "#1971c2",
   grape: "#9c36b5",
   teal: "#0ca678",
 };
+
+export const lightColors = {
+  ...accent,
+  bg: "#f1f3f5",
+  card: "#ffffff",
+  text: "#1a1b1e",
+  dimmed: "#868e96",
+  border: "#e9ecef",
+  headerBg: "#f8f9fa",
+};
+
+export const darkColors = {
+  ...accent,
+  bg: "#121417",
+  card: "#1e2126",
+  text: "#e9ecef",
+  dimmed: "#909296",
+  border: "#2c2e33",
+  headerBg: "#1a1c20",
+};
+
+export type ThemeColors = typeof lightColors;
+
+/** Back-compat: usos a nivel de módulo (mapas de estado, equipment/api.ts). */
+export const colors = lightColors;
 
 export const spacing = {
   xs: 4,
@@ -130,3 +160,52 @@ export const serviceTypeLabels: Record<string, string> = {
   calibration: "Calibración",
   other: "Otro",
 };
+
+// ---------- Tema (claro/oscuro) ----------
+export type Scheme = "light" | "dark";
+const THEME_KEY = "veragro.theme";
+
+interface ThemeValue {
+  colors: ThemeColors;
+  scheme: Scheme;
+  toggle: () => void;
+}
+
+const ThemeContext = createContext<ThemeValue | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [scheme, setScheme] = useState<Scheme>("light");
+
+  useEffect(() => {
+    void (async () => {
+      const saved = await SecureStore.getItemAsync(THEME_KEY);
+      if (saved === "dark" || saved === "light") setScheme(saved);
+    })();
+  }, []);
+
+  const toggle = useCallback(() => {
+    setScheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      void SecureStore.setItemAsync(THEME_KEY, next);
+      return next;
+    });
+  }, []);
+
+  const value = useMemo<ThemeValue>(
+    () => ({ colors: scheme === "dark" ? darkColors : lightColors, scheme, toggle }),
+    [scheme, toggle],
+  );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+export function useTheme(): ThemeValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme debe usarse dentro de <ThemeProvider>.");
+  return ctx;
+}
+
+export function useThemedStyles<T>(factory: (c: ThemeColors) => T): T {
+  const { colors } = useTheme();
+  return useMemo(() => factory(colors), [colors, factory]);
+}
