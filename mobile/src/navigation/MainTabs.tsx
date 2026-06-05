@@ -10,6 +10,19 @@ import { ChecklistScreen } from "../features/checklists/ChecklistScreen";
 import { PhotosScreen } from "../features/orders/PhotosScreen";
 import { InventorySearchScreen } from "../features/inventory/InventorySearchScreen";
 import { MenuScreen } from "../features/menu/MenuScreen";
+import { CustomersScreen } from "../features/customers/CustomersScreen";
+import { CustomerDetailScreen } from "../features/customers/CustomerDetailScreen";
+import { EquipmentScreen } from "../features/equipment/EquipmentScreen";
+import { EquipmentDetailScreen } from "../features/equipment/EquipmentDetailScreen";
+import { SuppliersScreen } from "../features/suppliers/SuppliersScreen";
+import { SupplierDetailScreen } from "../features/suppliers/SupplierDetailScreen";
+import { PurchasingScreen } from "../features/purchasing/PurchasingScreen";
+import { PurchaseOrderDetailScreen } from "../features/purchasing/PurchaseOrderDetailScreen";
+import { QuotesScreen } from "../features/billing/QuotesScreen";
+import { QuoteDetailScreen } from "../features/billing/QuoteDetailScreen";
+import { InvoicesScreen } from "../features/billing/InvoicesScreen";
+import { InvoiceDetailScreen } from "../features/billing/InvoiceDetailScreen";
+import { ReportsScreen } from "../features/reports/ReportsScreen";
 import type {
   DashboardStackParamList,
   InventoryStackParamList,
@@ -85,6 +98,43 @@ function MoreNavigator() {
   return (
     <MoreStack.Navigator screenOptions={stackOptions}>
       <MoreStack.Screen name="Menu" component={MenuScreen} options={{ title: "Más" }} />
+      <MoreStack.Screen name="Customers" component={CustomersScreen} options={{ title: "Clientes" }} />
+      <MoreStack.Screen
+        name="CustomerDetail"
+        component={CustomerDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <MoreStack.Screen name="Equipment" component={EquipmentScreen} options={{ title: "Equipos" }} />
+      <MoreStack.Screen
+        name="EquipmentDetail"
+        component={EquipmentDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <MoreStack.Screen name="Suppliers" component={SuppliersScreen} options={{ title: "Proveedores" }} />
+      <MoreStack.Screen
+        name="SupplierDetail"
+        component={SupplierDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <MoreStack.Screen name="Purchasing" component={PurchasingScreen} options={{ title: "Compras" }} />
+      <MoreStack.Screen
+        name="PurchaseOrderDetail"
+        component={PurchaseOrderDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <MoreStack.Screen name="Quotes" component={QuotesScreen} options={{ title: "Cotizaciones" }} />
+      <MoreStack.Screen
+        name="QuoteDetail"
+        component={QuoteDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <MoreStack.Screen name="Invoices" component={InvoicesScreen} options={{ title: "Facturas" }} />
+      <MoreStack.Screen
+        name="InvoiceDetail"
+        component={InvoiceDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <MoreStack.Screen name="Reports" component={ReportsScreen} options={{ title: "Reportes" }} />
     </MoreStack.Navigator>
   );
 }

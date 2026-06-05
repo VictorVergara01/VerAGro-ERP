@@ -1,9 +1,11 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
 import { Card } from "../../components/ui";
 import { colors, font, radius, softBg, spacing } from "../../theme";
+import type { MoreNav } from "../../navigation/types";
 import { useAuth } from "../auth/useAuth";
 
 type Item = {
@@ -24,30 +26,29 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function MenuScreen() {
   const { user, logout } = useAuth();
+  const nav = useNavigation<MoreNav>();
 
-  // Fase 2 conectará estos módulos a sus pantallas. Por ahora se muestran
-  // como "Próximamente" para no romper la navegación.
   const groups: { title: string; items: Item[] }[] = [
     {
       title: "Menú",
       items: [
-        { label: "Clientes", icon: "people", color: colors.warning, soon: true },
-        { label: "Equipos", icon: "hardware-chip", color: colors.grape, soon: true },
-        { label: "Proveedores", icon: "car", color: colors.info, soon: true },
-        { label: "Compras", icon: "cart", color: colors.teal, soon: true },
+        { label: "Clientes", icon: "people", color: colors.warning, onPress: () => nav.navigate("Customers") },
+        { label: "Equipos", icon: "hardware-chip", color: colors.grape, onPress: () => nav.navigate("Equipment") },
+        { label: "Proveedores", icon: "car", color: colors.info, onPress: () => nav.navigate("Suppliers") },
+        { label: "Compras", icon: "cart", color: colors.teal, onPress: () => nav.navigate("Purchasing") },
       ],
     },
     {
       title: "Facturación",
       items: [
-        { label: "Cotizaciones", icon: "document-text", color: colors.info, soon: true },
-        { label: "Facturas", icon: "receipt", color: colors.grape, soon: true },
+        { label: "Cotizaciones", icon: "document-text", color: colors.info, onPress: () => nav.navigate("Quotes") },
+        { label: "Facturas", icon: "receipt", color: colors.grape, onPress: () => nav.navigate("Invoices") },
       ],
     },
     {
       title: "General",
       items: [
-        { label: "Reportes", icon: "bar-chart", color: colors.primary, soon: true },
+        { label: "Reportes", icon: "bar-chart", color: colors.primary, onPress: () => nav.navigate("Reports") },
         { label: "Configuración", icon: "settings", color: colors.dimmed, soon: true },
       ],
     },

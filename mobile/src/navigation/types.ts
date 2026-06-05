@@ -19,7 +19,22 @@ export type InventoryStackParamList = {
 
 export type MoreStackParamList = {
   Menu: undefined;
+  Customers: undefined;
+  CustomerDetail: { id: number; title: string };
+  Equipment: undefined;
+  EquipmentDetail: { id: number; title: string };
+  Suppliers: undefined;
+  SupplierDetail: { id: number; title: string };
+  Purchasing: undefined;
+  PurchaseOrderDetail: { id: number; title: string };
+  Quotes: undefined;
+  QuoteDetail: { id: number; title: string };
+  Invoices: undefined;
+  InvoiceDetail: { id: number; title: string };
+  Reports: undefined;
 };
+
+export type MoreNav = NativeStackNavigationProp<MoreStackParamList>;
 
 export type AuthStackParamList = {
   Login: undefined;

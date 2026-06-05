@@ -1,0 +1,56 @@
+import { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+
+import { Screen } from "../../components/ui/Screen";
+import { Badge, Card, SearchBar } from "../../components/ui";
+import { ListView } from "../../components/ui/ListView";
+import { colors, font } from "../../theme";
+import type { MoreNav } from "../../navigation/types";
+import { EQ_STATUS_COLOR, EQ_STATUS_LABEL, useEquipmentList, type Equipment } from "./api";
+
+export function EquipmentScreen() {
+  const [search, setSearch] = useState("");
+  const nav = useNavigation<MoreNav>();
+  const q = useEquipmentList(search);
+
+  return (
+    <Screen padded={false}>
+      <ListView
+        items={q.data ?? []}
+        loading={q.isLoading}
+        error={q.error}
+        refetch={q.refetch}
+        isRefetching={q.isRefetching}
+        keyExtractor={(e) => String(e.id)}
+        header={
+          <View style={{ marginBottom: 12 }}>
+            <SearchBar placeholder="Buscar equipo…" value={search} onChangeText={setSearch} />
+          </View>
+        }
+        emptyText="No hay equipos."
+        renderItem={(e: Equipment) => (
+          <Card onPress={() => nav.navigate("EquipmentDetail", { id: e.id, title: e.name })}>
+            <View style={styles.row}>
+              <Text style={styles.name}>{e.name}</Text>
+              <Badge
+                label={EQ_STATUS_LABEL[e.status ?? "active"] ?? e.status ?? ""}
+                color={EQ_STATUS_COLOR[e.status ?? "active"] ?? colors.dimmed}
+              />
+            </View>
+            <Text style={styles.meta}>
+              {e.equipment_type_name ?? "—"}
+              {e.customer_name ? ` · ${e.customer_name}` : ""}
+            </Text>
+          </Card>
+        )}
+      />
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  name: { fontSize: font.md, fontWeight: "700", color: colors.text, flexShrink: 1 },
+  meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
+});

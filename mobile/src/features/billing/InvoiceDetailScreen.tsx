@@ -1,0 +1,110 @@
+import { StyleSheet, Text, View } from "react-native";
+import { useRoute, type RouteProp } from "@react-navigation/native";
+
+import { Screen } from "../../components/ui/Screen";
+import {
+  Badge,
+  Card,
+  DetailRow,
+  ErrorState,
+  Field,
+  Loading,
+  SectionTitle,
+} from "../../components/ui";
+import {
+  colors,
+  font,
+  invoiceStatusColors,
+  invoiceStatusLabels,
+  spacing,
+} from "../../theme";
+import { formatCurrency, formatDate } from "../../utils/format";
+import type { MoreStackParamList } from "../../navigation/types";
+import { INVOICE_TYPE_LABEL, useInvoice } from "./api";
+
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  cash: "Efectivo",
+  bank_transfer: "Transferencia",
+  yappy: "Yappy",
+  ach: "ACH",
+  card: "Tarjeta",
+  other: "Otro",
+};
+
+export function InvoiceDetailScreen() {
+  const { params } = useRoute<RouteProp<MoreStackParamList, "InvoiceDetail">>();
+  const { data: inv, isLoading, error } = useInvoice(params.id);
+
+  if (isLoading) return <Loading />;
+  if (error || !inv) return <Screen><ErrorState text="No se pudo cargar la factura." /></Screen>;
+
+  const st = inv.status ?? "draft";
+  return (
+    <Screen scroll>
+      <Card>
+        <Badge label={invoiceStatusLabels[st] ?? st} color={invoiceStatusColors[st] ?? colors.dimmed} />
+        <Field label="Cliente" value={inv.customer_name} />
+        <Field label="Tipo" value={INVOICE_TYPE_LABEL[inv.invoice_type ?? "service_invoice"]} />
+        <Field label="Emisión" value={formatDate(inv.issue_date)} />
+        <Field label="Vence" value={formatDate(inv.due_date)} />
+      </Card>
+
+      <Card>
+        <SectionTitle>Conceptos</SectionTitle>
+        {(inv.lines ?? []).map((l) => (
+          <View key={l.id} style={styles.lineRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.lineDesc}>{l.description || l.product_sku || "—"}</Text>
+              <Text style={styles.lineMeta}>
+                {l.quantity} × {formatCurrency(l.unit_price)}
+              </Text>
+            </View>
+            <Text style={styles.lineTotal}>{formatCurrency(l.total)}</Text>
+          </View>
+        ))}
+        <View style={styles.divider} />
+        <DetailRow label="Subtotal" value={formatCurrency(inv.subtotal)} />
+        {Number(inv.discount_amount) > 0 && (
+          <DetailRow label={`Descuento (${Number(inv.discount_percentage)}%)`} value={`−${formatCurrency(inv.discount_amount)}`} />
+        )}
+        {Number(inv.tax_amount) > 0 && (
+          <DetailRow label={`Impuesto (${Number(inv.tax_percentage)}%)`} value={formatCurrency(inv.tax_amount)} />
+        )}
+        <DetailRow label="Total" value={formatCurrency(inv.total)} strong />
+        <DetailRow label="Pagado" value={formatCurrency(inv.paid_amount)} />
+        <DetailRow label="Saldo" value={formatCurrency(inv.balance_due)} strong />
+      </Card>
+
+      {(inv.payments ?? []).length > 0 && (
+        <Card>
+          <SectionTitle>Pagos</SectionTitle>
+          {(inv.payments ?? []).map((p) => (
+            <View key={p.id} style={styles.lineRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lineDesc}>{PAYMENT_METHOD_LABEL[p.method ?? "cash"]}</Text>
+                <Text style={styles.lineMeta}>
+                  {formatDate(p.payment_date)}
+                  {p.reference_number ? ` · ${p.reference_number}` : ""}
+                </Text>
+              </View>
+              <Text style={styles.lineTotal}>{formatCurrency(p.amount)}</Text>
+            </View>
+          ))}
+        </Card>
+      )}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  lineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+  lineDesc: { fontSize: font.md, color: colors.text },
+  lineMeta: { fontSize: font.sm, color: colors.dimmed },
+  lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
+});
