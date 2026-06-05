@@ -7,10 +7,10 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { Navigate, useNavigate } from "react-router-dom";
 
+import { Logo } from "../../components/ui/Logo";
 import { useAuth } from "./useAuth";
 
 export function LoginPage() {
@@ -43,12 +43,12 @@ export function LoginPage() {
     <Center mih="100vh" bg="gray.0">
       <Paper withBorder shadow="md" p="xl" radius="md" w={380}>
         <Stack>
-          <div>
-            <Title order={2}>Veragro ERP</Title>
+          <Stack align="center" gap={4}>
+            <Logo height={88} />
             <Text c="dimmed" size="sm">
               Inicia sesión para continuar
             </Text>
-          </div>
+          </Stack>
           <form onSubmit={handleSubmit}>
             <Stack>
               <TextInput

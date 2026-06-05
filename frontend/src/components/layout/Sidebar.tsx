@@ -1,4 +1,4 @@
-import { NavLink as MantineNavLink, Stack, Text } from "@mantine/core";
+import { Group, NavLink as MantineNavLink, Stack, Text } from "@mantine/core";
 import {
   IconBox,
   IconClipboardList,
@@ -14,6 +14,8 @@ import {
   IconDeviceDesktop,
 } from "@tabler/icons-react";
 import { NavLink } from "react-router-dom";
+
+import { Logo } from "../ui/Logo";
 
 interface NavItem {
   label: string;
@@ -40,6 +42,9 @@ const ITEMS: NavItem[] = [
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Stack gap={4}>
+      <Group justify="center" pb="sm">
+        <Logo height={56} />
+      </Group>
       {ITEMS.map((item) => {
         const Icon = item.icon;
         if (!item.ready) {

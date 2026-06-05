@@ -2,6 +2,7 @@ import { Burger, Group, Menu, Avatar, Text, UnstyledButton } from "@mantine/core
 import { IconLogout, IconChevronDown } from "@tabler/icons-react";
 
 import { useAuth } from "../../features/auth/useAuth";
+import { Logo } from "../ui/Logo";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
@@ -24,7 +25,7 @@ export function Topbar({
     <Group h="100%" px="md" justify="space-between">
       <Group>
         <Burger opened={opened} onClick={onToggle} hiddenFrom="sm" size="sm" />
-        <Text fw={700}>Veragro ERP</Text>
+        <Logo height={32} />
       </Group>
       <Menu shadow="md" width={220} position="bottom-end">
         <Menu.Target>
