@@ -2,20 +2,17 @@ import {
   Alert,
   Anchor,
   Badge,
-  Button,
   Card,
   Grid,
-  Group,
   Loader,
   Stack,
   Tabs,
-  Text,
 } from "@mantine/core";
-import { IconArrowLeft } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { DetailHeader } from "../../components/ui/DetailHeader";
+import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import {
   useCustomer,
@@ -25,17 +22,6 @@ import {
   type ServiceOrderSummary,
 } from "./api";
 import { CUSTOMER_TYPE_LABEL } from "./types";
-
-function Field({ label, value }: { label: string; value?: ReactNode }) {
-  return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {label}
-      </Text>
-      <Text component="div">{value ? value : "—"}</Text>
-    </div>
-  );
-}
 
 const orderColumns: Column<ServiceOrderSummary>[] = [
   { header: "N.º", render: (o) => o.service_order_number },
@@ -67,26 +53,18 @@ export function CustomerDetailPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
-          <Button
-            component={Link}
-            to="/customers"
-            variant="subtle"
-            leftSection={<IconArrowLeft size={18} />}
-          >
-            Clientes
-          </Button>
-          <Text fz={24} fw={700}>
-            {customer.name}
-          </Text>
+      <DetailHeader
+        backTo="/customers"
+        backLabel="Clientes"
+        title={customer.name}
+        badge={
           <Badge color={customer.is_active ? "green" : "gray"} variant="light">
             {customer.is_active ? "Activo" : "Inactivo"}
           </Badge>
-        </Group>
-      </Group>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field

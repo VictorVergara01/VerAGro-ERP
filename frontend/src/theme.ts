@@ -1,4 +1,10 @@
-import { Card, Paper, createTheme, type MantineColorsTuple } from "@mantine/core";
+import {
+  Card,
+  Modal,
+  Paper,
+  createTheme,
+  type MantineColorsTuple,
+} from "@mantine/core";
 
 // Verde de marca Veragro (escala de 10 tonos derivada del logo).
 const veragroGreen: MantineColorsTuple = [
@@ -30,6 +36,16 @@ export const theme = createTheme({
     }),
     Paper: Paper.extend({
       defaultProps: { radius: "lg" },
+    }),
+    Modal: Modal.extend({
+      defaultProps: {
+        radius: "lg",
+        centered: true,
+        overlayProps: { backgroundOpacity: 0.55, blur: 3 },
+      },
+      styles: {
+        title: { fontWeight: 700, fontSize: "var(--mantine-font-size-lg)" },
+      },
     }),
   },
 });

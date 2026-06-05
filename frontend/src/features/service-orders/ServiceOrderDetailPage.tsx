@@ -16,17 +16,17 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
-  IconArrowLeft,
   IconChevronDown,
   IconEdit,
   IconFileInvoice,
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { DetailHeader } from "../../components/ui/DetailHeader";
+import { Field } from "../../components/ui/Field";
 import { useAuth } from "../auth/useAuth";
 import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
 import { formatCurrency, formatDate } from "../../utils/format";
@@ -49,17 +49,6 @@ import {
 } from "./types";
 
 const TERMINAL = ["finished", "invoiced", "delivered", "cancelled"];
-
-function Field({ label, value }: { label: string; value?: ReactNode }) {
-  return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {label}
-      </Text>
-      <Text component="div">{value ?? "—"}</Text>
-    </div>
-  );
-}
 
 export function ServiceOrderDetailPage() {
   const { id } = useParams();
@@ -179,24 +168,17 @@ export function ServiceOrderDetailPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
-          <Button
-            component={Link}
-            to="/service-orders"
-            variant="subtle"
-            leftSection={<IconArrowLeft size={18} />}
-          >
-            Órdenes
-          </Button>
-          <Text fz={24} fw={700}>
-            {order.service_order_number}
-          </Text>
+      <DetailHeader
+        backTo="/service-orders"
+        backLabel="Órdenes"
+        title={order.service_order_number}
+        badge={
           <Badge color={SO_STATUS_COLOR[status]} variant="light" size="lg">
             {SO_STATUS_LABEL[status]}
           </Badge>
-        </Group>
-        <Group>
+        }
+        actions={
+          <>
           {!terminal && (
             <Button variant="default" leftSection={<IconEdit size={18} />} onClick={openEdit}>
               Editar
@@ -261,10 +243,11 @@ export function ServiceOrderDetailPage() {
               </Menu.Dropdown>
             </Menu>
           )}
-        </Group>
-      </Group>
+          </>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Cliente" value={order.customer_name} />
@@ -298,7 +281,7 @@ export function ServiceOrderDetailPage() {
           <Tabs.Tab value="checklist">Checklist</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="parts" pt="md">
-          <Card withBorder radius="md">
+          <Card>
             <Group justify="space-between" mb="sm">
               <Text fw={600}>Piezas</Text>
               {!terminal && (

@@ -4,32 +4,21 @@ import {
   Button,
   Card,
   Grid,
-  Group,
   Loader,
   Stack,
   Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconAdjustments, IconArrowLeft } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { IconAdjustments } from "@tabler/icons-react";
+import { useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { DetailHeader } from "../../components/ui/DetailHeader";
+import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AdjustStockModal } from "./AdjustStockModal";
 import { useProduct, useProductMovements } from "./api";
 import { MOVEMENT_COLOR, MOVEMENT_LABEL, type InventoryMovement } from "./types";
-
-function Field({ label, value }: { label: string; value?: ReactNode }) {
-  return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {label}
-      </Text>
-      <Text component="div">{value !== undefined && value !== null && value !== "" ? value : "—"}</Text>
-    </div>
-  );
-}
 
 const movementColumns: Column<InventoryMovement>[] = [
   { header: "Fecha", render: (m) => formatDate(m.created_at) },
@@ -60,29 +49,23 @@ export function ProductDetailPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
-          <Button
-            component={Link}
-            to="/inventory"
-            variant="subtle"
-            leftSection={<IconArrowLeft size={18} />}
-          >
-            Inventario
-          </Button>
-          <Text fz={24} fw={700}>
-            {product.name}
-          </Text>
+      <DetailHeader
+        backTo="/inventory"
+        backLabel="Inventario"
+        title={product.name}
+        badge={
           <Badge color={product.is_active ? "green" : "gray"} variant="light">
             {product.is_active ? "Activo" : "Inactivo"}
           </Badge>
-        </Group>
-        <Button leftSection={<IconAdjustments size={18} />} onClick={open}>
-          Ajustar stock
-        </Button>
-      </Group>
+        }
+        actions={
+          <Button leftSection={<IconAdjustments size={18} />} onClick={open}>
+            Ajustar stock
+          </Button>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="SKU" value={product.sku} />

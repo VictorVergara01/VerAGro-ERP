@@ -14,30 +14,19 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
-  IconArrowLeft,
   IconCalculator,
   IconSend,
   IconTruckDelivery,
   IconX,
 } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
+import { DetailHeader } from "../../components/ui/DetailHeader";
+import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { usePurchaseOrder, usePurchaseOrderAction } from "./api";
 import { ReceiveModal } from "./ReceiveModal";
 import { PO_STATUS_COLOR, PO_STATUS_LABEL } from "./types";
-
-function Field({ label, value }: { label: string; value?: ReactNode }) {
-  return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {label}
-      </Text>
-      <Text component="div">{value ?? "—"}</Text>
-    </div>
-  );
-}
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams();
@@ -76,66 +65,60 @@ export function PurchaseOrderDetailPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
-          <Button
-            component={Link}
-            to="/purchasing"
-            variant="subtle"
-            leftSection={<IconArrowLeft size={18} />}
-          >
-            Compras
-          </Button>
-          <Text fz={24} fw={700}>
-            {order.order_number}
-          </Text>
+      <DetailHeader
+        backTo="/purchasing"
+        backLabel="Compras"
+        title={order.order_number}
+        badge={
           <Badge color={PO_STATUS_COLOR[status]} variant="light">
             {PO_STATUS_LABEL[status]}
           </Badge>
-        </Group>
-        <Group>
-          {canRecalc && (
-            <Button
-              variant="default"
-              leftSection={<IconCalculator size={18} />}
-              onClick={() => run("recalculate", "Costos recalculados.")}
-              loading={action.isPending}
-            >
-              Recalcular
-            </Button>
-          )}
-          {canSend && (
-            <Button
-              leftSection={<IconSend size={18} />}
-              onClick={() => run("send", "Orden enviada.")}
-              loading={action.isPending}
-            >
-              Enviar
-            </Button>
-          )}
-          {canReceive && (
-            <Button
-              color="teal"
-              leftSection={<IconTruckDelivery size={18} />}
-              onClick={open}
-            >
-              Recibir
-            </Button>
-          )}
-          {canCancel && (
-            <Button
-              variant="subtle"
-              color="red"
-              leftSection={<IconX size={18} />}
-              onClick={confirmCancel}
-            >
-              Cancelar
-            </Button>
-          )}
-        </Group>
-      </Group>
+        }
+        actions={
+          <>
+            {canRecalc && (
+              <Button
+                variant="default"
+                leftSection={<IconCalculator size={18} />}
+                onClick={() => run("recalculate", "Costos recalculados.")}
+                loading={action.isPending}
+              >
+                Recalcular
+              </Button>
+            )}
+            {canSend && (
+              <Button
+                leftSection={<IconSend size={18} />}
+                onClick={() => run("send", "Orden enviada.")}
+                loading={action.isPending}
+              >
+                Enviar
+              </Button>
+            )}
+            {canReceive && (
+              <Button
+                color="teal"
+                leftSection={<IconTruckDelivery size={18} />}
+                onClick={open}
+              >
+                Recibir
+              </Button>
+            )}
+            {canCancel && (
+              <Button
+                variant="subtle"
+                color="red"
+                leftSection={<IconX size={18} />}
+                onClick={confirmCancel}
+              >
+                Cancelar
+              </Button>
+            )}
+          </>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Proveedor" value={order.supplier_name} />
@@ -152,7 +135,7 @@ export function PurchaseOrderDetailPage() {
         </Grid>
       </Card>
 
-      <Card withBorder radius="md">
+      <Card>
         <Text fw={600} mb="sm">
           Líneas y costeo
         </Text>
@@ -189,7 +172,7 @@ export function PurchaseOrderDetailPage() {
       </Card>
 
       <Group align="flex-start" grow>
-        <Card withBorder radius="md">
+        <Card>
           <Text fw={600} mb="sm">
             Costos adicionales
           </Text>
@@ -210,7 +193,7 @@ export function PurchaseOrderDetailPage() {
             </Table>
           )}
         </Card>
-        <Card withBorder radius="md">
+        <Card>
           <Text fw={600} mb="sm">
             Totales
           </Text>

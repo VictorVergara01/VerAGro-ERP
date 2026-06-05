@@ -1,19 +1,9 @@
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Grid,
-  Group,
-  Loader,
-  Stack,
-  Text,
-} from "@mantine/core";
-import { IconArrowLeft } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Alert, Badge, Card, Grid, Loader, Stack, Text } from "@mantine/core";
+import { useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { DetailHeader } from "../../components/ui/DetailHeader";
+import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import {
   useEquipment,
@@ -21,17 +11,6 @@ import {
   type EquipmentServiceSummary,
 } from "./api";
 import { STATUS_COLOR, STATUS_LABEL } from "./types";
-
-function Field({ label, value }: { label: string; value?: ReactNode }) {
-  return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {label}
-      </Text>
-      <Text component="div">{value ? value : "—"}</Text>
-    </div>
-  );
-}
 
 const historyColumns: Column<EquipmentServiceSummary>[] = [
   { header: "N.º", render: (o) => o.service_order_number },
@@ -54,24 +33,18 @@ export function EquipmentDetailPage() {
 
   return (
     <Stack>
-      <Group>
-        <Button
-          component={Link}
-          to="/equipment"
-          variant="subtle"
-          leftSection={<IconArrowLeft size={18} />}
-        >
-          Equipos
-        </Button>
-        <Text fz={24} fw={700}>
-          {equipment.name}
-        </Text>
-        <Badge color={STATUS_COLOR[equipment.status ?? "active"]} variant="light">
-          {STATUS_LABEL[equipment.status ?? "active"]}
-        </Badge>
-      </Group>
+      <DetailHeader
+        backTo="/equipment"
+        backLabel="Equipos"
+        title={equipment.name}
+        badge={
+          <Badge color={STATUS_COLOR[equipment.status ?? "active"]} variant="light">
+            {STATUS_LABEL[equipment.status ?? "active"]}
+          </Badge>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Tipo" value={equipment.equipment_type_name} />

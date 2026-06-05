@@ -9,16 +9,17 @@ import {
   Loader,
   Stack,
   Tabs,
-  Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { IconArrowLeft, IconEdit, IconPlus, IconStar, IconTrash } from "@tabler/icons-react";
-import { useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { IconEdit, IconPlus, IconStar, IconTrash } from "@tabler/icons-react";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
+import { DetailHeader } from "../../components/ui/DetailHeader";
+import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import {
   useDeleteSupplierProduct,
@@ -28,17 +29,6 @@ import {
 } from "./api";
 import { SupplierProductModal } from "./SupplierProductModal";
 import type { PurchaseHistoryItem, SupplierProduct } from "./types";
-
-function Field({ label, value }: { label: string; value?: ReactNode }) {
-  return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {label}
-      </Text>
-      <Text component="div">{value ? value : "—"}</Text>
-    </div>
-  );
-}
 
 const purchaseColumns: Column<PurchaseHistoryItem>[] = [
   { header: "N.º", render: (o) => o.order_number },
@@ -119,24 +109,18 @@ export function SupplierDetailPage() {
 
   return (
     <Stack>
-      <Group>
-        <Button
-          component={Link}
-          to="/suppliers"
-          variant="subtle"
-          leftSection={<IconArrowLeft size={18} />}
-        >
-          Proveedores
-        </Button>
-        <Text fz={24} fw={700}>
-          {supplier.name}
-        </Text>
-        <Badge color={supplier.is_active ? "green" : "gray"} variant="light">
-          {supplier.is_active ? "Activo" : "Inactivo"}
-        </Badge>
-      </Group>
+      <DetailHeader
+        backTo="/suppliers"
+        backLabel="Proveedores"
+        title={supplier.name}
+        badge={
+          <Badge color={supplier.is_active ? "green" : "gray"} variant="light">
+            {supplier.is_active ? "Activo" : "Inactivo"}
+          </Badge>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Razón social" value={supplier.legal_name} />

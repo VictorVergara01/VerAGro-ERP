@@ -11,9 +11,10 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconArrowLeft, IconEdit } from "@tabler/icons-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { IconEdit } from "@tabler/icons-react";
+import { useNavigate, useParams } from "react-router-dom";
 
+import { DetailHeader } from "../../components/ui/DetailHeader";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useConvertQuote, useQuote, useQuoteAction } from "./api";
 import { QuoteCreateModal } from "./QuoteCreateModal";
@@ -59,50 +60,46 @@ export function QuoteDetailPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
-          <Button
-            component={Link}
-            to="/quotes"
-            variant="subtle"
-            leftSection={<IconArrowLeft size={18} />}
-          >
-            Cotizaciones
-          </Button>
-          <Text fz={24} fw={700}>
-            {quote.quote_number}
-          </Text>
+      <DetailHeader
+        backTo="/quotes"
+        backLabel="Cotizaciones"
+        title={quote.quote_number}
+        badge={
           <Badge color={QUOTE_STATUS_COLOR[status]} variant="light" size="lg">
             {QUOTE_STATUS_LABEL[status]}
           </Badge>
-        </Group>
-        <Group>
-          {editable && (
-            <Button
-              variant="default"
-              leftSection={<IconEdit size={18} />}
-              onClick={openEdit}
-            >
-              Editar
-            </Button>
-          )}
-          {canApprove && (
-            <Button onClick={() => run("approve", "Cotización aprobada.")}>Aprobar</Button>
-          )}
-          {canReject && (
-            <Button variant="default" color="red" onClick={() => run("reject", "Rechazada.")}>
-              Rechazar
-            </Button>
-          )}
-          {canConvert && (
-            <Button color="grape" onClick={doConvert} loading={convert.isPending}>
-              Convertir en factura
-            </Button>
-          )}
-        </Group>
-      </Group>
+        }
+        actions={
+          <>
+            {editable && (
+              <Button
+                variant="default"
+                leftSection={<IconEdit size={18} />}
+                onClick={openEdit}
+              >
+                Editar
+              </Button>
+            )}
+            {canApprove && (
+              <Button onClick={() => run("approve", "Cotización aprobada.")}>
+                Aprobar
+              </Button>
+            )}
+            {canReject && (
+              <Button variant="default" color="red" onClick={() => run("reject", "Rechazada.")}>
+                Rechazar
+              </Button>
+            )}
+            {canConvert && (
+              <Button color="grape" onClick={doConvert} loading={convert.isPending}>
+                Convertir en factura
+              </Button>
+            )}
+          </>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Group gap="xl">
           <div>
             <Text size="xs" c="dimmed" fw={600} tt="uppercase">
@@ -125,7 +122,7 @@ export function QuoteDetailPage() {
         </Group>
       </Card>
 
-      <Card withBorder radius="md">
+      <Card>
         <Table>
           <Table.Thead>
             <Table.Tr>

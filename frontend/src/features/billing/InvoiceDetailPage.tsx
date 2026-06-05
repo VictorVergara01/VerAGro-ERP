@@ -15,7 +15,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
-  IconArrowLeft,
   IconBrandWhatsapp,
   IconCash,
   IconChevronDown,
@@ -25,8 +24,9 @@ import {
   IconSend,
   IconX,
 } from "@tabler/icons-react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
+import { DetailHeader } from "../../components/ui/DetailHeader";
 import { formatCurrency, formatDate } from "../../utils/format";
 import {
   downloadInvoicePdf,
@@ -110,24 +110,17 @@ export function InvoiceDetailPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Group>
-          <Button
-            component={Link}
-            to="/invoices"
-            variant="subtle"
-            leftSection={<IconArrowLeft size={18} />}
-          >
-            Facturas
-          </Button>
-          <Text fz={24} fw={700}>
-            {invoice.invoice_number}
-          </Text>
+      <DetailHeader
+        backTo="/invoices"
+        backLabel="Facturas"
+        title={invoice.invoice_number}
+        badge={
           <Badge color={INVOICE_STATUS_COLOR[status]} variant="light" size="lg">
             {INVOICE_STATUS_LABEL[status]}
           </Badge>
-        </Group>
-        <Group>
+        }
+        actions={
+          <>
           {canIssue && (
             <Button
               variant="default"
@@ -174,10 +167,11 @@ export function InvoiceDetailPage() {
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
-        </Group>
-      </Group>
+          </>
+        }
+      />
 
-      <Card withBorder radius="md">
+      <Card>
         <Group gap="xl">
           <div>
             <Text size="xs" c="dimmed" fw={600} tt="uppercase">
@@ -206,7 +200,7 @@ export function InvoiceDetailPage() {
         </Group>
       </Card>
 
-      <Card withBorder radius="md">
+      <Card>
         <Text fw={600} mb="sm">
           Conceptos
         </Text>
@@ -234,7 +228,7 @@ export function InvoiceDetailPage() {
 
       <Grid>
         <Grid.Col span={{ base: 12, sm: 7 }}>
-          <Card withBorder radius="md">
+          <Card>
             <Text fw={600} mb="sm">
               Pagos
             </Text>
@@ -267,7 +261,7 @@ export function InvoiceDetailPage() {
           </Card>
         </Grid.Col>
         <Grid.Col span={{ base: 12, sm: 5 }}>
-          <Card withBorder radius="md">
+          <Card>
             <Stack gap={4}>
               <Group justify="space-between">
                 <Text c="dimmed">Subtotal</Text>
