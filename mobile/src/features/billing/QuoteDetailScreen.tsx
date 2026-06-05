@@ -18,6 +18,7 @@ import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreNav, MoreStackParamList } from "../../navigation/types";
 import { useConvertQuote, useQuote, useQuoteAction } from "./api";
 import { QuoteFormModal } from "./QuoteFormModal";
+import { shareDocumentPdf } from "./pdf";
 
 export function QuoteDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "QuoteDetail">>();
@@ -50,18 +51,27 @@ export function QuoteDetailScreen() {
 
   return (
     <Screen scroll>
-      {(canApprove || canReject || canConvert || canEdit) && (
-        <Card style={styles.actions}>
-          {canApprove && <Button title="Aprobar" icon="checkmark" onPress={() => run("approve", "¿Aprobar la cotización?")} />}
-          {canEdit && <Button title="Editar" icon="create" variant="subtle" onPress={() => setEditOpen(true)} />}
-          {canConvert && (
-            <Button title="Convertir en factura" icon="receipt" color={colors.grape} loading={convert.isPending} onPress={doConvert} />
-          )}
-          {canReject && (
-            <Button title="Rechazar" variant="subtle" color={colors.danger} onPress={() => run("reject", "¿Rechazar la cotización?")} />
-          )}
-        </Card>
-      )}
+      <Card style={styles.actions}>
+        {canApprove && <Button title="Aprobar" icon="checkmark" onPress={() => run("approve", "¿Aprobar la cotización?")} />}
+        {canEdit && <Button title="Editar" icon="create" variant="subtle" onPress={() => setEditOpen(true)} />}
+        {canConvert && (
+          <Button title="Convertir en factura" icon="receipt" color={colors.grape} loading={convert.isPending} onPress={doConvert} />
+        )}
+        <Button
+          title="Compartir PDF"
+          icon="document-text"
+          variant="subtle"
+          onPress={() =>
+            void shareDocumentPdf({
+              path: `/api/quotes/${q.id}/pdf/`,
+              filename: `${q.quote_number ?? "cotizacion"}.pdf`,
+            })
+          }
+        />
+        {canReject && (
+          <Button title="Rechazar" variant="subtle" color={colors.danger} onPress={() => run("reject", "¿Rechazar la cotización?")} />
+        )}
+      </Card>
 
       <Card>
         <Badge label={quoteStatusLabels[st] ?? st} color={quoteStatusColors[st] ?? colors.dimmed} />

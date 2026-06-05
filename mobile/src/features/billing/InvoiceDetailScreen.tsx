@@ -25,6 +25,7 @@ import type { MoreStackParamList } from "../../navigation/types";
 import { INVOICE_TYPE_LABEL, useInvoice, useInvoiceAction } from "./api";
 import { InvoiceFormModal } from "./InvoiceFormModal";
 import { PaymentModal } from "./PaymentModal";
+import { shareDocumentPdf } from "./pdf";
 import { sendInvoiceWhatsapp } from "./whatsapp";
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
@@ -71,6 +72,17 @@ export function InvoiceDetailScreen() {
           <Button title="Registrar pago" icon="cash" color={colors.primary} onPress={() => setPayOpen(true)} />
         )}
         <Button title="WhatsApp" icon="logo-whatsapp" variant="subtle" color={colors.teal} onPress={() => void sendInvoiceWhatsapp(inv)} />
+        <Button
+          title="Compartir PDF"
+          icon="document-text"
+          variant="subtle"
+          onPress={() =>
+            void shareDocumentPdf({
+              path: `/api/invoices/${inv.id}/pdf/`,
+              filename: `${inv.invoice_number ?? "factura"}.pdf`,
+            })
+          }
+        />
         {canCancel && (
           <Button title="Cancelar factura" variant="subtle" color={colors.danger} onPress={() => run("cancel", "¿Cancelar esta factura?")} />
         )}
