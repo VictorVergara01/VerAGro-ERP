@@ -71,6 +71,19 @@ export function useSaveProduct() {
   });
 }
 
+export function useDeleteProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/inventory/products/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo eliminar el producto.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["product-search"] }),
+  });
+}
+
 export function useAdjustStock() {
   const qc = useQueryClient();
   return useMutation({

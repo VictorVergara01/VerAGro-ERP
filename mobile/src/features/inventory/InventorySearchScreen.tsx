@@ -6,7 +6,7 @@ import { Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import { colors, font } from "../../theme";
 import { formatCurrency } from "../../utils/format";
-import { useProductSearch, type Product } from "./api";
+import { useDeleteProduct, useProductSearch, type Product } from "./api";
 import { ProductFormModal } from "./ProductFormModal";
 import { StockAdjustModal } from "./StockAdjustModal";
 
@@ -16,6 +16,7 @@ export function InventorySearchScreen() {
   const [creating, setCreating] = useState(false);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const products = useProductSearch(search);
+  const del = useDeleteProduct();
 
   const openActions = (p: Product) => {
     Alert.alert(p.name, undefined, [
@@ -24,6 +25,23 @@ export function InventorySearchScreen() {
       { text: "Cancelar", style: "cancel" },
     ]);
   };
+
+  const confirmDelete = (p: Product) =>
+    Alert.alert(
+      "Eliminar producto",
+      `¿Eliminar "${p.name}"? Se desactivará y dejará de aparecer.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () =>
+            del.mutate(p.id, {
+              onError: (e) => Alert.alert("Error", (e as Error).message),
+            }),
+        },
+      ],
+    );
 
   return (
     <Screen padded={false}>
@@ -37,6 +55,7 @@ export function InventorySearchScreen() {
         header={
           <View style={{ marginBottom: 12 }}>
             <SearchBar placeholder="Buscar por SKU, nombre, marca…" value={search} onChangeText={setSearch} />
+            <Text style={styles.hint}>Mantén pulsada una fila para eliminar.</Text>
           </View>
         }
         emptyText={search ? "Sin resultados." : "No hay productos."}
@@ -45,7 +64,7 @@ export function InventorySearchScreen() {
           const low =
             Number(available) <= Number(item.minimum_stock) && Number(item.minimum_stock) > 0;
           return (
-            <Card onPress={() => openActions(item)}>
+            <Card onPress={() => openActions(item)} onLongPress={() => confirmDelete(item)}>
               <View style={styles.cardHeader}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.price}>{formatCurrency(item.sale_price)}</Text>
@@ -79,4 +98,5 @@ const styles = StyleSheet.create({
   stock: { fontSize: font.sm, color: colors.text },
   lowStock: { color: colors.danger, fontWeight: "700" },
   location: { fontSize: font.sm, color: colors.dimmed },
+  hint: { fontSize: font.xs, color: colors.dimmed, marginTop: 6, fontStyle: "italic" },
 });
