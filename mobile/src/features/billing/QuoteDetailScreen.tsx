@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View } from "react-native";
-import { useRoute, type RouteProp } from "@react-navigation/native";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
 import {
   Badge,
+  Button,
   Card,
   DetailRow,
   ErrorState,
@@ -13,19 +14,50 @@ import {
 } from "../../components/ui";
 import { colors, font, quoteStatusColors, quoteStatusLabels, spacing } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
-import type { MoreStackParamList } from "../../navigation/types";
-import { useQuote } from "./api";
+import type { MoreNav, MoreStackParamList } from "../../navigation/types";
+import { useConvertQuote, useQuote, useQuoteAction } from "./api";
 
 export function QuoteDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "QuoteDetail">>();
+  const nav = useNavigation<MoreNav>();
   const { data: q, isLoading, error } = useQuote(params.id);
+  const action = useQuoteAction(params.id);
+  const convert = useConvertQuote(params.id);
 
   if (isLoading) return <Loading />;
   if (error || !q) return <Screen><ErrorState text="No se pudo cargar la cotización." /></Screen>;
 
   const st = q.status ?? "draft";
+  const canApprove = st === "draft" || st === "sent";
+  const canReject = st !== "converted_to_invoice" && st !== "rejected";
+  const canConvert = st === "approved";
+
+  const run = (a: "approve" | "reject", msg: string) =>
+    Alert.alert("Confirmar", msg, [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Sí", onPress: () => action.mutate(a, { onError: (e) => Alert.alert("Error", (e as Error).message) }) },
+    ]);
+
+  const doConvert = () =>
+    convert.mutate(undefined, {
+      onSuccess: (inv) => nav.replace("InvoiceDetail", { id: inv.id, title: inv.invoice_number ?? "Factura" }),
+      onError: (e) => Alert.alert("Error", (e as Error).message),
+    });
+
   return (
     <Screen scroll>
+      {(canApprove || canReject || canConvert) && (
+        <Card style={styles.actions}>
+          {canApprove && <Button title="Aprobar" icon="checkmark" onPress={() => run("approve", "¿Aprobar la cotización?")} />}
+          {canConvert && (
+            <Button title="Convertir en factura" icon="receipt" color={colors.grape} loading={convert.isPending} onPress={doConvert} />
+          )}
+          {canReject && (
+            <Button title="Rechazar" variant="subtle" color={colors.danger} onPress={() => run("reject", "¿Rechazar la cotización?")} />
+          )}
+        </Card>
+      )}
+
       <Card>
         <Badge label={quoteStatusLabels[st] ?? st} color={quoteStatusColors[st] ?? colors.dimmed} />
         <Field label="Cliente" value={q.customer_name} />
@@ -61,6 +93,7 @@ export function QuoteDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  actions: { gap: spacing.sm },
   lineRow: {
     flexDirection: "row",
     alignItems: "center",

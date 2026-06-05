@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { useRoute, type RouteProp } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
 import {
   Badge,
+  Button,
   Card,
   DetailRow,
   ErrorState,
@@ -14,18 +15,40 @@ import {
 import { colors, font, poStatusColors, poStatusLabels, spacing } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreStackParamList } from "../../navigation/types";
-import { usePurchaseOrder } from "./api";
+import { usePOAction, usePurchaseOrder } from "./api";
 
 export function PurchaseOrderDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "PurchaseOrderDetail">>();
   const { data: o, isLoading, error } = usePurchaseOrder(params.id);
+  const action = usePOAction(params.id);
 
   if (isLoading) return <Loading />;
   if (error || !o) return <Screen><ErrorState text="No se pudo cargar la orden." /></Screen>;
 
   const st = o.status ?? "draft";
+  const canSend = st === "draft";
+  const canReceive = st === "sent" || st === "partially_received";
+  const canCancel = st !== "received" && st !== "cancelled";
+  const run = (a: "send" | "cancel" | "receive-all", msg: string) =>
+    Alert.alert("Confirmar", msg, [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Sí", onPress: () => action.mutate(a, { onError: (e) => Alert.alert("Error", (e as Error).message) }) },
+    ]);
+
   return (
     <Screen scroll>
+      {(canSend || canReceive || canCancel) && (
+        <Card style={styles.actions}>
+          {canSend && <Button title="Enviar" icon="send" onPress={() => run("send", "¿Enviar la orden al proveedor?")} />}
+          {canReceive && (
+            <Button title="Recibir todo" icon="checkmark-done" color={colors.teal} onPress={() => run("receive-all", "¿Recibir todas las líneas?")} />
+          )}
+          {canCancel && (
+            <Button title="Cancelar orden" variant="subtle" color={colors.danger} onPress={() => run("cancel", "¿Cancelar la orden?")} />
+          )}
+        </Card>
+      )}
+
       <Card>
         <Badge label={poStatusLabels[st] ?? st} color={poStatusColors[st] ?? colors.dimmed} />
         <Field label="Proveedor" value={o.supplier_name} />
@@ -58,6 +81,7 @@ export function PurchaseOrderDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  actions: { gap: spacing.sm },
   lineRow: {
     flexDirection: "row",
     alignItems: "center",

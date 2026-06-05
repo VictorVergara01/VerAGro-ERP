@@ -49,7 +49,7 @@ export function MenuScreen() {
       title: "General",
       items: [
         { label: "Reportes", icon: "bar-chart", color: colors.primary, onPress: () => nav.navigate("Reports") },
-        { label: "Configuración", icon: "settings", color: colors.dimmed, soon: true },
+        { label: "Configuración", icon: "settings", color: colors.dimmed, onPress: () => nav.navigate("Settings") },
       ],
     },
   ];

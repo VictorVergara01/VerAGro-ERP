@@ -32,6 +32,7 @@ export type MoreStackParamList = {
   Invoices: undefined;
   InvoiceDetail: { id: number; title: string };
   Reports: undefined;
+  Settings: undefined;
 };
 
 export type MoreNav = NativeStackNavigationProp<MoreStackParamList>;

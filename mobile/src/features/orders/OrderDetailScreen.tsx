@@ -15,7 +15,9 @@ import { formatCurrency, formatDate } from "../../utils/format";
 import type { AppNav, OrderDetailRoute } from "../../navigation/types";
 import { AddPartModal } from "./AddPartModal";
 import {
+  useCancelOrder,
   useDeletePart,
+  useGenerateDoc,
   useOrder,
   useOrderAction,
   useReserveParts,
@@ -106,6 +108,8 @@ export function OrderDetailScreen() {
   const action = useOrderAction(id);
   const reserve = useReserveParts(id);
   const deletePart = useDeletePart(id);
+  const generate = useGenerateDoc(id);
+  const cancelOrder = useCancelOrder(id);
   const [addVisible, setAddVisible] = useState(false);
 
   if (isLoading) {
@@ -165,6 +169,27 @@ export function OrderDetailScreen() {
       },
     ]);
   };
+
+  const doGenerate = (kind: "quote" | "invoice") =>
+    generate.mutate(kind, {
+      onSuccess: () =>
+        Alert.alert("Listo", kind === "quote" ? "Cotización generada." : "Factura generada."),
+      onError: (e) => Alert.alert("Error", (e as Error).message),
+    });
+
+  const confirmCancel = () =>
+    Alert.alert("Cancelar orden", "Se eliminará la orden y se liberarán las piezas. ¿Continuar?", [
+      { text: "Volver", style: "cancel" },
+      {
+        text: "Cancelar y eliminar",
+        style: "destructive",
+        onPress: () =>
+          cancelOrder.mutate(undefined, {
+            onSuccess: () => navigation.goBack(),
+            onError: (e) => Alert.alert("Error", (e as Error).message),
+          }),
+      },
+    ]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -255,6 +280,25 @@ export function OrderDetailScreen() {
         <Text style={styles.checklistText}>Fotos ›</Text>
       </TouchableOpacity>
 
+      {editable ? (
+        <TouchableOpacity
+          style={styles.docBtn}
+          onPress={() => doGenerate("quote")}
+          disabled={generate.isPending}
+        >
+          <Text style={styles.docText}>Generar cotización</Text>
+        </TouchableOpacity>
+      ) : null}
+      {status === "finished" ? (
+        <TouchableOpacity
+          style={styles.docBtn}
+          onPress={() => doGenerate("invoice")}
+          disabled={generate.isPending}
+        >
+          <Text style={styles.docText}>Generar factura</Text>
+        </TouchableOpacity>
+      ) : null}
+
       {next ? (
         <TouchableOpacity
           style={[styles.actionBtn, action.isPending && styles.actionBtnDisabled]}
@@ -274,6 +318,12 @@ export function OrderDetailScreen() {
             : "No hay acciones disponibles en este estado."}
         </Text>
       )}
+
+      {editable ? (
+        <TouchableOpacity style={styles.cancelBtn} onPress={confirmCancel}>
+          <Text style={styles.cancelText}>Cancelar orden</Text>
+        </TouchableOpacity>
+      ) : null}
 
       <AddPartModal
         visible={addVisible}
@@ -335,6 +385,17 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   checklistText: { color: colors.primary, fontSize: 15, fontWeight: "700" },
+  docBtn: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+  },
+  docText: { color: colors.primary, fontSize: 15, fontWeight: "700" },
+  cancelBtn: { padding: 14, alignItems: "center", marginTop: 4 },
+  cancelText: { color: colors.danger, fontSize: 15, fontWeight: "700" },
   dimmedCenter: { color: colors.dimmed, fontSize: 14, textAlign: "center", marginTop: 8 },
   partRow: {
     flexDirection: "row",

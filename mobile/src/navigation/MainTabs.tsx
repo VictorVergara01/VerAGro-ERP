@@ -23,6 +23,7 @@ import { QuoteDetailScreen } from "../features/billing/QuoteDetailScreen";
 import { InvoicesScreen } from "../features/billing/InvoicesScreen";
 import { InvoiceDetailScreen } from "../features/billing/InvoiceDetailScreen";
 import { ReportsScreen } from "../features/reports/ReportsScreen";
+import { SettingsScreen } from "../features/settings/SettingsScreen";
 import type {
   DashboardStackParamList,
   InventoryStackParamList,
@@ -135,6 +136,7 @@ function MoreNavigator() {
         options={({ route }) => ({ title: route.params.title })}
       />
       <MoreStack.Screen name="Reports" component={ReportsScreen} options={{ title: "Reportes" }} />
+      <MoreStack.Screen name="Settings" component={SettingsScreen} options={{ title: "Configuración" }} />
     </MoreStack.Navigator>
   );
 }

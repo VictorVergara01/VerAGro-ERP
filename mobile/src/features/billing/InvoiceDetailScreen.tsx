@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { useRoute, type RouteProp } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
 import {
   Badge,
+  Button,
   Card,
   DetailRow,
   ErrorState,
@@ -20,7 +22,9 @@ import {
 } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreStackParamList } from "../../navigation/types";
-import { INVOICE_TYPE_LABEL, useInvoice } from "./api";
+import { INVOICE_TYPE_LABEL, useInvoice, useInvoiceAction } from "./api";
+import { PaymentModal } from "./PaymentModal";
+import { sendInvoiceWhatsapp } from "./whatsapp";
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   cash: "Efectivo",
@@ -34,13 +38,40 @@ const PAYMENT_METHOD_LABEL: Record<string, string> = {
 export function InvoiceDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "InvoiceDetail">>();
   const { data: inv, isLoading, error } = useInvoice(params.id);
+  const action = useInvoiceAction(params.id);
+  const [payOpen, setPayOpen] = useState(false);
 
   if (isLoading) return <Loading />;
   if (error || !inv) return <Screen><ErrorState text="No se pudo cargar la factura." /></Screen>;
 
   const st = inv.status ?? "draft";
+  const canIssue = st === "draft";
+  const canPay = st === "issued" || st === "partially_paid";
+  const canCancel = st !== "paid" && st !== "cancelled";
+
+  const run = (a: "issue" | "cancel", confirm: string) =>
+    Alert.alert("Confirmar", confirm, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sí",
+        onPress: () =>
+          action.mutate(a, { onError: (e) => Alert.alert("Error", (e as Error).message) }),
+      },
+    ]);
+
   return (
     <Screen scroll>
+      <Card style={styles.actions}>
+        {canIssue && <Button title="Emitir" icon="send" onPress={() => run("issue", "¿Emitir esta factura?")} />}
+        {canPay && (
+          <Button title="Registrar pago" icon="cash" color={colors.primary} onPress={() => setPayOpen(true)} />
+        )}
+        <Button title="WhatsApp" icon="logo-whatsapp" variant="subtle" color={colors.teal} onPress={() => void sendInvoiceWhatsapp(inv)} />
+        {canCancel && (
+          <Button title="Cancelar factura" variant="subtle" color={colors.danger} onPress={() => run("cancel", "¿Cancelar esta factura?")} />
+        )}
+      </Card>
+
       <Card>
         <Badge label={invoiceStatusLabels[st] ?? st} color={invoiceStatusColors[st] ?? colors.dimmed} />
         <Field label="Cliente" value={inv.customer_name} />
@@ -92,11 +123,14 @@ export function InvoiceDetailScreen() {
           ))}
         </Card>
       )}
+
+      <PaymentModal visible={payOpen} onClose={() => setPayOpen(false)} invoice={inv} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  actions: { gap: spacing.sm },
   lineRow: {
     flexDirection: "row",
     alignItems: "center",

@@ -12,10 +12,13 @@ import {
 
 import { useNavigation } from "@react-navigation/native";
 
+import { Ionicons } from "@expo/vector-icons";
+
 import { useAuth } from "../auth/useAuth";
 import { colors, statusColors, statusLabels } from "../../theme";
 import type { AppNav } from "../../navigation/types";
 import { useMyOrders, type ServiceOrder } from "./api";
+import { ServiceOrderFormModal } from "./ServiceOrderFormModal";
 
 const SERVICE_TYPE_LABEL: Record<string, string> = {
   diagnostic: "Diagnóstico",
@@ -56,6 +59,7 @@ export function MyOrdersScreen() {
   const { user } = useAuth();
   const navigation = useNavigation<AppNav>();
   const [all, setAll] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const { data, isLoading, error, refetch, isRefetching } = useMyOrders(
     user?.id,
     all,
@@ -102,6 +106,10 @@ export function MyOrdersScreen() {
           }
         />
       )}
+      <TouchableOpacity style={styles.fab} onPress={() => setFormOpen(true)} activeOpacity={0.85}>
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
+      <ServiceOrderFormModal visible={formOpen} onClose={() => setFormOpen(false)} />
     </View>
   );
 }
@@ -144,4 +152,20 @@ const styles = StyleSheet.create({
   cardMeta: { fontSize: 13, color: colors.dimmed, marginTop: 2 },
   empty: { textAlign: "center", color: colors.dimmed, marginTop: 40 },
   error: { textAlign: "center", color: colors.danger, marginTop: 40 },
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  },
 });

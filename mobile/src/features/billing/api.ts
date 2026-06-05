@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
 import type { components } from "../../lib/api/schema";
@@ -67,6 +67,87 @@ export function useQuote(id: number | undefined) {
       });
       if (error || !data) throw new Error("No se pudo cargar la cotización.");
       return data as Quote;
+    },
+  });
+}
+
+// ---------- Acciones de factura ----------
+export function useInvoiceAction(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (action: "issue" | "cancel") => {
+      const params = { path: { id: id as number } };
+      const empty = {} as unknown as Invoice;
+      const { error } =
+        action === "issue"
+          ? await api.POST("/api/invoices/{id}/issue/", { params, body: empty })
+          : await api.POST("/api/invoices/{id}/cancel/", { params, body: empty });
+      if (error) throw new Error("No se pudo ejecutar la acción.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoice", id] });
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useRecordPayment(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      amount: string;
+      method: string;
+      reference_number?: string;
+      notes?: string;
+    }) => {
+      const { error } = await api.POST("/api/invoices/{id}/payments/", {
+        params: { path: { id: id as number } },
+        body: input as never,
+      });
+      if (error) throw new Error("No se pudo registrar el pago.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoice", id] });
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+// ---------- Acciones de cotización ----------
+export function useQuoteAction(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (action: "approve" | "reject") => {
+      const params = { path: { id: id as number } };
+      const empty = {} as unknown as Quote;
+      const { error } =
+        action === "approve"
+          ? await api.POST("/api/quotes/{id}/approve/", { params, body: empty })
+          : await api.POST("/api/quotes/{id}/reject/", { params, body: empty });
+      if (error) throw new Error("No se pudo ejecutar la acción.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["quote", id] });
+      void qc.invalidateQueries({ queryKey: ["quotes"] });
+    },
+  });
+}
+
+export function useConvertQuote(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST("/api/quotes/{id}/convert-to-invoice/", {
+        params: { path: { id: id as number } },
+        body: {} as unknown as Quote,
+      });
+      if (error || !data) throw new Error("No se pudo convertir la cotización.");
+      return data as unknown as Invoice;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["quote", id] });
+      void qc.invalidateQueries({ queryKey: ["quotes"] });
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
     },
   });
 }

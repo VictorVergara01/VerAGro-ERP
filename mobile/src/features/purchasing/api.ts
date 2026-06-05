@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
 import type { components } from "../../lib/api/schema";
@@ -33,6 +33,32 @@ export function usePurchaseOrder(id: number | undefined) {
       });
       if (error || !data) throw new Error("No se pudo cargar la orden.");
       return data as PurchaseOrder;
+    },
+  });
+}
+
+export function usePOAction(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (action: "send" | "cancel" | "receive-all") => {
+      const params = { path: { id: id as number } };
+      const empty = {} as unknown as PurchaseOrder;
+      let error;
+      if (action === "send") {
+        ({ error } = await api.POST("/api/purchase-orders/{id}/send/", { params, body: empty }));
+      } else if (action === "cancel") {
+        ({ error } = await api.POST("/api/purchase-orders/{id}/cancel/", { params, body: empty }));
+      } else {
+        ({ error } = await api.POST("/api/purchase-orders/{id}/receive/", {
+          params,
+          body: { receive_all: true } as never,
+        }));
+      }
+      if (error) throw new Error("No se pudo ejecutar la acción.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["purchase-order", id] });
+      void qc.invalidateQueries({ queryKey: ["purchase-orders"] });
     },
   });
 }

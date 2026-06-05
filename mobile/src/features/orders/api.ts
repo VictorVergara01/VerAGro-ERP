@@ -98,6 +98,58 @@ export function useDeletePart(orderId: number | undefined) {
   });
 }
 
+export interface NewOrderInput {
+  customer: number;
+  equipment?: number | null;
+  service_type: string;
+  customer_complaint?: string;
+}
+
+export function useCreateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: NewOrderInput) => {
+      const { data, error } = await api.POST("/api/service-orders/", {
+        body: input as unknown as ServiceOrder,
+      });
+      if (error || !data) throw new Error("No se pudo crear la orden.");
+      return data as ServiceOrder;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["my-orders"] }),
+  });
+}
+
+export function useGenerateDoc(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (kind: "quote" | "invoice") => {
+      const params = { path: { id: orderId as number } };
+      const empty = {} as unknown as ServiceOrder;
+      const { data, error } =
+        kind === "quote"
+          ? await api.POST("/api/service-orders/{id}/generate-quote/", { params, body: empty })
+          : await api.POST("/api/service-orders/{id}/generate-invoice/", { params, body: empty });
+      if (error || !data) throw new Error("No se pudo generar el documento.");
+      return data;
+    },
+    onSuccess: () => invalidateOrder(qc, orderId),
+  });
+}
+
+export function useCancelOrder(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await api.POST("/api/service-orders/{id}/cancel/", {
+        params: { path: { id: orderId as number } },
+        body: {} as unknown as ServiceOrder,
+      });
+      if (error) throw new Error("No se pudo cancelar la orden.");
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["my-orders"] }),
+  });
+}
+
 export function useOrderAction(id: number | undefined) {
   const qc = useQueryClient();
   return useMutation({
