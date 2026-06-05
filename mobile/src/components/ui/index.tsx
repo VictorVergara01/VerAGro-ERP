@@ -158,6 +158,15 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
+// ---------- FAB (botón flotante de crear) ----------
+export function FAB({ onPress, icon = "add" }: { onPress: () => void; icon?: keyof typeof Ionicons.glyphMap }) {
+  return (
+    <TouchableOpacity style={styles.fab} onPress={onPress} activeOpacity={0.85}>
+      <Ionicons name={icon} size={28} color="#fff" />
+    </TouchableOpacity>
+  );
+}
+
 // ---------- Estados ----------
 export function Loading() {
   return <ActivityIndicator style={{ marginTop: 48 }} color={colors.primary} />;
@@ -228,4 +237,20 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: font.lg, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
   empty: { textAlign: "center", color: colors.dimmed, marginTop: 48, fontSize: font.md },
   errorText: { textAlign: "center", color: colors.danger, marginTop: 48, fontSize: font.md },
+  fab: {
+    position: "absolute",
+    right: spacing.lg,
+    bottom: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+  },
 });

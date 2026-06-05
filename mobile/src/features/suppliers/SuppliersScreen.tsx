@@ -3,14 +3,16 @@ import { StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
-import { Badge, Card, SearchBar } from "../../components/ui";
+import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import { colors, font } from "../../theme";
 import type { MoreNav } from "../../navigation/types";
 import { useSuppliers, type Supplier } from "./api";
+import { SupplierFormModal } from "./SupplierFormModal";
 
 export function SuppliersScreen() {
   const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = useSuppliers(search);
 
@@ -45,6 +47,8 @@ export function SuppliersScreen() {
           </Card>
         )}
       />
+      <FAB onPress={() => setFormOpen(true)} />
+      <SupplierFormModal visible={formOpen} onClose={() => setFormOpen(false)} supplier={null} />
     </Screen>
   );
 }

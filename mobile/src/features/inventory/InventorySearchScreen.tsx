@@ -1,103 +1,82 @@
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../../theme";
+import { Screen } from "../../components/ui/Screen";
+import { Card, FAB, SearchBar } from "../../components/ui";
+import { ListView } from "../../components/ui/ListView";
+import { colors, font } from "../../theme";
 import { formatCurrency } from "../../utils/format";
-import { useProductSearch } from "./api";
+import { useProductSearch, type Product } from "./api";
+import { ProductFormModal } from "./ProductFormModal";
+import { StockAdjustModal } from "./StockAdjustModal";
 
 export function InventorySearchScreen() {
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [adjusting, setAdjusting] = useState<Product | null>(null);
   const products = useProductSearch(search);
 
+  const openActions = (p: Product) => {
+    Alert.alert(p.name, undefined, [
+      { text: "Editar", onPress: () => setEditing(p) },
+      { text: "Ajustar stock", onPress: () => setAdjusting(p) },
+      { text: "Cancelar", style: "cancel" },
+    ]);
+  };
+
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Buscar por SKU, nombre, marca…"
-        value={search}
-        onChangeText={setSearch}
-        autoFocus
-      />
-      {products.isLoading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} color={colors.primary} />
-      ) : (
-        <FlatList
-          data={products.data ?? []}
-          keyExtractor={(p) => String(p.id)}
-          contentContainerStyle={styles.list}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => {
-            const available = item.available_quantity ?? item.stock_quantity;
-            const low =
-              Number(available) <= Number(item.minimum_stock) &&
-              Number(item.minimum_stock) > 0;
-            return (
-              <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.price}>{formatCurrency(item.sale_price)}</Text>
-                </View>
-                <Text style={styles.meta}>{item.sku}</Text>
-                <View style={styles.stockRow}>
-                  <Text style={styles.stock}>
-                    Stock: {item.stock_quantity} · Disp:{" "}
-                    <Text style={low ? styles.lowStock : undefined}>{available}</Text>
-                  </Text>
-                  {item.location ? (
-                    <Text style={styles.location}>{item.location}</Text>
-                  ) : null}
-                </View>
+    <Screen padded={false}>
+      <ListView
+        items={products.data ?? []}
+        loading={products.isLoading}
+        error={products.error}
+        refetch={products.refetch}
+        isRefetching={products.isRefetching}
+        keyExtractor={(p) => String(p.id)}
+        header={
+          <View style={{ marginBottom: 12 }}>
+            <SearchBar placeholder="Buscar por SKU, nombre, marca…" value={search} onChangeText={setSearch} />
+          </View>
+        }
+        emptyText={search ? "Sin resultados." : "No hay productos."}
+        renderItem={(item: Product) => {
+          const available = item.available_quantity ?? item.stock_quantity;
+          const low =
+            Number(available) <= Number(item.minimum_stock) && Number(item.minimum_stock) > 0;
+          return (
+            <Card onPress={() => openActions(item)}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.price}>{formatCurrency(item.sale_price)}</Text>
               </View>
-            );
-          }}
-          ListEmptyComponent={
-            <Text style={styles.empty}>
-              {search ? "Sin resultados." : "Escribe para buscar."}
-            </Text>
-          }
-        />
-      )}
-    </View>
+              <Text style={styles.meta}>{item.sku}</Text>
+              <View style={styles.stockRow}>
+                <Text style={styles.stock}>
+                  Stock: {item.stock_quantity} · Disp:{" "}
+                  <Text style={low ? styles.lowStock : undefined}>{available}</Text>
+                </Text>
+                {item.location ? <Text style={styles.location}>{item.location}</Text> : null}
+              </View>
+            </Card>
+          );
+        }}
+      />
+      <FAB onPress={() => setCreating(true)} />
+      <ProductFormModal visible={creating} onClose={() => setCreating(false)} product={null} />
+      <ProductFormModal visible={!!editing} onClose={() => setEditing(null)} product={editing} />
+      <StockAdjustModal visible={!!adjusting} onClose={() => setAdjusting(null)} product={adjusting} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, padding: 16 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-  list: { paddingTop: 12, gap: 10 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   cardHeader: { flexDirection: "row", justifyContent: "space-between" },
-  name: { fontSize: 15, fontWeight: "600", color: colors.text, flexShrink: 1 },
-  price: { fontSize: 15, fontWeight: "700", color: colors.text },
-  meta: { fontSize: 12, color: colors.dimmed, marginTop: 2 },
-  stockRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  stock: { fontSize: 13, color: colors.text },
+  name: { fontSize: font.md, fontWeight: "600", color: colors.text, flexShrink: 1 },
+  price: { fontSize: font.md, fontWeight: "700", color: colors.text },
+  meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
+  stockRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
+  stock: { fontSize: font.sm, color: colors.text },
   lowStock: { color: colors.danger, fontWeight: "700" },
-  location: { fontSize: 12, color: colors.dimmed },
-  empty: { textAlign: "center", color: colors.dimmed, marginTop: 32 },
+  location: { fontSize: font.sm, color: colors.dimmed },
 });

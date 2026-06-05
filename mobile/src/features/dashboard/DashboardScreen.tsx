@@ -29,13 +29,23 @@ function StatCard({
 }) {
   return (
     <Card style={StyleSheet.flatten([styles.stat, highlight && { backgroundColor: colors.primary, borderColor: colors.primary }])}>
-      <View
-        style={[
-          styles.statIcon,
-          { backgroundColor: highlight ? "rgba(255,255,255,0.2)" : softBg(color) },
-        ]}
-      >
-        <Ionicons name={icon} size={22} color={highlight ? "#fff" : color} />
+      <View style={styles.statTop}>
+        <View
+          style={[
+            styles.statIcon,
+            { backgroundColor: highlight ? "rgba(255,255,255,0.2)" : softBg(color) },
+          ]}
+        >
+          <Ionicons name={icon} size={22} color={highlight ? "#fff" : color} />
+        </View>
+        <View
+          style={[
+            styles.statArrow,
+            { backgroundColor: highlight ? "rgba(255,255,255,0.25)" : colors.bg },
+          ]}
+        >
+          <Ionicons name="arrow-up" size={14} color={highlight ? "#fff" : colors.dimmed} />
+        </View>
       </View>
       <Text style={[styles.statValue, highlight && { color: "#fff" }]}>{value}</Text>
       <Text style={[styles.statLabel, highlight && { color: "rgba(255,255,255,0.9)" }]}>
@@ -207,13 +217,25 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: font.sm, color: colors.dimmed },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   stat: { width: "47%", flexGrow: 1, gap: 2 },
+  statTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
   statIcon: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.sm,
+  },
+  statArrow: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
   },
   statValue: { fontSize: font.xxl, fontWeight: "700", color: colors.text },
   statLabel: { fontSize: font.sm, color: colors.dimmed, fontWeight: "500" },

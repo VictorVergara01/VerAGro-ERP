@@ -3,14 +3,16 @@ import { StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
-import { Badge, Card, SearchBar } from "../../components/ui";
+import { Badge, Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
 import { colors, font } from "../../theme";
 import type { MoreNav } from "../../navigation/types";
 import { EQ_STATUS_COLOR, EQ_STATUS_LABEL, useEquipmentList, type Equipment } from "./api";
+import { EquipmentFormModal } from "./EquipmentFormModal";
 
 export function EquipmentScreen() {
   const [search, setSearch] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const nav = useNavigation<MoreNav>();
   const q = useEquipmentList(search);
 
@@ -45,6 +47,8 @@ export function EquipmentScreen() {
           </Card>
         )}
       />
+      <FAB onPress={() => setFormOpen(true)} />
+      <EquipmentFormModal visible={formOpen} onClose={() => setFormOpen(false)} equipment={null} />
     </Screen>
   );
 }
