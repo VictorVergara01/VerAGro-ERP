@@ -1,10 +1,18 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
 import { Card } from "../../components/ui";
-import { colors, font, radius, softBg, spacing } from "../../theme";
+import {
+  font,
+  radius,
+  softBg,
+  spacing,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 import type { MoreNav } from "../../navigation/types";
 import { useAuth } from "../auth/useAuth";
 
@@ -25,6 +33,8 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function MenuScreen() {
+  const { colors, scheme, toggle } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user, logout } = useAuth();
   const nav = useNavigation<MoreNav>();
 
@@ -99,6 +109,12 @@ export function MenuScreen() {
         </View>
       ))}
 
+      <Card style={styles.themeRow}>
+        <Ionicons name="moon" size={20} color={colors.dimmed} />
+        <Text style={styles.themeLabel}>Modo oscuro</Text>
+        <Switch value={scheme === "dark"} onValueChange={toggle} />
+      </Card>
+
       <TouchableOpacity style={styles.logout} onPress={() => void logout()} activeOpacity={0.7}>
         <Ionicons name="log-out-outline" size={20} color={colors.danger} />
         <Text style={styles.logoutText}>Cerrar sesión</Text>
@@ -107,8 +123,11 @@ export function MenuScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   userCard: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  themeRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  themeLabel: { flex: 1, fontSize: font.md, fontWeight: "600", color: colors.text },
   avatar: {
     width: 48,
     height: 48,

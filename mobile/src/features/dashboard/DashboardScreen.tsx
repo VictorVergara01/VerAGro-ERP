@@ -4,7 +4,17 @@ import { useNavigation } from "@react-navigation/native";
 
 import { Screen } from "../../components/ui/Screen";
 import { Card, EmptyState, Loading, SectionTitle } from "../../components/ui";
-import { colors, font, radius, softBg, spacing, statusColors, statusLabels } from "../../theme";
+import {
+  font,
+  radius,
+  softBg,
+  spacing,
+  statusColors,
+  statusLabels,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
 import { DashboardData, OPEN_STATUSES, sumStatuses, useDashboard } from "./api";
@@ -16,7 +26,7 @@ function StatCard({
   label,
   value,
   icon,
-  color = colors.primary,
+  color,
   hint,
   highlight,
 }: {
@@ -27,16 +37,19 @@ function StatCard({
   hint?: string;
   highlight?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const c = color ?? colors.primary;
   return (
     <Card style={StyleSheet.flatten([styles.stat, highlight && { backgroundColor: colors.primary, borderColor: colors.primary }])}>
       <View style={styles.statTop}>
         <View
           style={[
             styles.statIcon,
-            { backgroundColor: highlight ? "rgba(255,255,255,0.2)" : softBg(color) },
+            { backgroundColor: highlight ? "rgba(255,255,255,0.2)" : softBg(c) },
           ]}
         >
-          <Ionicons name={icon} size={22} color={highlight ? "#fff" : color} />
+          <Ionicons name={icon} size={22} color={highlight ? "#fff" : c} />
         </View>
         <View
           style={[
@@ -61,6 +74,8 @@ function StatCard({
 }
 
 function StatusBars({ data }: { data: DashboardData }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const entries = Object.entries(data.service_orders_by_status).filter(([, n]) => n > 0);
   const max = Math.max(1, ...entries.map(([, n]) => n));
   if (!entries.length) return <EmptyState text="Sin órdenes registradas." />;
@@ -89,6 +104,8 @@ function StatusBars({ data }: { data: DashboardData }) {
 }
 
 export function DashboardScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const isFinancial = user && FINANCIAL_ROLES.includes(user.role);
   const navigation = useNavigation<any>();
@@ -199,6 +216,8 @@ function QuickLink({
   title: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Card onPress={onPress} style={styles.quick}>
       <View style={[styles.statIcon, { backgroundColor: softBg(color) }]}>
@@ -210,40 +229,41 @@ function QuickLink({
   );
 }
 
-const styles = StyleSheet.create({
-  greetingRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-  logo: { width: 52, height: 52 },
-  greeting: { fontSize: font.xl, fontWeight: "700", color: colors.text },
-  subtitle: { fontSize: font.sm, color: colors.dimmed },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
-  stat: { width: "47%", flexGrow: 1, gap: 2 },
-  statTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-  },
-  statIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statArrow: {
-    width: 26,
-    height: 26,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statValue: { fontSize: font.xxl, fontWeight: "700", color: colors.text },
-  statLabel: { fontSize: font.sm, color: colors.dimmed, fontWeight: "500" },
-  statHint: { fontSize: font.xs, color: colors.dimmed, marginTop: 2 },
-  barRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  barLabel: { width: 110, fontSize: font.sm, color: colors.text },
-  barTrack: { flex: 1, backgroundColor: colors.bg, borderRadius: 6, height: 10, overflow: "hidden" },
-  barValue: { width: 28, textAlign: "right", fontSize: font.sm, fontWeight: "700", color: colors.text },
-  quick: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-  quickTitle: { flex: 1, fontSize: font.md, fontWeight: "600", color: colors.text },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    greetingRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+    logo: { width: 52, height: 52 },
+    greeting: { fontSize: font.xl, fontWeight: "700", color: colors.text },
+    subtitle: { fontSize: font.sm, color: colors.dimmed },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
+    stat: { width: "47%", flexGrow: 1, gap: 2 },
+    statTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: spacing.sm,
+    },
+    statIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    statArrow: {
+      width: 26,
+      height: 26,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    statValue: { fontSize: font.xxl, fontWeight: "700", color: colors.text },
+    statLabel: { fontSize: font.sm, color: colors.dimmed, fontWeight: "500" },
+    statHint: { fontSize: font.xs, color: colors.dimmed, marginTop: 2 },
+    barRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+    barLabel: { width: 110, fontSize: font.sm, color: colors.text },
+    barTrack: { flex: 1, backgroundColor: colors.bg, borderRadius: 6, height: 10, overflow: "hidden" },
+    barValue: { width: 28, textAlign: "right", fontSize: font.sm, fontWeight: "700", color: colors.text },
+    quick: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+    quickTitle: { flex: 1, fontSize: font.md, fontWeight: "600", color: colors.text },
+  });

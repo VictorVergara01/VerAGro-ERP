@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../../theme";
+import { useTheme, useThemedStyles, type ThemeColors } from "../../theme";
 import { formatDate } from "../../utils/format";
 import type { OrderChecklistRoute } from "../../navigation/types";
 import {
@@ -22,6 +22,8 @@ import {
 } from "./photos";
 
 export function PhotosScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const route = useRoute<OrderChecklistRoute>();
   const { id: orderId } = route.params;
   const photos = useOrderPhotos(orderId);
@@ -114,7 +116,8 @@ export function PhotosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, paddingBottom: 32 },
   actions: { flexDirection: "row", gap: 10, marginBottom: 16 },

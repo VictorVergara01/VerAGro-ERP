@@ -10,7 +10,13 @@ import {
   View,
 } from "react-native";
 
-import { colors, statusColors, statusLabels } from "../../theme";
+import {
+  statusColors,
+  statusLabels,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
 import type { AppNav, OrderDetailRoute } from "../../navigation/types";
@@ -68,6 +74,7 @@ function nextAction(
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -83,6 +90,7 @@ function PartRow({
   part: ServiceOrderPart;
   onDelete?: () => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <TouchableOpacity
       style={styles.partRow}
@@ -102,6 +110,8 @@ function PartRow({
 }
 
 export function OrderDetailScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const route = useRoute<OrderDetailRoute>();
   const navigation = useNavigation<AppNav>();
   const { id } = route.params;
@@ -362,7 +372,8 @@ export function OrderDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, gap: 12, paddingBottom: 32 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg },

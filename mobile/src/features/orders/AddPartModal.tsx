@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../../theme";
+import { useTheme, useThemedStyles, type ThemeColors } from "../../theme";
 import { useProductSearch, type Product } from "../inventory/api";
 import { useAddPart } from "./api";
 
@@ -23,6 +23,8 @@ export function AddPartModal({
   onClose: () => void;
   orderId: number;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState("1");
@@ -130,7 +132,8 @@ export function AddPartModal({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, padding: 16 },
   header: {
     flexDirection: "row",
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     marginBottom: 8,
   },
   productRow: {
@@ -177,7 +180,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     width: 120,
   },
   actions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 20 },

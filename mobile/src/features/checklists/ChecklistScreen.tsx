@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../../theme";
+import { useTheme, useThemedStyles, type ThemeColors } from "../../theme";
 import type { OrderChecklistRoute } from "../../navigation/types";
 import {
   ITEM_STATUS,
@@ -29,6 +29,7 @@ function ChecklistBlock({
   checklist: ServiceChecklist;
   orderId: number;
 }) {
+  const styles = useThemedStyles(makeStyles);
   const fill = useFillChecklist(orderId);
   const complete = useCompleteChecklist(orderId);
   const [statuses, setStatuses] = useState<Record<number, string>>({});
@@ -118,6 +119,8 @@ function ChecklistBlock({
 }
 
 export function ChecklistScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const route = useRoute<OrderChecklistRoute>();
   const { id: orderId } = route.params;
   const checklists = useOrderChecklists(orderId);
@@ -175,7 +178,8 @@ export function ChecklistScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, gap: 12, paddingBottom: 32 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg },
