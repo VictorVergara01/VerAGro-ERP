@@ -151,3 +151,120 @@ export function useConvertQuote(id: number | undefined) {
     },
   });
 }
+
+// ---------- Opciones ----------
+export const LINE_TYPE_OPTIONS = [
+  { value: "product", label: "Producto" },
+  { value: "service", label: "Servicio" },
+  { value: "labor", label: "Mano de obra" },
+  { value: "diagnostic", label: "Diagnóstico" },
+  { value: "other", label: "Otro" },
+];
+
+export const INVOICE_TYPE_OPTIONS = [
+  { value: "service_invoice", label: "Servicio" },
+  { value: "final_invoice", label: "Final" },
+  { value: "product_sale", label: "Venta de producto" },
+];
+
+// ---------- Cotización: crear/editar ----------
+export interface QuoteLineInput {
+  line_type: string;
+  description: string;
+  quantity: string;
+  unit_price: string;
+}
+export interface QuoteInput {
+  customer: number;
+  issue_date?: string;
+  expiration_date?: string | null;
+  discount_percentage: string;
+  tax_percentage: string;
+  notes: string;
+  terms: string;
+  lines: QuoteLineInput[];
+}
+
+export function useCreateQuote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: QuoteInput) => {
+      const { data, error } = await api.POST("/api/quotes/", {
+        body: input as unknown as Quote,
+      });
+      if (error || !data) throw new Error("No se pudo crear la cotización.");
+      return data as Quote;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["quotes"] }),
+  });
+}
+
+export function useUpdateQuote(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: QuoteInput) => {
+      const { data, error } = await api.PATCH("/api/quotes/{id}/", {
+        params: { path: { id: id as number } },
+        body: input as unknown as Quote,
+      });
+      if (error || !data) throw new Error("No se pudo guardar la cotización.");
+      return data as Quote;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["quote", id] });
+      void qc.invalidateQueries({ queryKey: ["quotes"] });
+    },
+  });
+}
+
+// ---------- Factura: crear/editar ----------
+export interface InvoiceLineInput {
+  line_type: string;
+  product: number | null;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  unit_cost: string;
+}
+export interface InvoiceInput {
+  customer: number;
+  invoice_type: string;
+  issue_date?: string;
+  due_date?: string | null;
+  discount_percentage: string;
+  tax_percentage: string;
+  notes: string;
+  lines: InvoiceLineInput[];
+}
+
+export function useCreateInvoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: InvoiceInput) => {
+      const { data, error } = await api.POST("/api/invoices/", {
+        body: input as unknown as Invoice,
+      });
+      if (error || !data) throw new Error("No se pudo crear la factura.");
+      return data as Invoice;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["invoices"] }),
+  });
+}
+
+export function useUpdateInvoice(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: InvoiceInput) => {
+      const { data, error } = await api.PATCH("/api/invoices/{id}/", {
+        params: { path: { id: id as number } },
+        body: input as unknown as Invoice,
+      });
+      if (error || !data) throw new Error("No se pudo guardar la factura.");
+      return data as Invoice;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoice", id] });
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
