@@ -4,7 +4,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { Screen } from "../../components/ui/Screen";
 import { Card, FAB, SearchBar } from "../../components/ui";
 import { ListView } from "../../components/ui/ListView";
-import { colors, font } from "../../theme";
+import { font, useThemedStyles, type ThemeColors } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import { useDeleteProduct, useProductSearch, type Product } from "./api";
 import { ProductFormModal } from "./ProductFormModal";
@@ -17,6 +17,7 @@ export function InventorySearchScreen() {
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const products = useProductSearch(search);
   const del = useDeleteProduct();
+  const styles = useThemedStyles(makeStyles);
 
   const openActions = (p: Product) => {
     Alert.alert(p.name, undefined, [
@@ -89,14 +90,15 @@ export function InventorySearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
-  name: { fontSize: font.md, fontWeight: "600", color: colors.text, flexShrink: 1 },
-  price: { fontSize: font.md, fontWeight: "700", color: colors.text },
-  meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
-  stockRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
-  stock: { fontSize: font.sm, color: colors.text },
-  lowStock: { color: colors.danger, fontWeight: "700" },
-  location: { fontSize: font.sm, color: colors.dimmed },
-  hint: { fontSize: font.xs, color: colors.dimmed, marginTop: 6, fontStyle: "italic" },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+    name: { fontSize: font.md, fontWeight: "600", color: colors.text, flexShrink: 1 },
+    price: { fontSize: font.md, fontWeight: "700", color: colors.text },
+    meta: { fontSize: font.sm, color: colors.dimmed, marginTop: 2 },
+    stockRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
+    stock: { fontSize: font.sm, color: colors.text },
+    lowStock: { color: colors.danger, fontWeight: "700" },
+    location: { fontSize: font.sm, color: colors.dimmed },
+    hint: { fontSize: font.xs, color: colors.dimmed, marginTop: 6, fontStyle: "italic" },
+  });

@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import { Screen } from "../../components/ui/Screen";
 import { Button, ErrorState, LabeledInput, Loading, SectionTitle } from "../../components/ui";
-import { colors } from "../../theme";
 import { useAuth } from "../auth/useAuth";
 
 interface Company {

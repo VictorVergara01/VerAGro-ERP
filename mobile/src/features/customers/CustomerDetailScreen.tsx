@@ -5,7 +5,7 @@ import { useNavigation, useRoute, type RouteProp } from "@react-navigation/nativ
 
 import { Screen } from "../../components/ui/Screen";
 import { Badge, Card, ErrorState, Field, Loading } from "../../components/ui";
-import { colors } from "../../theme";
+import { useTheme } from "../../theme";
 import type { MoreNav, MoreStackParamList } from "../../navigation/types";
 import { CUSTOMER_TYPE_LABEL, useCustomer } from "./api";
 import { CustomerFormModal } from "./CustomerFormModal";
@@ -15,6 +15,7 @@ export function CustomerDetailScreen() {
   const nav = useNavigation<MoreNav>();
   const { data: c, isLoading, error } = useCustomer(params.id);
   const [edit, setEdit] = useState(false);
+  const { colors } = useTheme();
 
   useEffect(() => {
     nav.setOptions({

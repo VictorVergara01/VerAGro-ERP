@@ -5,7 +5,7 @@ import { api } from "../../lib/api/client";
 import type { components } from "../../lib/api/schema";
 import { Screen } from "../../components/ui/Screen";
 import { Card, DetailRow, ErrorState, Loading, SectionTitle } from "../../components/ui";
-import { colors, font } from "../../theme";
+import { font, useThemedStyles, type ThemeColors } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import { useDashboard } from "../dashboard/api";
 
@@ -25,6 +25,7 @@ function useLowStock() {
 export function ReportsScreen() {
   const dash = useDashboard();
   const low = useLowStock();
+  const styles = useThemedStyles(makeStyles);
 
   if (dash.isLoading) return <Loading />;
   if (dash.error || !dash.data) {
@@ -77,15 +78,16 @@ export function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  empty: { color: colors.dimmed, fontSize: font.sm },
-  lowRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  lowName: { fontSize: font.md, color: colors.text },
-  lowMeta: { fontSize: font.sm, color: colors.dimmed },
-  lowQty: { fontSize: font.sm, fontWeight: "700", color: colors.danger },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    empty: { color: colors.dimmed, fontSize: font.sm },
+    lowRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 6,
+    },
+    lowName: { fontSize: font.md, color: colors.text },
+    lowMeta: { fontSize: font.sm, color: colors.dimmed },
+    lowQty: { fontSize: font.sm, fontWeight: "700", color: colors.danger },
+  });

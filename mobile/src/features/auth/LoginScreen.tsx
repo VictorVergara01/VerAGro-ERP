@@ -11,11 +11,12 @@ import {
 } from "react-native";
 
 import { API_BASE_URL } from "../../lib/api/baseUrl";
-import { colors } from "../../theme";
+import { useThemedStyles, type ThemeColors } from "../../theme";
 import { useAuth } from "./useAuth";
 
 export function LoginScreen() {
   const { login } = useAuth();
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +81,8 @@ export function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -104,7 +106,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
+    color: colors.text,
   },
   error: { color: colors.danger, marginTop: 12 },
   button: {

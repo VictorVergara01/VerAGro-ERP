@@ -5,7 +5,7 @@ import { useNavigation, useRoute, type RouteProp } from "@react-navigation/nativ
 
 import { Screen } from "../../components/ui/Screen";
 import { Badge, Card, ErrorState, Field, Loading } from "../../components/ui";
-import { colors } from "../../theme";
+import { useTheme } from "../../theme";
 import { formatDate } from "../../utils/format";
 import type { MoreNav, MoreStackParamList } from "../../navigation/types";
 import { EQ_STATUS_COLOR, EQ_STATUS_LABEL, useEquipment } from "./api";
@@ -16,6 +16,7 @@ export function EquipmentDetailScreen() {
   const nav = useNavigation<MoreNav>();
   const { data: e, isLoading, error } = useEquipment(params.id);
   const [edit, setEdit] = useState(false);
+  const { colors } = useTheme();
 
   useEffect(() => {
     nav.setOptions({

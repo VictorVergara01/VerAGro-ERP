@@ -3,7 +3,7 @@ import { Alert, Text } from "react-native";
 
 import { FormModal, Segmented } from "../../components/ui/form";
 import { LabeledInput } from "../../components/ui";
-import { colors, font } from "../../theme";
+import { font, useTheme } from "../../theme";
 import { useAdjustStock, type Product } from "./api";
 
 export function StockAdjustModal({
@@ -15,6 +15,7 @@ export function StockAdjustModal({
   onClose: () => void;
   product: Product | null;
 }) {
+  const { colors } = useTheme();
   const [type, setType] = useState("adjustment_in");
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
