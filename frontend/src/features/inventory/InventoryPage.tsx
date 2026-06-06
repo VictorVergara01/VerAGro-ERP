@@ -101,6 +101,12 @@ export function InventoryPage() {
       },
     });
 
+  const isLow = (p: Product) => {
+    const available = Number(p.available_quantity ?? p.stock_quantity);
+    const min = Number(p.minimum_stock);
+    return min > 0 && available <= min;
+  };
+
   const columns: Column<Product>[] = [
     { header: "SKU", render: (p) => p.sku },
     { header: "Nombre", render: (p) => p.name },
@@ -112,7 +118,16 @@ export function InventoryPage() {
     {
       header: "Disp.",
       align: "right",
-      render: (p) => p.available_quantity ?? p.stock_quantity,
+      render: (p) => {
+        const available = p.available_quantity ?? p.stock_quantity;
+        return isLow(p) ? (
+          <Text component="span" c="red" fw={700}>
+            {available}
+          </Text>
+        ) : (
+          available
+        );
+      },
     },
     { header: "Mín.", align: "right", render: (p) => p.minimum_stock },
     {
@@ -123,9 +138,16 @@ export function InventoryPage() {
     {
       header: "Estado",
       render: (p) => (
-        <Badge color={p.is_active ? "green" : "gray"} variant="light">
-          {p.is_active ? "Activo" : "Inactivo"}
-        </Badge>
+        <Group gap={6} wrap="nowrap">
+          <Badge color={p.is_active ? "green" : "gray"} variant="light">
+            {p.is_active ? "Activo" : "Inactivo"}
+          </Badge>
+          {isLow(p) && (
+            <Badge color="red" variant="filled">
+              Pedir
+            </Badge>
+          )}
+        </Group>
       ),
     },
     {
