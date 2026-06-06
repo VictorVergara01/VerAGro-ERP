@@ -101,11 +101,24 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if attrs.get("product") is None and not attrs.get("new_product"):
+        # En edición (PATCH) puede no venir ni product ni new_product: se conserva el existente.
+        if self.instance is None and attrs.get("product") is None and not attrs.get("new_product"):
             raise serializers.ValidationError(
                 "Cada línea requiere un producto existente o uno nuevo (new_product)."
             )
         return attrs
+
+    def create(self, validated_data):
+        new_product = validated_data.pop("new_product", None)
+        if validated_data.get("product") is None and new_product:
+            validated_data["product"] = create_product_from_payload(new_product)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        new_product = validated_data.pop("new_product", None)
+        if validated_data.get("product") is None and new_product:
+            validated_data["product"] = create_product_from_payload(new_product)
+        return super().update(instance, validated_data)
 
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):

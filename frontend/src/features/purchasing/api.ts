@@ -118,6 +118,60 @@ export function usePurchaseOrderAction(id: number | undefined) {
   });
 }
 
+export function useAddOrderLine(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateLineInput) => {
+      const { error } = await api.POST("/api/purchase-order-lines/", {
+        body: {
+          purchase_order: orderId,
+          ...input,
+        } as never,
+      });
+      if (error) throw new Error("No se pudo agregar el producto.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["purchase-order", orderId] });
+    },
+  });
+}
+
+export interface UpdateLineInput {
+  quantity_ordered: string;
+  unit_purchase_cost: string;
+}
+
+export function useUpdateOrderLine(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...input }: UpdateLineInput & { id: number }) => {
+      const { error } = await api.PATCH("/api/purchase-order-lines/{id}/", {
+        params: { path: { id } },
+        body: input as never,
+      });
+      if (error) throw new Error("No se pudo actualizar el producto.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["purchase-order", orderId] });
+    },
+  });
+}
+
+export function useDeleteOrderLine(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/purchase-order-lines/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo quitar el producto.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["purchase-order", orderId] });
+    },
+  });
+}
+
 export function useAddAdditionalCost(orderId: number | undefined) {
   const qc = useQueryClient();
   return useMutation({

@@ -17,6 +17,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
+  IconPencil,
   IconPlus,
   IconSend,
   IconTrash,
@@ -29,14 +30,16 @@ import { useParams } from "react-router-dom";
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { AddLineModal } from "./AddLineModal";
 import {
   useAddAdditionalCost,
   useDeleteAdditionalCost,
+  useDeleteOrderLine,
   usePurchaseOrder,
   usePurchaseOrderAction,
 } from "./api";
 import { ReceiveModal } from "./ReceiveModal";
-import { PO_STATUS_COLOR, PO_STATUS_LABEL } from "./types";
+import { PO_STATUS_COLOR, PO_STATUS_LABEL, type PurchaseOrderLine } from "./types";
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams();
@@ -45,7 +48,10 @@ export function PurchaseOrderDetailPage() {
   const action = usePurchaseOrderAction(orderId);
   const addCost = useAddAdditionalCost(orderId);
   const deleteCost = useDeleteAdditionalCost(orderId);
+  const deleteLine = useDeleteOrderLine(orderId);
   const [receiveOpen, { open, close }] = useDisclosure(false);
+  const [lineOpen, { open: openLine, close: closeLine }] = useDisclosure(false);
+  const [editingLine, setEditingLine] = useState<PurchaseOrderLine | null>(null);
   const [costName, setCostName] = useState("");
   const [costAmount, setCostAmount] = useState<number | string>("");
 
@@ -97,6 +103,22 @@ export function PurchaseOrderDetailPage() {
       notifications.show({ color: "red", message: (e as Error).message });
     }
   };
+
+  const removeLine = (lineId: number) =>
+    modals.openConfirmModal({
+      title: "Quitar producto",
+      children: "¿Quitar este producto de la orden?",
+      labels: { confirm: "Quitar", cancel: "Volver" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        try {
+          await deleteLine.mutateAsync(lineId);
+          notifications.show({ color: "green", message: "Producto quitado." });
+        } catch (e) {
+          notifications.show({ color: "red", message: (e as Error).message });
+        }
+      },
+    });
 
   return (
     <Stack>
@@ -161,9 +183,22 @@ export function PurchaseOrderDetailPage() {
       </Card>
 
       <Card>
-        <Text fw={600} mb="sm">
-          Líneas y costeo
-        </Text>
+        <Group justify="space-between" mb="sm">
+          <Text fw={600}>Líneas y costeo</Text>
+          {canRecalc && (
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconPlus size={16} />}
+              onClick={() => {
+                setEditingLine(null);
+                openLine();
+              }}
+            >
+              Agregar producto
+            </Button>
+          )}
+        </Group>
         <Table.ScrollContainer minWidth={760}>
           <Table striped>
             <Table.Thead>
@@ -175,6 +210,7 @@ export function PurchaseOrderDetailPage() {
                 <Table.Th ta="right">Subtotal</Table.Th>
                 <Table.Th ta="right">Costo asignado</Table.Th>
                 <Table.Th ta="right">Costo real (landed)</Table.Th>
+                {canRecalc && <Table.Th w={80} />}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -187,6 +223,31 @@ export function PurchaseOrderDetailPage() {
                   <Table.Td ta="right">{formatCurrency(l.line_subtotal)}</Table.Td>
                   <Table.Td ta="right">{formatCurrency(l.allocated_extra_cost)}</Table.Td>
                   <Table.Td ta="right">{formatCurrency(l.landed_unit_cost)}</Table.Td>
+                  {canRecalc && (
+                    <Table.Td ta="right">
+                      {Number(l.quantity_received) === 0 && (
+                        <Group gap={4} justify="flex-end" wrap="nowrap">
+                          <ActionIcon
+                            variant="subtle"
+                            onClick={() => {
+                              setEditingLine(l);
+                              openLine();
+                            }}
+                          >
+                            <IconPencil size={16} />
+                          </ActionIcon>
+                          <ActionIcon
+                            color="red"
+                            variant="subtle"
+                            onClick={() => removeLine(l.id)}
+                            loading={deleteLine.isPending}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Group>
+                      )}
+                    </Table.Td>
+                  )}
                 </Table.Tr>
               ))}
             </Table.Tbody>
@@ -281,6 +342,12 @@ export function PurchaseOrderDetailPage() {
       </Group>
 
       <ReceiveModal opened={receiveOpen} onClose={close} order={order} />
+      <AddLineModal
+        opened={lineOpen}
+        onClose={closeLine}
+        orderId={orderId}
+        line={editingLine}
+      />
     </Stack>
   );
 }
