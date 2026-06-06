@@ -2,22 +2,35 @@ import { useEffect, useState } from "react";
 import { Alert, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-import { AddRowButton, FormModal, LineCard, Picker } from "../../components/ui/form";
+import { AddRowButton, FormModal, LineCard, Picker, Segmented } from "../../components/ui/form";
 import { LabeledInput, SectionTitle } from "../../components/ui";
 import type { MoreNav } from "../../navigation/types";
 import { useSuppliers } from "../suppliers/api";
-import { useProductSearch } from "../inventory/api";
+import { useCategories, useProductSearch } from "../inventory/api";
 import {
   useCreatePurchaseOrder,
   type POCostInput,
   type POLineInput,
 } from "./api";
 
-const emptyLine = (): POLineInput => ({
+interface LineState {
+  mode: "existing" | "new";
+  product: number | null;
+  new_name: string;
+  new_category: number | null;
+  new_sku: string;
+  quantity_ordered: string;
+  unit_purchase_cost: string;
+}
+
+const emptyLine = (): LineState => ({
+  mode: "existing",
   product: null,
+  new_name: "",
+  new_category: null,
+  new_sku: "",
   quantity_ordered: "1",
   unit_purchase_cost: "0",
-  margin_percentage: "0",
 });
 
 export function PurchaseOrderFormModal({
@@ -31,6 +44,7 @@ export function PurchaseOrderFormModal({
   const create = useCreatePurchaseOrder();
   const suppliers = useSuppliers("");
   const products = useProductSearch("");
+  const categories = useCategories();
 
   const [supplier, setSupplier] = useState<number | null>(null);
   const [orderDate, setOrderDate] = useState("");
@@ -38,7 +52,7 @@ export function PurchaseOrderFormModal({
   const [currency, setCurrency] = useState("USD");
   const [shipping, setShipping] = useState("0");
   const [notes, setNotes] = useState("");
-  const [lines, setLines] = useState<POLineInput[]>([]);
+  const [lines, setLines] = useState<LineState[]>([]);
   const [costs, setCosts] = useState<POCostInput[]>([]);
 
   useEffect(() => {
@@ -53,7 +67,7 @@ export function PurchaseOrderFormModal({
     setCosts([]);
   }, [visible]);
 
-  const updateLine = (i: number, patch: Partial<POLineInput>) =>
+  const updateLine = (i: number, patch: Partial<LineState>) =>
     setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   const removeLine = (i: number) => setLines((prev) => prev.filter((_, idx) => idx !== i));
   const updateCost = (i: number, patch: Partial<POCostInput>) =>
@@ -63,8 +77,26 @@ export function PurchaseOrderFormModal({
   const submit = () => {
     if (!supplier) return Alert.alert("Falta el proveedor", "Selecciona un proveedor.");
     if (lines.length === 0) return Alert.alert("Sin líneas", "Agrega al menos una línea.");
-    if (lines.some((l) => l.product == null))
-      return Alert.alert("Producto requerido", "Cada línea necesita un producto.");
+    for (const l of lines) {
+      if (l.mode === "existing" && l.product == null)
+        return Alert.alert("Producto requerido", "Cada línea existente necesita un producto.");
+      if (l.mode === "new" && !l.new_name.trim())
+        return Alert.alert("Nombre requerido", "Cada producto nuevo necesita un nombre.");
+    }
+    const payloadLines: POLineInput[] = lines.map((l) => ({
+      quantity_ordered: l.quantity_ordered,
+      unit_purchase_cost: l.unit_purchase_cost,
+      ...(l.mode === "new"
+        ? {
+            product: null,
+            new_product: {
+              name: l.new_name.trim(),
+              category: l.new_category,
+              sku: l.new_sku.trim() || undefined,
+            },
+          }
+        : { product: l.product }),
+    }));
     const input = {
       supplier,
       order_date: orderDate || undefined,
@@ -72,7 +104,7 @@ export function PurchaseOrderFormModal({
       currency: currency || "USD",
       shipping_cost: shipping || "0",
       notes,
-      lines,
+      lines: payloadLines,
       additional_costs: costs.filter((c) => c.name.trim()),
     };
     create.mutate(input, {
@@ -89,6 +121,7 @@ export function PurchaseOrderFormModal({
     value: p.id,
     label: `${p.sku} · ${p.name}`,
   }));
+  const categoryOptions = (categories.data ?? []).map((c) => ({ value: c.id, label: c.name }));
 
   return (
     <FormModal
@@ -119,21 +152,51 @@ export function PurchaseOrderFormModal({
       <SectionTitle>Líneas</SectionTitle>
       {lines.map((l, i) => (
         <LineCard key={i} title={`Línea ${i + 1}`} onRemove={() => removeLine(i)}>
-          <Picker
-            label="Producto"
-            value={l.product}
-            onChange={(v) => updateLine(i, { product: v as number | null })}
-            options={productOptions}
+          <Segmented
+            value={l.mode}
+            onChange={(v) => updateLine(i, { mode: v })}
+            options={[
+              { value: "existing", label: "Existente" },
+              { value: "new", label: "Nuevo" },
+            ]}
           />
+          {l.mode === "existing" ? (
+            <Picker
+              label="Producto"
+              value={l.product}
+              onChange={(v) => updateLine(i, { product: v as number | null })}
+              options={productOptions}
+            />
+          ) : (
+            <>
+              <LabeledInput
+                label="Nombre del producto"
+                value={l.new_name}
+                onChangeText={(t) => updateLine(i, { new_name: t })}
+              />
+              <Picker
+                label="Categoría"
+                value={l.new_category}
+                onChange={(v) => updateLine(i, { new_category: v as number | null })}
+                options={categoryOptions}
+                clearable
+                placeholder="Sin categoría"
+              />
+              <LabeledInput
+                label="SKU (opcional)"
+                value={l.new_sku}
+                onChangeText={(t) => updateLine(i, { new_sku: t })}
+                placeholder="auto"
+                autoCapitalize="characters"
+              />
+            </>
+          )}
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
               <LabeledInput label="Cantidad" value={l.quantity_ordered} onChangeText={(t) => updateLine(i, { quantity_ordered: t })} keyboardType="decimal-pad" />
             </View>
             <View style={{ flex: 1 }}>
               <LabeledInput label="Costo unit." value={l.unit_purchase_cost} onChangeText={(t) => updateLine(i, { unit_purchase_cost: t })} keyboardType="decimal-pad" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <LabeledInput label="Margen %" value={l.margin_percentage} onChangeText={(t) => updateLine(i, { margin_percentage: t })} keyboardType="decimal-pad" />
             </View>
           </View>
         </LineCard>
