@@ -17,7 +17,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
-  IconCalculator,
   IconPlus,
   IconSend,
   IconTrash,
@@ -112,16 +111,6 @@ export function PurchaseOrderDetailPage() {
         }
         actions={
           <>
-            {canRecalc && (
-              <Button
-                variant="default"
-                leftSection={<IconCalculator size={18} />}
-                onClick={() => run("recalculate", "Costos recalculados.")}
-                loading={action.isPending}
-              >
-                Recalcular
-              </Button>
-            )}
             {canSend && (
               <Button
                 leftSection={<IconSend size={18} />}
