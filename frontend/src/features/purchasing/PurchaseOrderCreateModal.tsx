@@ -1,13 +1,15 @@
 import {
   ActionIcon,
   Button,
+  Card,
   Divider,
   Grid,
   Group,
   Modal,
   NumberInput,
+  SegmentedControl,
   Select,
-  Table,
+  Stack,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -17,14 +19,17 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useProducts, useSupplierOptions } from "../inventory/api";
-import { useCreatePurchaseOrder } from "./api";
+import { useCategories, useProducts, useSupplierOptions } from "../inventory/api";
+import { useCreatePurchaseOrder, type CreateLineInput } from "./api";
 
 interface LineRow {
+  mode: "existing" | "new";
   product: string | null;
+  new_name: string;
+  new_category: string | null;
+  new_sku: string;
   quantity_ordered: number | string;
   unit_purchase_cost: number | string;
-  margin_percentage: number | string;
 }
 interface CostRow {
   name: string;
@@ -41,6 +46,16 @@ interface FormValues {
   additional_costs: CostRow[];
 }
 
+const emptyLine = (): LineRow => ({
+  mode: "existing",
+  product: null,
+  new_name: "",
+  new_category: null,
+  new_sku: "",
+  quantity_ordered: 1,
+  unit_purchase_cost: 0,
+});
+
 export function PurchaseOrderCreateModal({
   opened,
   onClose,
@@ -51,6 +66,7 @@ export function PurchaseOrderCreateModal({
   const create = useCreatePurchaseOrder();
   const suppliers = useSupplierOptions();
   const products = useProducts({});
+  const categories = useCategories();
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
@@ -78,17 +94,40 @@ export function PurchaseOrderCreateModal({
     value: String(p.id),
     label: `${p.sku} · ${p.name}`,
   }));
+  const categoryOptions = (categories.data ?? []).map((c) => ({
+    value: String(c.id),
+    label: c.name,
+  }));
 
   const handleSubmit = form.onSubmit(async (values) => {
     if (values.lines.length === 0) {
       notifications.show({ color: "red", message: "Agrega al menos una línea." });
       return;
     }
-    if (values.lines.some((l) => !l.product)) {
-      notifications.show({ color: "red", message: "Cada línea requiere un producto." });
-      return;
+    for (const l of values.lines) {
+      if (l.mode === "existing" && !l.product) {
+        notifications.show({ color: "red", message: "Cada línea existente requiere un producto." });
+        return;
+      }
+      if (l.mode === "new" && !l.new_name.trim()) {
+        notifications.show({ color: "red", message: "Cada producto nuevo requiere un nombre." });
+        return;
+      }
     }
     try {
+      const lines: CreateLineInput[] = values.lines.map((l) => ({
+        quantity_ordered: String(l.quantity_ordered || 0),
+        unit_purchase_cost: String(l.unit_purchase_cost || 0),
+        ...(l.mode === "new"
+          ? {
+              new_product: {
+                name: l.new_name.trim(),
+                category: l.new_category ? Number(l.new_category) : null,
+                sku: l.new_sku.trim() || undefined,
+              },
+            }
+          : { product: Number(l.product) }),
+      }));
       const order = await create.mutateAsync({
         supplier: Number(values.supplier),
         order_date: values.order_date || undefined,
@@ -96,12 +135,7 @@ export function PurchaseOrderCreateModal({
         currency: values.currency,
         shipping_cost: String(values.shipping_cost || 0),
         notes: values.notes,
-        lines: values.lines.map((l) => ({
-          product: Number(l.product),
-          quantity_ordered: String(l.quantity_ordered || 0),
-          unit_purchase_cost: String(l.unit_purchase_cost || 0),
-          margin_percentage: String(l.margin_percentage || 0),
-        })),
+        lines,
         additional_costs: values.additional_costs
           .filter((c) => c.name)
           .map((c) => ({ name: c.name, amount: String(c.amount || 0) })),
@@ -158,77 +192,75 @@ export function PurchaseOrderCreateModal({
           label={
             <Group gap="xs">
               <Text fw={600}>Líneas</Text>
-              <ActionIcon
-                size="sm"
-                onClick={() =>
-                  form.insertListItem("lines", {
-                    product: null,
-                    quantity_ordered: 1,
-                    unit_purchase_cost: 0,
-                    margin_percentage: 0,
-                  })
-                }
-              >
+              <ActionIcon size="sm" onClick={() => form.insertListItem("lines", emptyLine())}>
                 <IconPlus size={16} />
               </ActionIcon>
             </Group>
           }
         />
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Producto</Table.Th>
-              <Table.Th w={90}>Cant.</Table.Th>
-              <Table.Th w={110}>Costo unit.</Table.Th>
-              <Table.Th w={90}>Margen %</Table.Th>
-              <Table.Th w={40} />
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {form.values.lines.map((_, i) => (
-              <Table.Tr key={i}>
-                <Table.Td>
-                  <Select
-                    data={productOptions}
-                    searchable
-                    placeholder="Producto"
-                    {...form.getInputProps(`lines.${i}.product`)}
-                  />
-                </Table.Td>
-                <Table.Td>
-                  <NumberInput
-                    min={0}
-                    decimalScale={2}
-                    {...form.getInputProps(`lines.${i}.quantity_ordered`)}
-                  />
-                </Table.Td>
-                <Table.Td>
-                  <NumberInput
-                    min={0}
-                    decimalScale={2}
-                    {...form.getInputProps(`lines.${i}.unit_purchase_cost`)}
-                  />
-                </Table.Td>
-                <Table.Td>
-                  <NumberInput
-                    min={0}
-                    decimalScale={2}
-                    {...form.getInputProps(`lines.${i}.margin_percentage`)}
-                  />
-                </Table.Td>
-                <Table.Td>
-                  <ActionIcon
-                    color="red"
-                    variant="subtle"
-                    onClick={() => form.removeListItem("lines", i)}
-                  >
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+        <Stack gap="sm">
+          {form.values.lines.map((line, i) => (
+            <Card key={i} withBorder padding="sm">
+              <Group justify="space-between" mb="xs">
+                <SegmentedControl
+                  size="xs"
+                  data={[
+                    { value: "existing", label: "Existente" },
+                    { value: "new", label: "Nuevo" },
+                  ]}
+                  {...form.getInputProps(`lines.${i}.mode`)}
+                />
+                <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem("lines", i)}>
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </Group>
+
+              {line.mode === "existing" ? (
+                <Select
+                  label="Producto"
+                  data={productOptions}
+                  searchable
+                  placeholder="Selecciona un producto"
+                  {...form.getInputProps(`lines.${i}.product`)}
+                />
+              ) : (
+                <Grid>
+                  <Grid.Col span={{ base: 12, sm: 6 }}>
+                    <TextInput label="Nombre" {...form.getInputProps(`lines.${i}.new_name`)} />
+                  </Grid.Col>
+                  <Grid.Col span={{ base: 8, sm: 4 }}>
+                    <Select
+                      label="Categoría"
+                      data={categoryOptions}
+                      searchable
+                      clearable
+                      placeholder="—"
+                      {...form.getInputProps(`lines.${i}.new_category`)}
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={{ base: 4, sm: 2 }}>
+                    <TextInput label="SKU" placeholder="auto" {...form.getInputProps(`lines.${i}.new_sku`)} />
+                  </Grid.Col>
+                </Grid>
+              )}
+
+              <Group mt="xs" grow>
+                <NumberInput
+                  label="Cantidad"
+                  min={0}
+                  decimalScale={2}
+                  {...form.getInputProps(`lines.${i}.quantity_ordered`)}
+                />
+                <NumberInput
+                  label="Costo unit."
+                  min={0}
+                  decimalScale={2}
+                  {...form.getInputProps(`lines.${i}.unit_purchase_cost`)}
+                />
+              </Group>
+            </Card>
+          ))}
+        </Stack>
 
         <Divider
           my="md"
@@ -237,9 +269,7 @@ export function PurchaseOrderCreateModal({
               <Text fw={600}>Costos adicionales</Text>
               <ActionIcon
                 size="sm"
-                onClick={() =>
-                  form.insertListItem("additional_costs", { name: "", amount: 0 })
-                }
+                onClick={() => form.insertListItem("additional_costs", { name: "", amount: 0 })}
               >
                 <IconPlus size={16} />
               </ActionIcon>

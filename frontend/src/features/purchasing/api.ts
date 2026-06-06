@@ -45,11 +45,16 @@ export function usePurchaseOrder(id: number | undefined) {
   });
 }
 
+export interface NewProductInput {
+  name: string;
+  category?: number | null;
+  sku?: string;
+}
 export interface CreateLineInput {
-  product: number;
+  product?: number | null;
+  new_product?: NewProductInput;
   quantity_ordered: string;
   unit_purchase_cost: string;
-  margin_percentage?: string;
 }
 export interface CreateCostInput {
   name: string;

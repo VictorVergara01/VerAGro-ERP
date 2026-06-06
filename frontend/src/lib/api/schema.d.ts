@@ -1756,6 +1756,13 @@ export interface components {
          * @enum {string}
          */
         MovementTypeEnum: "adjustment_in" | "adjustment_out";
+        /** @description Datos mínimos para dar de alta un producto desde una línea de OC. */
+        NewProduct: {
+            name: string;
+            category?: number | null;
+            sku?: string;
+            unit_of_measure?: string;
+        };
         /**
          * @description * `customer` - Cliente
          *     * `company` - Empresa
@@ -2244,6 +2251,8 @@ export interface components {
             readonly id?: number;
             name?: string;
             is_active?: boolean;
+            /** Format: decimal */
+            default_margin_percentage?: string;
         };
         PatchedPurchaseAdditionalCost: {
             readonly id?: number;
@@ -2289,9 +2298,10 @@ export interface components {
         PatchedPurchaseOrderLine: {
             readonly id?: number;
             purchase_order?: number;
-            product?: number;
+            product?: number | null;
             readonly product_sku?: string;
             readonly product_name?: string;
+            new_product?: components["schemas"]["NewProduct"];
             /** Format: decimal */
             quantity_ordered?: string;
             /** Format: decimal */
@@ -2304,12 +2314,6 @@ export interface components {
             readonly allocated_extra_cost?: string;
             /** Format: decimal */
             readonly landed_unit_cost?: string;
-            /** Format: decimal */
-            margin_percentage?: string;
-            /** Format: decimal */
-            readonly calculated_sale_price?: string;
-            /** Format: decimal */
-            final_sale_price?: string;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -2569,6 +2573,8 @@ export interface components {
             readonly id: number;
             name: string;
             is_active?: boolean;
+            /** Format: decimal */
+            default_margin_percentage?: string;
         };
         PurchaseAdditionalCost: {
             readonly id: number;
@@ -2614,9 +2620,10 @@ export interface components {
         PurchaseOrderLine: {
             readonly id: number;
             purchase_order?: number;
-            product: number;
+            product?: number | null;
             readonly product_sku: string;
             readonly product_name: string;
+            new_product?: components["schemas"]["NewProduct"];
             /** Format: decimal */
             quantity_ordered: string;
             /** Format: decimal */
@@ -2629,12 +2636,6 @@ export interface components {
             readonly allocated_extra_cost: string;
             /** Format: decimal */
             readonly landed_unit_cost: string;
-            /** Format: decimal */
-            margin_percentage?: string;
-            /** Format: decimal */
-            readonly calculated_sale_price: string;
-            /** Format: decimal */
-            final_sale_price?: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */

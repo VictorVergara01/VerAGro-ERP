@@ -150,7 +150,6 @@ export function PurchaseOrderDetailPage() {
                 <Table.Th ta="right">Subtotal</Table.Th>
                 <Table.Th ta="right">Costo asignado</Table.Th>
                 <Table.Th ta="right">Costo real (landed)</Table.Th>
-                <Table.Th ta="right">Precio venta</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -163,7 +162,6 @@ export function PurchaseOrderDetailPage() {
                   <Table.Td ta="right">{formatCurrency(l.line_subtotal)}</Table.Td>
                   <Table.Td ta="right">{formatCurrency(l.allocated_extra_cost)}</Table.Td>
                   <Table.Td ta="right">{formatCurrency(l.landed_unit_cost)}</Table.Td>
-                  <Table.Td ta="right">{formatCurrency(l.final_sale_price)}</Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>

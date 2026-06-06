@@ -14,6 +14,7 @@ vi.mock("./api", () => ({
 vi.mock("../inventory/api", () => ({
   useProducts: () => ({ data: { results: [] } }),
   useSupplierOptions: () => ({ data: [] }),
+  useCategories: () => ({ data: [] }),
 }));
 
 function renderPage() {

@@ -22,6 +22,7 @@ function CategoriesTab() {
       save={useSaveCategory()}
       remove={useDeleteCategory()}
       itemLabel="Categoría"
+      withMargin
     />
   );
 }

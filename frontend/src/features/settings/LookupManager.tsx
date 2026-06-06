@@ -3,6 +3,7 @@ import {
   Button,
   Group,
   Modal,
+  NumberInput,
   Stack,
   TextInput,
 } from "@mantine/core";
@@ -20,34 +21,55 @@ interface LookupItem {
   name: string;
 }
 
+const marginOf = (item: LookupItem | null) => {
+  const value = (item as { default_margin_percentage?: string | number } | null)
+    ?.default_margin_percentage;
+  return value != null ? String(value) : "0";
+};
+
 export function LookupManager<T extends LookupItem>({
   items,
   loading,
   save,
   remove,
   itemLabel,
+  withMargin = false,
 }: {
   items: T[];
   loading: boolean;
-  save: UseMutationResult<unknown, Error, { id?: number; name: string }>;
+  save: UseMutationResult<
+    unknown,
+    Error,
+    { id?: number; name: string; default_margin_percentage?: string }
+  >;
   remove: UseMutationResult<unknown, Error, number>;
   itemLabel: string;
+  withMargin?: boolean;
 }) {
   const [newName, setNewName] = useState("");
+  const [newMargin, setNewMargin] = useState<string>("0");
   const [editing, setEditing] = useState<T | null>(null);
   const [editName, setEditName] = useState("");
+  const [editMargin, setEditMargin] = useState<string>("0");
   const [editOpen, { open, close }] = useDisclosure(false);
 
   useEffect(() => {
-    if (editing) setEditName(editing.name);
+    if (editing) {
+      setEditName(editing.name);
+      setEditMargin(marginOf(editing));
+    }
   }, [editing]);
 
   const add = async () => {
     if (!newName.trim()) return;
     try {
-      await save.mutateAsync({ name: newName.trim() });
+      await save.mutateAsync({
+        name: newName.trim(),
+        ...(withMargin ? { default_margin_percentage: newMargin || "0" } : {}),
+      });
       notifications.show({ color: "green", message: `${itemLabel} creado.` });
       setNewName("");
+      setNewMargin("0");
     } catch (e) {
       notifications.show({ color: "red", message: (e as Error).message });
     }
@@ -56,7 +78,11 @@ export function LookupManager<T extends LookupItem>({
   const submitEdit = async () => {
     if (!editing || !editName.trim()) return;
     try {
-      await save.mutateAsync({ id: editing.id, name: editName.trim() });
+      await save.mutateAsync({
+        id: editing.id,
+        name: editName.trim(),
+        ...(withMargin ? { default_margin_percentage: editMargin || "0" } : {}),
+      });
       notifications.show({ color: "green", message: "Guardado." });
       close();
     } catch (e) {
@@ -82,6 +108,15 @@ export function LookupManager<T extends LookupItem>({
 
   const columns: Column<T>[] = [
     { header: "Nombre", render: (i) => i.name },
+    ...(withMargin
+      ? [
+          {
+            header: "Margen %",
+            align: "right" as const,
+            render: (i: T) => `${marginOf(i)}%`,
+          },
+        ]
+      : []),
     {
       header: "",
       align: "right",
@@ -114,6 +149,16 @@ export function LookupManager<T extends LookupItem>({
           onKeyDown={(e) => e.key === "Enter" && add()}
           w={320}
         />
+        {withMargin && (
+          <NumberInput
+            placeholder="Margen %"
+            value={newMargin}
+            onChange={(v) => setNewMargin(String(v))}
+            min={0}
+            decimalScale={2}
+            w={140}
+          />
+        )}
         <Button
           leftSection={<IconPlus size={18} />}
           onClick={add}
@@ -136,6 +181,15 @@ export function LookupManager<T extends LookupItem>({
             value={editName}
             onChange={(e) => setEditName(e.currentTarget.value)}
           />
+          {withMargin && (
+            <NumberInput
+              label="Margen %"
+              value={editMargin}
+              onChange={(v) => setEditMargin(String(v))}
+              min={0}
+              decimalScale={2}
+            />
+          )}
           <Group justify="flex-end">
             <Button variant="default" onClick={close}>
               Cancelar

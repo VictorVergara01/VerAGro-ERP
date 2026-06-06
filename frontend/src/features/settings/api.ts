@@ -25,17 +25,25 @@ export function useCategoryList() {
 export function useSaveCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { id?: number; name: string }) => {
+    mutationFn: async (payload: {
+      id?: number;
+      name: string;
+      default_margin_percentage?: string;
+    }) => {
+      const body = {
+        name: payload.name,
+        ...(payload.default_margin_percentage !== undefined
+          ? { default_margin_percentage: payload.default_margin_percentage }
+          : {}),
+      } as ProductCategory;
       if (payload.id) {
         const { error } = await api.PATCH("/api/inventory/categories/{id}/", {
           params: { path: { id: payload.id } },
-          body: { name: payload.name } as ProductCategory,
+          body,
         });
         if (error) throw new Error("No se pudo guardar.");
       } else {
-        const { error } = await api.POST("/api/inventory/categories/", {
-          body: { name: payload.name } as ProductCategory,
-        });
+        const { error } = await api.POST("/api/inventory/categories/", { body });
         if (error) throw new Error("No se pudo crear.");
       }
     },
