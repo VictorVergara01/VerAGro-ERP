@@ -1,13 +1,16 @@
 from django.db.models import F
+from django.http import HttpResponse
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
 from apps.core.permissions import RoleWriteOrReadOnly
 
+from .import_export import export_products_csv, import_products_csv
 from .models import Product, ProductCategory
 from .serializers import (
     AdjustmentSerializer,
@@ -50,6 +53,26 @@ class ProductViewSet(viewsets.ModelViewSet):
         product = self.get_object()
         qs = product.movements.all()
         return Response(InventoryMovementSerializer(qs, many=True).data)
+
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        content = export_products_csv()
+        response = HttpResponse(content, content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="inventario.csv"'
+        return response
+
+    @action(
+        detail=False,
+        methods=["post"],
+        parser_classes=[MultiPartParser],
+        url_path="import",
+    )
+    def import_csv(self, request):
+        upload = request.FILES.get("file")
+        if not upload:
+            raise ValidationError({"file": "Suba un archivo CSV."})
+        result = import_products_csv(upload, request.user)
+        return Response(result)
 
 
 class AdjustmentCreateView(CreateAPIView):
