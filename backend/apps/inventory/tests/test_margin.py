@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 
 from apps.inventory.models import Product, ProductCategory
+from apps.inventory.serializers import ProductSerializer
 from apps.inventory.services import apply_category_margin, apply_margin, effective_margin
 
 
@@ -36,6 +37,28 @@ def test_apply_margin_uses_average_cost():
     apply_margin(p)
     p.refresh_from_db()
     assert p.sale_price == Decimal("130.00")
+
+
+@pytest.mark.django_db
+def test_apply_margin_without_cost_keeps_manual_price():
+    p = Product.objects.create(
+        sku="A5", name="P", average_cost=Decimal("0"),
+        sale_price=Decimal("99"), default_margin_percentage=Decimal("30"),
+    )
+    apply_margin(p)
+    p.refresh_from_db()
+    assert p.sale_price == Decimal("99.00")  # sin costo base, no se toca el precio
+
+
+@pytest.mark.django_db
+def test_serializer_recomputes_price_on_category_change():
+    cat = ProductCategory.objects.create(name="ConMargen", default_margin_percentage=Decimal("20"))
+    p = Product.objects.create(sku="A6", name="P", average_cost=Decimal("10"))
+    s = ProductSerializer(instance=p, data={"category": cat.id}, partial=True)
+    s.is_valid(raise_exception=True)
+    s.save()
+    p.refresh_from_db()
+    assert p.sale_price == Decimal("12.00")  # 10 * 1.20 al asignar la categoría
 
 
 @pytest.mark.django_db

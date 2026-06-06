@@ -36,10 +36,23 @@ class ProductSerializer(serializers.ModelSerializer):
             "reserved_quantity",
         )
 
+    def create(self, validated_data):
+        product = super().create(validated_data)
+        from .services import apply_margin
+
+        apply_margin(product)
+        return product
+
     def update(self, instance, validated_data):
-        old = instance.default_margin_percentage
+        old_margin = instance.default_margin_percentage
+        old_category = instance.category_id
         product = super().update(instance, validated_data)
-        if product.default_margin_percentage != old:
+        # El precio depende del margen efectivo: cambia con el margen del producto
+        # o con su categoría. Recalcular si cambió cualquiera de los dos.
+        if (
+            product.default_margin_percentage != old_margin
+            or product.category_id != old_category
+        ):
             from .services import apply_margin
 
             apply_margin(product)

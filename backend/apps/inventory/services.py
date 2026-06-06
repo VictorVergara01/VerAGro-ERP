@@ -32,7 +32,13 @@ def effective_margin(product):
 
 
 def apply_margin(product):
-    """Recalcula sale_price = average_cost * (1 + margen efectivo / 100) y guarda."""
+    """Recalcula sale_price = average_cost * (1 + margen efectivo / 100) y guarda.
+
+    Sin costo base (average_cost <= 0) no se puede derivar el precio: se respeta el
+    precio manual y no se toca (el precio se fijará al recibir la primera compra).
+    """
+    if not product.average_cost or product.average_cost <= 0:
+        return product
     margin = effective_margin(product)
     product.sale_price = _q(product.average_cost * (Decimal("1") + margin / Decimal("100")))
     product.save(update_fields=["sale_price", "updated_at"])
