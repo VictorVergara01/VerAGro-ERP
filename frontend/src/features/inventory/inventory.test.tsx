@@ -1,5 +1,6 @@
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -21,14 +22,17 @@ vi.mock("../equipment/api", () => ({
 }));
 
 function renderPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MantineProvider>
-      <ModalsProvider>
-        <MemoryRouter>
-          <InventoryPage />
-        </MemoryRouter>
-      </ModalsProvider>
-    </MantineProvider>,
+    <QueryClientProvider client={qc}>
+      <MantineProvider>
+        <ModalsProvider>
+          <MemoryRouter>
+            <InventoryPage />
+          </MemoryRouter>
+        </ModalsProvider>
+      </MantineProvider>
+    </QueryClientProvider>,
   );
 }
 

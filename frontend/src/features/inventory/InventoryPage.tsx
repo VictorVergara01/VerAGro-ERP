@@ -16,11 +16,13 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
   IconAdjustments,
+  IconDownload,
   IconEdit,
   IconEye,
   IconPlus,
   IconSearch,
   IconTrash,
+  IconUpload,
 } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +38,8 @@ import {
   useLowStock,
   useProducts,
 } from "./api";
+import { ImportModal } from "./ImportModal";
+import { downloadProductsCsv } from "./importExport";
 import { ProductFormModal } from "./ProductFormModal";
 import type { Product } from "./types";
 
@@ -50,6 +54,7 @@ export function InventoryPage() {
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const [formOpen, { open: openForm, close: closeForm }] = useDisclosure(false);
   const [adjustOpen, { open: openAdjust, close: closeAdjust }] = useDisclosure(false);
+  const [importOpen, { open: openImport, close: closeImport }] = useDisclosure(false);
   const navigate = useNavigate();
 
   const categories = useCategories();
@@ -71,6 +76,14 @@ export function InventoryPage() {
   const rows = lowStockOnly ? (low.data ?? []) : (list.data?.results ?? []);
   const loading = lowStockOnly ? low.isLoading : list.isLoading;
   const error = lowStockOnly ? low.error : list.error;
+
+  const exportCsv = async () => {
+    try {
+      await downloadProductsCsv();
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
 
   const openNew = () => {
     setEditing(null);
@@ -186,9 +199,25 @@ export function InventoryPage() {
         title="Inventario"
         subtitle="Productos, repuestos y niveles de stock."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
-            Nuevo producto
-          </Button>
+          <Group gap="xs">
+            <Button
+              variant="default"
+              leftSection={<IconDownload size={18} />}
+              onClick={exportCsv}
+            >
+              Exportar CSV
+            </Button>
+            <Button
+              variant="default"
+              leftSection={<IconUpload size={18} />}
+              onClick={openImport}
+            >
+              Importar CSV
+            </Button>
+            <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
+              Nuevo producto
+            </Button>
+          </Group>
         }
       />
 
@@ -270,6 +299,7 @@ export function InventoryPage() {
 
       <ProductFormModal opened={formOpen} onClose={closeForm} product={editing} />
       <AdjustStockModal opened={adjustOpen} onClose={closeAdjust} product={adjusting} />
+      <ImportModal opened={importOpen} onClose={closeImport} />
     </Stack>
   );
 }
