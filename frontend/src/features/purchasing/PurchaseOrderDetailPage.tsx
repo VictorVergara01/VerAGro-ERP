@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -6,25 +7,35 @@ import {
   Grid,
   Group,
   Loader,
+  NumberInput,
   Stack,
   Table,
   Text,
+  TextInput,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import {
   IconCalculator,
+  IconPlus,
   IconSend,
+  IconTrash,
   IconTruckDelivery,
   IconX,
 } from "@tabler/icons-react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
-import { usePurchaseOrder, usePurchaseOrderAction } from "./api";
+import {
+  useAddAdditionalCost,
+  useDeleteAdditionalCost,
+  usePurchaseOrder,
+  usePurchaseOrderAction,
+} from "./api";
 import { ReceiveModal } from "./ReceiveModal";
 import { PO_STATUS_COLOR, PO_STATUS_LABEL } from "./types";
 
@@ -33,7 +44,11 @@ export function PurchaseOrderDetailPage() {
   const orderId = id ? Number(id) : undefined;
   const { data: order, isLoading, error } = usePurchaseOrder(orderId);
   const action = usePurchaseOrderAction(orderId);
+  const addCost = useAddAdditionalCost(orderId);
+  const deleteCost = useDeleteAdditionalCost(orderId);
   const [receiveOpen, { open, close }] = useDisclosure(false);
+  const [costName, setCostName] = useState("");
+  const [costAmount, setCostAmount] = useState<number | string>("");
 
   if (isLoading) return <Loader />;
   if (error || !order)
@@ -62,6 +77,27 @@ export function PurchaseOrderDetailPage() {
       confirmProps: { color: "red" },
       onConfirm: () => run("cancel", "Orden cancelada."),
     });
+
+  const submitCost = async () => {
+    if (!costName.trim()) return;
+    try {
+      await addCost.mutateAsync({ name: costName.trim(), amount: String(costAmount || 0) });
+      notifications.show({ color: "green", message: "Costo agregado." });
+      setCostName("");
+      setCostAmount("");
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
+
+  const removeCost = async (costId: number) => {
+    try {
+      await deleteCost.mutateAsync(costId);
+      notifications.show({ color: "green", message: "Costo eliminado." });
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
 
   return (
     <Stack>
@@ -185,10 +221,49 @@ export function PurchaseOrderDetailPage() {
                   <Table.Tr key={c.id}>
                     <Table.Td>{c.name}</Table.Td>
                     <Table.Td ta="right">{formatCurrency(c.amount)}</Table.Td>
+                    {canRecalc && (
+                      <Table.Td w={40} ta="right">
+                        <ActionIcon
+                          color="red"
+                          variant="subtle"
+                          onClick={() => removeCost(c.id)}
+                          loading={deleteCost.isPending}
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Table.Td>
+                    )}
                   </Table.Tr>
                 ))}
               </Table.Tbody>
             </Table>
+          )}
+          {canRecalc && (
+            <Group mt="sm" align="flex-end" gap="xs">
+              <TextInput
+                label="Concepto"
+                placeholder="Envío, aduana…"
+                value={costName}
+                onChange={(e) => setCostName(e.currentTarget.value)}
+                style={{ flex: 1 }}
+              />
+              <NumberInput
+                label="Monto"
+                min={0}
+                decimalScale={2}
+                w={120}
+                value={costAmount}
+                onChange={(v) => setCostAmount(typeof v === "bigint" ? Number(v) : v)}
+              />
+              <Button
+                leftSection={<IconPlus size={16} />}
+                onClick={submitCost}
+                loading={addCost.isPending}
+                disabled={!costName.trim()}
+              >
+                Agregar
+              </Button>
+            </Group>
           )}
         </Card>
         <Card>

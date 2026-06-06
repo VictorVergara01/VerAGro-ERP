@@ -118,6 +118,40 @@ export function usePurchaseOrderAction(id: number | undefined) {
   });
 }
 
+export function useAddAdditionalCost(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; amount: string }) => {
+      const { error } = await api.POST("/api/purchase-additional-costs/", {
+        body: {
+          purchase_order: orderId,
+          name: input.name,
+          amount: input.amount,
+        } as never,
+      });
+      if (error) throw new Error("No se pudo agregar el costo.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["purchase-order", orderId] });
+    },
+  });
+}
+
+export function useDeleteAdditionalCost(orderId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/purchase-additional-costs/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo eliminar el costo.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["purchase-order", orderId] });
+    },
+  });
+}
+
 export interface Receipt {
   line: number;
   quantity: string;
