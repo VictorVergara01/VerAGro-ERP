@@ -1,8 +1,38 @@
+import uuid
+
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.inventory.models import Product, ProductCategory
+
 from .models import PurchaseAdditionalCost, PurchaseOrder, PurchaseOrderLine
 from .services import recalculate_costs
+
+
+class NewProductSerializer(serializers.Serializer):
+    """Datos mínimos para dar de alta un producto desde una línea de OC."""
+
+    name = serializers.CharField()
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=ProductCategory.objects.all(), required=False, allow_null=True
+    )
+    sku = serializers.CharField(required=False, allow_blank=True)
+    unit_of_measure = serializers.CharField(required=False, allow_blank=True)
+
+
+def create_product_from_payload(data):
+    """Crea un Product mínimo desde {name, category?, sku?, unit_of_measure?}."""
+    sku = (data.get("sku") or "").strip()
+    product = Product.objects.create(
+        name=data["name"],
+        category=data.get("category"),
+        sku=sku or f"TMP-{uuid.uuid4().hex[:12]}",
+        unit_of_measure=data.get("unit_of_measure", "") or "",
+    )
+    if not sku:
+        product.sku = f"SKU-{product.pk:06d}"
+        product.save(update_fields=["sku"])
+    return product
 
 
 class PurchaseAdditionalCostSerializer(serializers.ModelSerializer):
@@ -26,6 +56,7 @@ class PurchaseAdditionalCostSerializer(serializers.ModelSerializer):
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
     product_name = serializers.CharField(source="product.name", read_only=True)
+    new_product = NewProductSerializer(write_only=True, required=False)
 
     class Meta:
         model = PurchaseOrderLine
@@ -35,6 +66,7 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
             "product",
             "product_sku",
             "product_name",
+            "new_product",
             "quantity_ordered",
             "quantity_received",
             "unit_purchase_cost",
@@ -67,6 +99,13 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
         if value < 0:
             raise serializers.ValidationError("No puede ser negativo.")
         return value
+
+    def validate(self, attrs):
+        if attrs.get("product") is None and not attrs.get("new_product"):
+            raise serializers.ValidationError(
+                "Cada línea requiere un producto existente o uno nuevo (new_product)."
+            )
+        return attrs
 
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
@@ -114,6 +153,9 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         order = PurchaseOrder.objects.create(**validated_data)
         for line in lines_data:
             line.pop("purchase_order", None)
+            new_product = line.pop("new_product", None)
+            if line.get("product") is None and new_product:
+                line["product"] = create_product_from_payload(new_product)
             PurchaseOrderLine.objects.create(purchase_order=order, **line)
         for cost in costs_data:
             cost.pop("purchase_order", None)
