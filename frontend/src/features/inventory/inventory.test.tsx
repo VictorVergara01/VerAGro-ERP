@@ -20,6 +20,9 @@ vi.mock("./api", () => ({
 vi.mock("../equipment/api", () => ({
   useEquipmentTypes: () => ({ data: [] }),
 }));
+vi.mock("../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "super_admin" } }),
+}));
 
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

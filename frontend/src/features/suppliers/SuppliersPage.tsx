@@ -25,6 +25,8 @@ import { useNavigate } from "react-router-dom";
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
+import { canWriteInventory } from "../auth/roles";
+import { useAuth } from "../auth/useAuth";
 import { useDeleteSupplier, useSuppliers } from "./api";
 import { SupplierFormModal } from "./SupplierFormModal";
 import type { Supplier } from "./types";
@@ -37,6 +39,7 @@ export function SuppliersPage() {
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [formOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, isLoading, error } = useSuppliers({
     search: debounced,
@@ -111,9 +114,11 @@ export function SuppliersPage() {
         title="Proveedores"
         subtitle="Quién te vende piezas y repuestos."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
-            Nuevo proveedor
-          </Button>
+          canWriteInventory(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
+              Nuevo proveedor
+            </Button>
+          ) : undefined
         }
       />
 

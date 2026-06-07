@@ -25,6 +25,8 @@ import { useNavigate } from "react-router-dom";
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
+import { canWriteCustomers } from "../auth/roles";
+import { useAuth } from "../auth/useAuth";
 import { useCustomers, useDeleteCustomer } from "./api";
 import { CustomerFormModal } from "./CustomerFormModal";
 import { CUSTOMER_TYPE_LABEL, type Customer } from "./types";
@@ -37,6 +39,7 @@ export function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [formOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, isLoading, error } = useCustomers({
     search: debounced,
@@ -114,9 +117,11 @@ export function CustomersPage() {
         title="Clientes"
         subtitle="Personas y empresas a las que prestas servicio."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
-            Nuevo cliente
-          </Button>
+          canWriteCustomers(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
+              Nuevo cliente
+            </Button>
+          ) : undefined
         }
       />
 

@@ -31,6 +31,8 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
 import { formatCurrency } from "../../utils/format";
+import { canWriteInventory } from "../auth/roles";
+import { useAuth } from "../auth/useAuth";
 import { AdjustStockModal } from "./AdjustStockModal";
 import {
   useCategories,
@@ -56,6 +58,8 @@ export function InventoryPage() {
   const [adjustOpen, { open: openAdjust, close: closeAdjust }] = useDisclosure(false);
   const [importOpen, { open: openImport, close: closeImport }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canWrite = canWriteInventory(user?.role);
 
   const categories = useCategories();
   const catName = useMemo(() => {
@@ -199,25 +203,27 @@ export function InventoryPage() {
         title="Inventario"
         subtitle="Productos, repuestos y niveles de stock."
         action={
-          <Group gap="xs">
-            <Button
-              variant="default"
-              leftSection={<IconDownload size={18} />}
-              onClick={exportCsv}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              variant="default"
-              leftSection={<IconUpload size={18} />}
-              onClick={openImport}
-            >
-              Importar CSV
-            </Button>
-            <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
-              Nuevo producto
-            </Button>
-          </Group>
+          canWrite ? (
+            <Group gap="xs">
+              <Button
+                variant="default"
+                leftSection={<IconDownload size={18} />}
+                onClick={exportCsv}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                variant="default"
+                leftSection={<IconUpload size={18} />}
+                onClick={openImport}
+              >
+                Importar CSV
+              </Button>
+              <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
+                Nuevo producto
+              </Button>
+            </Group>
+          ) : undefined
         }
       />
 

@@ -17,6 +17,8 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { canWriteInventory } from "../auth/roles";
+import { useAuth } from "../auth/useAuth";
 import { usePurchaseOrders } from "./api";
 import { PurchaseOrderCreateModal } from "./PurchaseOrderCreateModal";
 import { PO_STATUS_COLOR, PO_STATUS_LABEL, PO_STATUS_OPTIONS, type PurchaseOrder } from "./types";
@@ -28,6 +30,7 @@ export function PurchasingPage() {
   const [page, setPage] = useState(1);
   const [createOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, isLoading, error } = usePurchaseOrders({
     search: debounced,
@@ -58,9 +61,11 @@ export function PurchasingPage() {
         title="Compras"
         subtitle="Órdenes de compra y recepción de inventario."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={open}>
-            Nueva orden
-          </Button>
+          canWriteInventory(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={open}>
+              Nueva orden
+            </Button>
+          ) : undefined
         }
       />
 

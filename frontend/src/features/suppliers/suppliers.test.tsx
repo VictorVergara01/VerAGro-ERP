@@ -12,6 +12,9 @@ vi.mock("./api", () => ({
   useDeleteSupplier: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSaveSupplier: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+vi.mock("../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "super_admin" } }),
+}));
 
 function renderPage() {
   return render(
