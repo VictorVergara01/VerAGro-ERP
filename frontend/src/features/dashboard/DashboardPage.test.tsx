@@ -38,7 +38,7 @@ const data: DashboardData = {
 
 describe("DashboardPage", () => {
   beforeEach(() => {
-    mockUser.mockReturnValue({ id: 1, email: "a@a.com", full_name: "Admin", role: "admin", is_active: true });
+    mockUser.mockReturnValue({ id: 1, email: "a@a.com", full_name: "Admin", role: "super_admin", is_active: true });
   });
 
   it("muestra las tarjetas con los datos (rol financiero)", () => {
