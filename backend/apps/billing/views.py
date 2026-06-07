@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import Invoice, InvoiceLine, Quote, QuoteLine
@@ -21,7 +22,7 @@ from .services import (
     record_payment,
 )
 
-BillingWrite = RoleWriteOrReadOnly("admin", "sales")
+BillingWrite = RoleWriteOrReadOnly(*roles.BILLING_WRITE)
 
 
 def _int_param(params, key):
@@ -140,6 +141,11 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     permission_classes = [BillingWrite]
     filter_backends = [filters.SearchFilter]
     search_fields = ["invoice_number", "notes"]
+
+    def get_permissions(self):
+        if self.action == "payments":
+            return [RoleWriteOrReadOnly(*roles.PAYMENTS_WRITE)()]
+        return super().get_permissions()
 
     def get_queryset(self):
         qs = Invoice.objects.select_related("customer").prefetch_related(

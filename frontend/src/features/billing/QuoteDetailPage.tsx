@@ -16,12 +16,15 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { useAuth } from "../auth/useAuth";
+import { canWriteBilling } from "../auth/roles";
 import { useConvertQuote, useQuote, useQuoteAction } from "./api";
 import { QuoteCreateModal } from "./QuoteCreateModal";
 import { QUOTE_STATUS_COLOR, QUOTE_STATUS_LABEL } from "./types";
 
 export function QuoteDetailPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const quoteId = id ? Number(id) : undefined;
   const { data: quote, isLoading, error } = useQuote(quoteId);
   const action = useQuoteAction(quoteId);
@@ -71,7 +74,7 @@ export function QuoteDetailPage() {
         }
         actions={
           <>
-            {editable && (
+            {editable && canWriteBilling(user?.role) && (
               <Button
                 variant="default"
                 leftSection={<IconEdit size={18} />}

@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .import_export import export_products_csv, import_products_csv
@@ -19,7 +20,7 @@ from .serializers import (
     ProductSerializer,
 )
 
-InventoryWrite = RoleWriteOrReadOnly("admin", "inventory")
+InventoryWrite = RoleWriteOrReadOnly(*roles.INVENTORY_WRITE)
 
 
 class ProductViewSet(viewsets.ModelViewSet):

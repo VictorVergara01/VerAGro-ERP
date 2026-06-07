@@ -17,11 +17,12 @@ import { IconUpload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "../auth/useAuth";
+import { isSuperAdmin } from "../auth/roles";
 import { useCompany, useSaveCompany, type CompanyInput } from "./api";
 
 export function CompanySettings() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isSuperAdmin(user?.role);
   const { data, isLoading, error } = useCompany();
   const save = useSaveCompany();
   const [logo, setLogo] = useState<File | null>(null);

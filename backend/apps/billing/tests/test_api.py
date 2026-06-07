@@ -82,7 +82,8 @@ def test_invoice_issue_and_payment(sales_client, customer):
     issue = sales_client.post(f"/api/invoices/{inv_id}/issue/")
     assert issue.data["status"] == "issued"
 
-    pay = sales_client.post(
+    # El pago lo registra contabilidad (sales ya no puede registrar pagos).
+    pay = _client("accounting").post(
         f"/api/invoices/{inv_id}/payments/",
         {"amount": "100", "method": "cash"},
         format="json",
@@ -184,7 +185,7 @@ def test_permissions(customer, db):
     assert _client("sales").post(
         "/api/invoices/", payload, format="json"
     ).status_code == 201
-    assert _client("admin").post(
+    assert _client("super_admin").post(
         "/api/invoices/", payload, format="json"
     ).status_code == 201
 
@@ -214,7 +215,7 @@ def test_generate_quote_and_invoice_from_order(customer):
 @pytest.mark.django_db
 def test_deliver_requires_invoice_except_admin(customer):
     tech = _client("technician")
-    admin = _client("admin")
+    admin = _client("super_admin")
     # Orden finished (no facturada): technician no puede entregar.
     order = ServiceOrder.objects.create(
         customer=customer, status=ServiceOrder.Status.FINISHED
@@ -224,6 +225,46 @@ def test_deliver_requires_invoice_except_admin(customer):
     assert admin.post(f"/api/service-orders/{order.id}/deliver/").status_code == 200
     order.refresh_from_db()
     assert order.status == "delivered"
+
+
+@pytest.mark.django_db
+def test_accounting_can_pay_but_not_invoice(customer):
+    acc = _client("accounting")
+    # No puede crear factura
+    resp = acc.post("/api/invoices/", {"customer": customer.id}, format="json")
+    assert resp.status_code == 403
+    # Sí puede registrar pago sobre una factura emitida
+    admin = _client("super_admin")
+    inv = admin.post(
+        "/api/invoices/",
+        {"customer": customer.id, "lines": [{"description": "x", "quantity": "1", "unit_price": "100"}]},
+        format="json",
+    ).data
+    admin.post(f"/api/invoices/{inv['id']}/issue/")
+    pay = acc.post(
+        f"/api/invoices/{inv['id']}/payments/",
+        {"amount": "50", "method": "cash"},
+        format="json",
+    )
+    assert pay.status_code == 201
+
+
+@pytest.mark.django_db
+def test_sales_can_invoice_but_not_pay(customer):
+    sales = _client("sales")
+    inv = sales.post(
+        "/api/invoices/",
+        {"customer": customer.id, "lines": [{"description": "x", "quantity": "1", "unit_price": "100"}]},
+        format="json",
+    )
+    assert inv.status_code == 201
+    sales.post(f"/api/invoices/{inv.data['id']}/issue/")
+    pay = sales.post(
+        f"/api/invoices/{inv.data['id']}/payments/",
+        {"amount": "50", "method": "cash"},
+        format="json",
+    )
+    assert pay.status_code == 403
 
 
 @pytest.mark.django_db

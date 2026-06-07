@@ -2,12 +2,16 @@ from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.core import roles
+from apps.core.permissions import RoleWriteOrReadOnly
+
 from .models import Customer
 from .serializers import CustomerSerializer
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerSerializer
+    permission_classes = [RoleWriteOrReadOnly(*roles.CUSTOMERS_WRITE)]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "identification_number", "phone", "email"]
 

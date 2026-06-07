@@ -236,7 +236,7 @@ def test_permissions(customer, db):
     assert _client("technician").post(
         "/api/service-orders/", payload, format="json"
     ).status_code == 201
-    assert _client("admin").post(
+    assert _client("super_admin").post(
         "/api/service-orders/", payload, format="json"
     ).status_code == 201
 

@@ -16,6 +16,9 @@ vi.mock("../inventory/api", () => ({
   useSupplierOptions: () => ({ data: [] }),
   useCategories: () => ({ data: [] }),
 }));
+vi.mock("../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "super_admin" } }),
+}));
 
 function renderPage() {
   return render(

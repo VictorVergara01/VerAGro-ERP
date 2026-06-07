@@ -19,6 +19,8 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { useAuth } from "../auth/useAuth";
+import { canWriteBilling } from "../auth/roles";
 import { useInvoices } from "./api";
 import {
   INVOICE_STATUS_COLOR,
@@ -35,6 +37,7 @@ export function InvoicesPage() {
   const [page, setPage] = useState(1);
   const [createOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, isLoading, error } = useInvoices({
     search: debounced,
@@ -70,9 +73,11 @@ export function InvoicesPage() {
         title="Facturas"
         subtitle="Facturas de servicio y venta de productos."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={open}>
-            Nueva factura
-          </Button>
+          canWriteBilling(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={open}>
+              Nueva factura
+            </Button>
+          ) : undefined
         }
       />
 

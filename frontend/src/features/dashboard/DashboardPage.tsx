@@ -25,13 +25,11 @@ import {
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../auth/useAuth";
+import { FINANCIAL_ROLES } from "../auth/roles";
 import { SO_STATUS_LABEL } from "../service-orders/types";
 import { formatCurrency } from "../../utils/format";
 import { StatCard } from "./StatCard";
 import { OPEN_STATUSES, sumStatuses, useDashboard } from "./useDashboard";
-
-// El dashboard financiero (reportes) solo lo pueden ver admin y ventas.
-const FINANCIAL_ROLES = ["admin", "sales"];
 
 export function DashboardPage() {
   const { user } = useAuth();

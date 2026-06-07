@@ -38,7 +38,7 @@ def _product(sku, **kwargs):
 @pytest.mark.django_db
 def test_financial_reports_require_admin_or_sales():
     denied = {role: _client(role) for role in ("technician", "inventory", "readonly")}
-    sales, admin = _client("sales"), _client("admin")
+    sales, admin = _client("sales"), _client("super_admin")
     for path in ("dashboard", "sales", "profit"):
         url = f"/api/reports/{path}/"
         assert APIClient().get(url).status_code == 401
@@ -129,7 +129,7 @@ def test_sales_report(customer):
 
 @pytest.mark.django_db
 def test_profit_report(customer):
-    c = _client("admin")
+    c = _client("super_admin")
     inv = Invoice.objects.create(customer=customer, status=Invoice.Status.PAID)
     product = _product("PFT")
     InvoiceLine.objects.create(
@@ -177,7 +177,7 @@ def test_equipment_history_not_found_404():
 
 @pytest.mark.django_db
 def test_dashboard_structure(customer):
-    c = _client("admin")
+    c = _client("super_admin")
     _issued_invoice(customer, Decimal("100"))
     resp = c.get("/api/reports/dashboard/")
     assert "inventory" in resp.data

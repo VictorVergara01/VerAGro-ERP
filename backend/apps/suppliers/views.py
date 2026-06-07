@@ -3,12 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import Supplier, SupplierProduct
 from .serializers import SupplierProductSerializer, SupplierSerializer
 
-SuppliersWrite = RoleWriteOrReadOnly("admin", "inventory")
+SuppliersWrite = RoleWriteOrReadOnly(*roles.INVENTORY_WRITE)
 
 
 class SupplierViewSet(viewsets.ModelViewSet):

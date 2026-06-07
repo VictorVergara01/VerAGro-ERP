@@ -23,7 +23,7 @@ def _client(role):
 
 @pytest.fixture
 def admin_client(db):
-    return _client("admin")
+    return _client("super_admin")
 
 
 @pytest.fixture

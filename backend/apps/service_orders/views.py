@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 from apps.inventory.services import release_reservation
 
@@ -15,7 +16,7 @@ from .serializers import (
 )
 from .services import cancel_order, finish_order, recalculate_totals, reserve_parts
 
-ServiceWrite = RoleWriteOrReadOnly("admin", "technician")
+ServiceWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)
 
 TERMINAL_STATUSES = (
     ServiceOrder.Status.FINISHED,
@@ -137,7 +138,7 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
 
         order = self.get_object()
         # Regla doc §5.10: no entregar sin factura, salvo permiso especial (admin).
-        is_admin = getattr(request.user, "role", None) == "admin"
+        is_admin = getattr(request.user, "role", None) in roles.ADMINS
         if order.status != ServiceOrder.Status.INVOICED and not is_admin:
             raise ValidationError(
                 {"status": "La orden debe estar facturada para entregarse (override solo admin)."}

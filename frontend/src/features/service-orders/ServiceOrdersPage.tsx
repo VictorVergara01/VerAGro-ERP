@@ -17,6 +17,8 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { canWriteService } from "../auth/roles";
+import { useAuth } from "../auth/useAuth";
 import { useServiceOrders } from "./api";
 import { ServiceOrderFormModal } from "./ServiceOrderFormModal";
 import {
@@ -34,6 +36,7 @@ export function ServiceOrdersPage() {
   const [page, setPage] = useState(1);
   const [formOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, isLoading, error } = useServiceOrders({
     search: debounced,
@@ -69,9 +72,11 @@ export function ServiceOrdersPage() {
         title="Órdenes de servicio"
         subtitle="Diagnóstico, reparación y entrega de equipos."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={open}>
-            Nueva orden
-          </Button>
+          canWriteService(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={open}>
+              Nueva orden
+            </Button>
+          ) : undefined
         }
       />
 

@@ -28,6 +28,7 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
 import { useAuth } from "../auth/useAuth";
+import { isAdmin as isAdminRole } from "../auth/roles";
 import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AddPartModal } from "./AddPartModal";
@@ -54,7 +55,7 @@ export function ServiceOrderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminRole(user?.role);
   const orderId = id ? Number(id) : undefined;
   const { data: order, isLoading, error } = useServiceOrder(orderId);
   const action = useServiceOrderAction(orderId);

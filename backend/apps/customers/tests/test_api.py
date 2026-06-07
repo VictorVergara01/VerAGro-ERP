@@ -10,7 +10,7 @@ User = get_user_model()
 @pytest.fixture
 def auth_client(db):
     user = User.objects.create_user(
-        email="admin@veragro.com", password="x", full_name="Admin", role="admin"
+        email="admin@veragro.com", password="x", full_name="Admin", role="super_admin"
     )
     client = APIClient()
     client.force_authenticate(user=user)
@@ -103,6 +103,30 @@ def test_is_active_not_writable_via_api(auth_client):
     assert resp.status_code == 201
     # is_active es read-only: se ignora el valor enviado y queda activo por defecto.
     assert resp.data["is_active"] is True
+
+
+@pytest.mark.django_db
+def test_readonly_cannot_create_customer(db):
+    from rest_framework.test import APIClient
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    u = User.objects.create_user(email="ro@v.com", password="x", full_name="RO", role="readonly")
+    c = APIClient()
+    c.force_authenticate(user=u)
+    assert c.post("/api/customers/", {"name": "Nuevo"}, format="json").status_code == 403
+
+
+@pytest.mark.django_db
+def test_general_admin_can_create_customer(db):
+    from rest_framework.test import APIClient
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    u = User.objects.create_user(email="ga@v.com", password="x", full_name="GA", role="general_admin")
+    c = APIClient()
+    c.force_authenticate(user=u)
+    assert c.post("/api/customers/", {"name": "Nuevo"}, format="json").status_code == 201
 
 
 @pytest.mark.django_db

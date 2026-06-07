@@ -19,6 +19,8 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { useAuth } from "../auth/useAuth";
+import { canWriteBilling } from "../auth/roles";
 import { useQuotes } from "./api";
 import {
   QUOTE_STATUS_COLOR,
@@ -34,6 +36,7 @@ export function QuotesPage() {
   const [page, setPage] = useState(1);
   const [createOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, isLoading, error } = useQuotes({
     search: debounced,
@@ -64,9 +67,11 @@ export function QuotesPage() {
         title="Cotizaciones"
         subtitle="Presupuestos enviados a clientes."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={open}>
-            Nueva cotización
-          </Button>
+          canWriteBilling(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={open}>
+              Nueva cotización
+            </Button>
+          ) : undefined
         }
       />
 

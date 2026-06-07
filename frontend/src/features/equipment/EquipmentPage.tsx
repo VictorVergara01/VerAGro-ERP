@@ -25,6 +25,8 @@ import { useNavigate } from "react-router-dom";
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { PAGE_SIZE } from "../../lib/api/types";
+import { canWriteEquipment } from "../auth/roles";
+import { useAuth } from "../auth/useAuth";
 import {
   useDeleteEquipment,
   useEquipmentList,
@@ -47,6 +49,7 @@ export function EquipmentPage() {
   const [editing, setEditing] = useState<Equipment | null>(null);
   const [formOpen, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const types = useEquipmentTypes();
   const { data, isLoading, error } = useEquipmentList({
@@ -122,9 +125,11 @@ export function EquipmentPage() {
         title="Equipos"
         subtitle="Drones y maquinaria de tus clientes."
         action={
-          <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
-            Nuevo equipo
-          </Button>
+          canWriteEquipment(user?.role) ? (
+            <Button leftSection={<IconPlus size={18} />} onClick={openNew}>
+              Nuevo equipo
+            </Button>
+          ) : undefined
         }
       />
 

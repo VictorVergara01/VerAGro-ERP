@@ -15,6 +15,9 @@ vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] 
 vi.mock("../equipment/api", () => ({
   useEquipmentList: () => ({ data: { results: [] } }),
 }));
+vi.mock("../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "super_admin" } }),
+}));
 
 function renderPage() {
   return render(

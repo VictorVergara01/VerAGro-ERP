@@ -111,7 +111,7 @@ def test_company_profile_get_and_admin_update(db):
     ).status_code == 403
 
     # Admin sí; el singleton persiste (pk=1).
-    admin = _client("admin")
+    admin = _client("super_admin")
     upd = admin.patch(
         "/api/company/",
         {"name": "Veragro S.A.", "tax_id": "155-1-2024", "whatsapp": "60001111"},

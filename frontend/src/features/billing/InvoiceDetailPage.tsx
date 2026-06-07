@@ -28,6 +28,8 @@ import { useParams } from "react-router-dom";
 
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { useAuth } from "../auth/useAuth";
+import { canRegisterPayments, canWriteBilling } from "../auth/roles";
 import {
   downloadInvoicePdf,
   printInvoicePdf,
@@ -45,6 +47,7 @@ import {
 
 export function InvoiceDetailPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const invoiceId = id ? Number(id) : undefined;
   const { data: invoice, isLoading, error } = useInvoice(invoiceId);
   const action = useInvoiceAction(invoiceId);
@@ -121,7 +124,7 @@ export function InvoiceDetailPage() {
         }
         actions={
           <>
-          {canIssue && (
+          {canIssue && canWriteBilling(user?.role) && (
             <Button
               variant="default"
               leftSection={<IconEdit size={18} />}
@@ -135,7 +138,7 @@ export function InvoiceDetailPage() {
               Emitir
             </Button>
           )}
-          {canPay && (
+          {canPay && canRegisterPayments(user?.role) && (
             <Button color="green" leftSection={<IconCash size={18} />} onClick={open}>
               Registrar pago
             </Button>
