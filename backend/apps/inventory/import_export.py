@@ -1,5 +1,6 @@
 import csv
 import io
+import unicodedata
 import uuid
 from decimal import Decimal, InvalidOperation
 
@@ -18,6 +19,17 @@ IMPORT_COLUMNS = [
 ]
 # Columnas solo-lectura que añade el export (el import las ignora).
 EXPORT_EXTRA = ["reservado", "disponible"]
+
+
+def _normalize_header(key):
+    """Normaliza el nombre de una columna: sin espacios, minúsculas y SIN tildes.
+
+    Así 'Categoría', 'CATEGORIA' y 'categoria' casan todas con la clave 'categoria'
+    (un hispanohablante escribe los encabezados con tilde y mayúscula).
+    """
+    text = (key or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in text if not unicodedata.combining(c))
 
 
 def _bool_text(value):
@@ -166,7 +178,7 @@ def import_products_csv(file, user):
     saltados = 0
     errores = []
     for index, raw in enumerate(reader, start=2):
-        row = {(k or "").strip().lower(): v for k, v in raw.items()}
+        row = {_normalize_header(k): v for k, v in raw.items()}
         sku = (row.get("sku") or "").strip()
         try:
             with transaction.atomic():

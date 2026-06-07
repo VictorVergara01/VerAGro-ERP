@@ -128,6 +128,27 @@ def test_import_best_effort_reports_skips_and_errors():
     assert not Product.objects.filter(name="Mal numero").exists()
 
 
+@pytest.mark.django_db
+def test_import_accepts_accented_and_uppercase_headers():
+    """Un hispanohablante escribe 'Categoría'/'Descripción' con tilde y mayúscula.
+    Los encabezados deben casar sin importar tildes ni mayúsculas."""
+    user = User.objects.create_user(
+        email="i5@veragro.com", password="x", full_name="i", role="inventory"
+    )
+    text = (
+        "SKU,Nombre,Categoría,Descripción,Proveedor\n"
+        "AC-1,Con tilde,Filtros Especiales,Una pieza,Prov Tilde\n"
+    )
+    result = import_products_csv(_csv_file(text), user)
+    assert result["creados"] == 1, result
+    product = Product.objects.get(sku="AC-1")
+    assert product.category is not None
+    assert product.category.name == "Filtros Especiales"
+    assert product.description == "Una pieza"
+    assert product.main_supplier is not None
+    assert product.main_supplier.name == "Prov Tilde"
+
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 
