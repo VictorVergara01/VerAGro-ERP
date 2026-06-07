@@ -228,6 +228,46 @@ def test_deliver_requires_invoice_except_admin(customer):
 
 
 @pytest.mark.django_db
+def test_accounting_can_pay_but_not_invoice(customer):
+    acc = _client("accounting")
+    # No puede crear factura
+    resp = acc.post("/api/invoices/", {"customer": customer.id}, format="json")
+    assert resp.status_code == 403
+    # Sí puede registrar pago sobre una factura emitida
+    admin = _client("super_admin")
+    inv = admin.post(
+        "/api/invoices/",
+        {"customer": customer.id, "lines": [{"description": "x", "quantity": "1", "unit_price": "100"}]},
+        format="json",
+    ).data
+    admin.post(f"/api/invoices/{inv['id']}/issue/")
+    pay = acc.post(
+        f"/api/invoices/{inv['id']}/payments/",
+        {"amount": "50", "method": "cash"},
+        format="json",
+    )
+    assert pay.status_code == 201
+
+
+@pytest.mark.django_db
+def test_sales_can_invoice_but_not_pay(customer):
+    sales = _client("sales")
+    inv = sales.post(
+        "/api/invoices/",
+        {"customer": customer.id, "lines": [{"description": "x", "quantity": "1", "unit_price": "100"}]},
+        format="json",
+    )
+    assert inv.status_code == 201
+    sales.post(f"/api/invoices/{inv.data['id']}/issue/")
+    pay = sales.post(
+        f"/api/invoices/{inv.data['id']}/payments/",
+        {"amount": "50", "method": "cash"},
+        format="json",
+    )
+    assert pay.status_code == 403
+
+
+@pytest.mark.django_db
 def test_customer_invoices_history(sales_client, customer):
     Invoice.objects.create(customer=customer)
     Invoice.objects.create(customer=customer)
