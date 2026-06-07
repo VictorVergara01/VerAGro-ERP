@@ -53,3 +53,30 @@ const authMiddleware: Middleware = {
 
 export const api = createClient<paths>({ baseUrl: API_BASE_URL });
 api.use(authMiddleware);
+
+/**
+ * `fetch` autenticado para endpoints que no pasan por openapi-fetch (descargas,
+ * subidas multipart). Adjunta el Bearer y, ante 401, intenta refrescar el token
+ * y reintenta una vez (mismo comportamiento que el middleware). `path` es relativo
+ * al `API_BASE_URL` (p.ej. "/api/inventory/products/export/").
+ */
+export async function authedFetch(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const headers = new Headers(init.headers);
+  const token = getAccess();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+  if (res.status !== 401 || path.includes("/api/auth/")) return res;
+
+  const access = await tryRefresh();
+  if (!access) {
+    clearTokens();
+    emitAuthExpired();
+    return res;
+  }
+  headers.set("Authorization", `Bearer ${access}`);
+  return fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+}

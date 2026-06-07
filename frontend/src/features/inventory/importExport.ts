@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { API_BASE_URL } from "../../lib/api/client";
-import { getAccess } from "../../lib/auth/tokens";
+import { authedFetch } from "../../lib/api/client";
 
 export interface ImportError {
   fila: number;
@@ -14,12 +13,9 @@ export interface ImportResult {
   errores: ImportError[];
 }
 
-/** Descarga el catálogo como CSV (fetch autenticado → blob). */
+/** Descarga el catálogo como CSV (fetch autenticado con refresh → blob). */
 export async function downloadProductsCsv(): Promise<void> {
-  const token = getAccess();
-  const res = await fetch(`${API_BASE_URL}/api/inventory/products/export/`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const res = await authedFetch("/api/inventory/products/export/");
   if (!res.ok) throw new Error("No se pudo exportar el inventario.");
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
@@ -32,17 +28,15 @@ export async function downloadProductsCsv(): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-/** Sube un CSV y devuelve el resumen. Usa fetch+FormData (multipart) con Bearer. */
+/** Sube un CSV y devuelve el resumen. Multipart (FormData) con Bearer + refresh. */
 export function useImportProducts() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (file: File): Promise<ImportResult> => {
-      const token = getAccess();
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${API_BASE_URL}/api/inventory/products/import/`, {
+      const res = await authedFetch("/api/inventory/products/import/", {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
       });
       if (!res.ok) throw new Error("No se pudo importar el archivo.");
