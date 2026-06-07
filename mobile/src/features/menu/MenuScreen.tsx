@@ -15,6 +15,7 @@ import {
 } from "../../theme";
 import type { MoreNav } from "../../navigation/types";
 import { useAuth } from "../auth/useAuth";
+import { ROLE_LABELS } from "../auth/roles";
 
 type Item = {
   label: string;
@@ -22,14 +23,6 @@ type Item = {
   color: string;
   soon?: boolean;
   onPress?: () => void;
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Administrador",
-  technician: "Técnico",
-  sales: "Ventas",
-  inventory: "Inventario",
-  readonly: "Solo lectura",
 };
 
 export function MenuScreen() {

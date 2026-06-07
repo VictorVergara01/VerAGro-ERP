@@ -133,12 +133,12 @@ export interface paths {
         };
         /**
          * @description Perfil de empresa (singleton). GET para cualquier autenticado; PUT/PATCH
-         *     solo admin. Acepta multipart para subir el logo.
+         *     solo super_admin. Acepta multipart para subir el logo.
          */
         get: operations["company_retrieve"];
         /**
          * @description Perfil de empresa (singleton). GET para cualquier autenticado; PUT/PATCH
-         *     solo admin. Acepta multipart para subir el logo.
+         *     solo super_admin. Acepta multipart para subir el logo.
          */
         put: operations["company_update"];
         post?: never;
@@ -147,7 +147,7 @@ export interface paths {
         head?: never;
         /**
          * @description Perfil de empresa (singleton). GET para cualquier autenticado; PUT/PATCH
-         *     solo admin. Acepta multipart para subir el logo.
+         *     solo super_admin. Acepta multipart para subir el logo.
          */
         patch: operations["company_partial_update"];
         trace?: never;
@@ -492,6 +492,40 @@ export interface paths {
         get: operations["inventory_products_movements_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/products/export/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CRUD de productos. stock/reserved son read-only: cambian vía ajustes/movimientos. */
+        get: operations["inventory_products_export_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/products/import/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description CRUD de productos. stock/reserved son read-only: cambian vía ajustes/movimientos. */
+        post: operations["inventory_products_import_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2715,14 +2749,16 @@ export interface components {
          */
         QuoteStatusEnum: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted_to_invoice";
         /**
-         * @description * `admin` - Administrador
+         * @description * `super_admin` - Super Administrador
+         *     * `general_admin` - Administrador General
+         *     * `sales` - Facturación / Ventas
          *     * `technician` - Técnico
-         *     * `sales` - Vendedor / Facturación
-         *     * `inventory` - Inventario / Compras
-         *     * `readonly` - Consulta / Lectura
+         *     * `inventory` - Inventario
+         *     * `accounting` - Contabilidad
+         *     * `readonly` - Consulta
          * @enum {string}
          */
-        RoleEnum: "admin" | "technician" | "sales" | "inventory" | "readonly";
+        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "inventory" | "accounting" | "readonly";
         ServiceChecklist: {
             readonly id: number;
             readonly service_order: number;
@@ -4246,6 +4282,48 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    inventory_products_export_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    inventory_products_import_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Product"];
+            };
+        };
         responses: {
             200: {
                 headers: {

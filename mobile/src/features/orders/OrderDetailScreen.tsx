@@ -19,6 +19,7 @@ import {
 } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
+import { isAdmin as isAdminRole } from "../auth/roles";
 import type { AppNav, OrderDetailRoute } from "../../navigation/types";
 import { AddPartModal } from "./AddPartModal";
 import {
@@ -122,7 +123,7 @@ export function OrderDetailScreen() {
   const generate = useGenerateDoc(id);
   const cancelOrder = useCancelOrder(id);
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminRole(user?.role);
   const [addVisible, setAddVisible] = useState(false);
 
   if (isLoading) {

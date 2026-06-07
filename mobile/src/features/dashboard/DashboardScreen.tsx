@@ -17,9 +17,9 @@ import {
 } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
+import { FINANCIAL_ROLES } from "../auth/roles";
 import { DashboardData, OPEN_STATUSES, sumStatuses, useDashboard } from "./api";
 
-const FINANCIAL_ROLES = ["admin", "sales"];
 const logo = require("../../../assets/logo.png");
 
 function StatCard({
