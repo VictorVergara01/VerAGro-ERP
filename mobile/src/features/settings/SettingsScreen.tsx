@@ -6,6 +6,7 @@ import { api } from "../../lib/api/client";
 import { Screen } from "../../components/ui/Screen";
 import { Button, ErrorState, LabeledInput, Loading, SectionTitle } from "../../components/ui";
 import { useAuth } from "../auth/useAuth";
+import { isSuperAdmin } from "../auth/roles";
 
 interface Company {
   name: string;
@@ -34,7 +35,7 @@ function useSaveCompany() {
   return useMutation({
     mutationFn: async (input: Company) => {
       const { error } = await api.PATCH("/api/company/", { body: input as never });
-      if (error) throw new Error("No se pudo guardar (¿eres admin?).");
+      if (error) throw new Error("No se pudo guardar (¿eres super administrador?).");
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["company"] }),
   });
@@ -42,7 +43,7 @@ function useSaveCompany() {
 
 export function SettingsScreen() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isSuperAdmin(user?.role);
   const { data, isLoading, error } = useCompany();
   const save = useSaveCompany();
   const [form, setForm] = useState<Company>({ name: "" });
