@@ -11,12 +11,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.billing.models import Invoice, InvoiceLine
+from apps.core import roles
 from apps.core.permissions import role_required
 from apps.inventory.models import Product
 from apps.purchasing.models import PurchaseOrder
 from apps.service_orders.models import ServiceOrder, ServiceOrderPart
 
-Financial = role_required("admin", "sales")
+Financial = role_required(*roles.FINANCIAL_READ)
 
 PENDING_STATUSES = (
     ServiceOrder.Status.RECEIVED,

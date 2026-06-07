@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 User = get_user_model()
 
 
-def _client(role="admin"):
+def _client(role="super_admin"):
     user = User.objects.create_user(
         email=f"{role}@v.com", password="x", full_name=role.title(), role=role
     )
@@ -21,7 +21,7 @@ def test_user_list_requires_auth():
 
 @pytest.mark.django_db
 def test_user_list_returns_active_users():
-    c = _client("admin")
+    c = _client("super_admin")
     User.objects.create_user(
         email="t1@v.com", password="x", full_name="Tec Uno", role="technician"
     )
@@ -38,7 +38,7 @@ def test_user_list_returns_active_users():
 
 @pytest.mark.django_db
 def test_user_list_filter_by_role():
-    c = _client("admin")
+    c = _client("super_admin")
     User.objects.create_user(
         email="tech1@v.com", password="x", full_name="Tec", role="technician"
     )

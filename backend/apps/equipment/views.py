@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import Equipment, EquipmentType
@@ -16,7 +17,7 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = EquipmentTypeSerializer
-    permission_classes = [RoleWriteOrReadOnly("admin", "inventory")]
+    permission_classes = [RoleWriteOrReadOnly(*roles.LOOKUPS_WRITE)]
     pagination_class = None
 
     def get_queryset(self):
@@ -35,9 +36,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     """CRUD de equipos con búsqueda, filtros y soft-delete vía status=retired."""
 
     serializer_class = EquipmentSerializer
-    permission_classes = [
-        RoleWriteOrReadOnly("admin", "technician", "sales", "inventory")
-    ]
+    permission_classes = [RoleWriteOrReadOnly(*roles.EQUIPMENT_WRITE)]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "serial_number", "internal_code", "brand", "model"]
 

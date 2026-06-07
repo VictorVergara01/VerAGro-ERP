@@ -23,7 +23,7 @@ def test_create_superuser():
     )
     assert admin.is_staff is True
     assert admin.is_superuser is True
-    assert admin.role == "admin"
+    assert admin.role == "super_admin"
 
 
 @pytest.mark.django_db

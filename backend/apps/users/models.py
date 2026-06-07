@@ -17,7 +17,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", "admin")
+        extra_fields.setdefault("role", "super_admin")
         if extra_fields.get("is_staff") is not True:
             raise ValueError("El superusuario debe tener is_staff=True")
         if extra_fields.get("is_superuser") is not True:
@@ -29,11 +29,13 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     class Role(models.TextChoices):
-        ADMIN = "admin", "Administrador"
+        SUPER_ADMIN = "super_admin", "Super Administrador"
+        GENERAL_ADMIN = "general_admin", "Administrador General"
+        SALES = "sales", "Facturación / Ventas"
         TECHNICIAN = "technician", "Técnico"
-        SALES = "sales", "Vendedor / Facturación"
-        INVENTORY = "inventory", "Inventario / Compras"
-        READONLY = "readonly", "Consulta / Lectura"
+        INVENTORY = "inventory", "Inventario"
+        ACCOUNTING = "accounting", "Contabilidad"
+        READONLY = "readonly", "Consulta"
 
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255, blank=True)

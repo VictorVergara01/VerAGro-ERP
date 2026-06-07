@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import (
@@ -20,8 +21,8 @@ from .serializers import (
 )
 from .services import apply_recommended_parts
 
-TemplateWrite = RoleWriteOrReadOnly("admin")
-ChecklistWrite = RoleWriteOrReadOnly("admin", "technician")
+TemplateWrite = RoleWriteOrReadOnly(*roles.CHECKLIST_TEMPLATE_WRITE)
+ChecklistWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)
 
 
 def _int_param(params, key):

@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import PurchaseAdditionalCost, PurchaseOrder, PurchaseOrderLine
@@ -13,7 +14,7 @@ from .serializers import (
 )
 from .services import receive_lines, recalculate_costs
 
-PurchasingWrite = RoleWriteOrReadOnly("admin", "inventory")
+PurchasingWrite = RoleWriteOrReadOnly(*roles.INVENTORY_WRITE)
 
 EDITABLE_STATUSES = (PurchaseOrder.Status.DRAFT, PurchaseOrder.Status.SENT)
 
