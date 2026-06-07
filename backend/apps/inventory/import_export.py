@@ -21,6 +21,15 @@ IMPORT_COLUMNS = [
 EXPORT_EXTRA = ["reservado", "disponible"]
 
 
+def _detect_delimiter(text):
+    """Coma o punto y coma, según cuál predomine en la primera línea.
+
+    Excel en español/europeo guarda el CSV con ';'; el resto usa ','.
+    """
+    first_line = text.split("\n", 1)[0]
+    return ";" if first_line.count(";") > first_line.count(",") else ","
+
+
 def _normalize_header(key):
     """Normaliza el nombre de una columna: sin espacios, minúsculas y SIN tildes.
 
@@ -172,7 +181,7 @@ def import_products_csv(file, user):
     text = file.read()
     if isinstance(text, bytes):
         text = text.decode("utf-8-sig")
-    reader = csv.DictReader(io.StringIO(text))
+    reader = csv.DictReader(io.StringIO(text), delimiter=_detect_delimiter(text))
 
     creados = 0
     saltados = 0

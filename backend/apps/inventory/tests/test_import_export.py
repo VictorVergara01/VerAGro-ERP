@@ -149,6 +149,24 @@ def test_import_accepts_accented_and_uppercase_headers():
     assert product.main_supplier.name == "Prov Tilde"
 
 
+@pytest.mark.django_db
+def test_import_detects_semicolon_delimiter():
+    """Excel en español guarda CSV con ';'. Debe detectarse automáticamente."""
+    user = User.objects.create_user(
+        email="i6@veragro.com", password="x", full_name="i", role="inventory"
+    )
+    text = (
+        "sku;nombre;Categoría;costo\n"
+        "SC-1;Punto y coma;Filtros PYC;10\n"
+    )
+    result = import_products_csv(_csv_file(text), user)
+    assert result["creados"] == 1, result
+    product = Product.objects.get(sku="SC-1")
+    assert product.category is not None
+    assert product.category.name == "Filtros PYC"
+    assert product.average_cost == Decimal("10")
+
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 
