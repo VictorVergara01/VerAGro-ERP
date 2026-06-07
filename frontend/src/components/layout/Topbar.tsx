@@ -21,16 +21,9 @@ import {
   IconSun,
 } from "@tabler/icons-react";
 
+import { ROLE_LABELS } from "../../features/auth/roles";
 import { useAuth } from "../../features/auth/useAuth";
 import { Logo } from "../ui/Logo";
-
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Administrador",
-  technician: "Técnico",
-  sales: "Ventas",
-  inventory: "Inventario",
-  readonly: "Solo lectura",
-};
 
 function ThemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
