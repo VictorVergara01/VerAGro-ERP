@@ -16,4 +16,6 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Producción: Gunicorn sirve la app WSGI. En desarrollo, docker-compose.yml
+# sobreescribe este comando con `runserver` (autoreload por volumen).
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "60"]
