@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Datos locales (no deben entrar a la imagen)
+media/
+staticfiles/
+*.sqlite3
+*.log
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# OS / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
