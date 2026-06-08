@@ -10,6 +10,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.veragro.erp",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,7 +25,14 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Veragro accede a tus fotos para adjuntarlas a las órdenes de servicio.",
+          "cameraPermission": "Veragro usa la cámara para tomar fotos de las órdenes de servicio."
+        }
+      ]
     ]
   }
 }

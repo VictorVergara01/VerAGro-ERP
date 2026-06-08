@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# Veragro ERP — Panel web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Panel de administración en **React 19 + Vite + TypeScript + Mantine 9**, consume la API REST del
+backend. Cliente tipado generado del OpenAPI (openapi-fetch), datos con TanStack Query, rutas con
+React Router v7.
 
-Currently, two official plugins are available:
+## Desarrollo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev          # http://localhost:5173
+npm test             # Vitest
+npm run typecheck    # tsc --noEmit
+npm run gen:api      # regenera src/lib/api/schema.d.ts desde el OpenAPI del backend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Variable de entorno (ver `.env.example`):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+VITE_API_URL=http://localhost:8000    # origen del backend (las rutas del OpenAPI ya incluyen /api)
+```
+
+> El backend debe estar corriendo para `gen:api` y para usar el panel. Desde la raíz del repo:
+> `docker compose up -d`.
+
+## Producción
+
+`npm run build` genera `dist/` (estático). **`VITE_API_URL` se hornea en el bundle en tiempo de build**,
+así que se define antes de compilar:
+
+```bash
+VITE_API_URL=https://api.veragro.com npm run build
+```
+
+Servir el `dist/` desde Nginx (con fallback de SPA a `index.html`) o usar el contenedor
+`Dockerfile.prod` (multi-stage build + nginx, incluye `nginx.conf`). Guía completa en
+[`../docs/DEPLOY.md`](../docs/DEPLOY.md).
+
+## Estructura
+
+```
+src/
+  app/                  # App.tsx (providers)
+  routes/               # AppRoutes, ProtectedRoute
+  components/{layout,ui}# AppShell, Sidebar, Topbar; DataTable, PageHeader, DetailHeader, Field…
+  features/<modulo>/     # types.ts, api.ts (hooks), <X>Page.tsx, modales, <X>DetailPage.tsx
+  lib/api/              # client.ts (JWT + refresh), schema.d.ts (GENERADO), queryClient
+  lib/auth/, utils/, theme.ts
+```
+
+Stack visual: identidad Veragro, modo claro/oscuro, gráficas (`@mantine/charts`) y command palette
+(`@mantine/spotlight`, Ctrl/⌘+K).
