@@ -29,6 +29,26 @@ npm start          # abre Expo; escanea el QR con Expo Go (Android) o la cámara
 - **Mis órdenes**: lista las órdenes asignadas al técnico (filtro `?technician=me`), con
   "Ver todas" y pull-to-refresh. Logout.
 
+## Generar el APK (producción)
+
+Se usa **EAS Build** (nube de Expo, no necesita Android Studio). La config está en `eas.json` y
+`app.json` (`android.package = com.veragro.erp`).
+
+> **Antes de compilar:** edita `eas.json` y pon la URL real del backend en
+> `build.preview.env.EXPO_PUBLIC_API_URL` (un APK NO deriva la IP del host como en desarrollo).
+
+```bash
+npm install -g eas-cli
+eas login                                  # cuenta Expo gratuita
+eas build:configure                        # una sola vez (vincula projectId)
+eas build --platform android --profile preview   # produce un APK instalable
+```
+Al terminar, EAS entrega un link de descarga del `.apk`. Para una versión nueva, sube
+`expo.android.versionCode` en `app.json` y vuelve a compilar.
+
+Guía detallada (incluye build local con Android Studio y publicación en Play Store) en
+[`../docs/DEPLOY.md`](../docs/DEPLOY.md).
+
 ## Scripts
 - `npm run typecheck` — `tsc --noEmit`.
 - `npm run gen:api` — regenera `src/lib/api/schema.d.ts` desde el OpenAPI del backend.

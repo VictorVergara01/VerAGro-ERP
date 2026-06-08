@@ -146,11 +146,17 @@ access; `GET /api/auth/me/` devuelve el usuario actual.
 
 ## Despliegue (producción)
 
-`config.settings.production` (`DJANGO_SETTINGS_MODULE=config.settings.production`) exige por entorno,
-sin defaults: `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`. Incluye
-endurecimiento HTTPS (HSTS, cookies seguras, redirect SSL) asumiendo que Nginx termina TLS. La imagen
-sirve la app con **Gunicorn** (el `Dockerfile`); el `docker-compose.yml` de dev sobreescribe el
-comando con `runserver`. Servir `/media/` y `/static/` desde Nginx.
+Guía completa paso a paso (backend, panel web y **APK móvil**) en **[`docs/DEPLOY.md`](docs/DEPLOY.md)**.
+
+Resumen:
+- **Backend:** `config.settings.production` exige `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`,
+  `CORS_ALLOWED_ORIGINS` (sin defaults). Incluye endurecimiento HTTPS (HSTS, cookies seguras, SSL
+  redirect) asumiendo que Nginx termina TLS. La imagen sirve la app con **Gunicorn**; servir `/media/`
+  y `/static/` desde Nginx.
+- **Web:** `npm run build` con `VITE_API_URL` apuntando al dominio del backend → servir el `dist/`
+  estático desde Nginx (o el contenedor `frontend/Dockerfile.prod`).
+- **Móvil:** **EAS Build** (`eas build -p android --profile preview`) genera el APK; la URL del backend
+  se inyecta vía `EXPO_PUBLIC_API_URL` en `mobile/eas.json`.
 
 ## Flujo de desarrollo
 
