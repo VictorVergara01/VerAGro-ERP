@@ -7,7 +7,7 @@ import {
   Text,
   ThemeIcon,
 } from "@mantine/core";
-import { IconDeviceMobile } from "@tabler/icons-react";
+import { IconDeviceMobile, IconDownload } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { Logo } from "../ui/Logo";
@@ -19,6 +19,7 @@ function isActive(pathname: string, to: string) {
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
+  const apkUrl = import.meta.env.VITE_APK_URL as string | undefined;
 
   return (
     <Stack gap="lg" h="100%">
@@ -70,10 +71,21 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         radius="lg"
         p="md"
         withBorder={false}
+        {...(apkUrl
+          ? {
+              component: "a" as const,
+              href: apkUrl,
+              target: "_blank",
+              rel: "noopener noreferrer",
+              onClick: onNavigate,
+            }
+          : {})}
         style={{
           background:
             "linear-gradient(135deg, var(--mantine-color-green-8), var(--mantine-color-green-6))",
           color: "white",
+          textDecoration: "none",
+          cursor: apkUrl ? "pointer" : "default",
         }}
       >
         <ThemeIcon variant="white" color="green" radius="md" size={36} mb="xs">
@@ -83,8 +95,18 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           App de campo
         </Text>
         <Text size="xs" opacity={0.9} mt={2}>
-          Los técnicos gestionan sus órdenes desde el móvil.
+          {apkUrl
+            ? "Descarga la app para técnicos."
+            : "Los técnicos gestionan sus órdenes desde el móvil."}
         </Text>
+        {apkUrl && (
+          <Group gap={6} mt="sm" wrap="nowrap">
+            <IconDownload size={16} />
+            <Text size="xs" fw={700}>
+              Descargar APK
+            </Text>
+          </Group>
+        )}
       </Card>
 
       <Box>
