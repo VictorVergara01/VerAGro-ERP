@@ -29,7 +29,7 @@ VITE_API_URL=http://localhost:8000    # origen del backend (las rutas del OpenAP
 así que se define antes de compilar:
 
 ```bash
-VITE_API_URL=https://api.veragro.com npm run build
+VITE_API_URL=https://api.veragro.tech npm run build
 ```
 
 Servir el `dist/` desde Nginx (con fallback de SPA a `index.html`) o usar el contenedor
