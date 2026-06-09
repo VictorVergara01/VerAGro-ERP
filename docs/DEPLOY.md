@@ -31,31 +31,42 @@ no arranca):
 Opcionales de hardening (tienen default seguro): `DJANGO_SECURE_SSL_REDIRECT`,
 `DJANGO_SECURE_HSTS_SECONDS`, `DJANGO_CSRF_TRUSTED_ORIGINS`.
 
-> El `docker-compose.yml` del repo es de **desarrollo** (usa `runserver`). Para producción levanta el
-> backend con su `Dockerfile` (Gunicorn) o un `docker-compose.prod.yml` propio.
+> El `docker-compose.yml` del repo es de **desarrollo** (usa `runserver`). Para producción usa
+> **`docker-compose.prod.yml`** (Postgres + backend con Gunicorn), que lee las variables de
+> `.env.prod` (copia la plantilla [`.env.prod.example`](../.env.prod.example) y rellénala).
+
+> **Estáticos:** el backend usa **WhiteNoise**, así que sirve sus propios estáticos (admin, Swagger)
+> sin necesidad de configurar `/static/` en Nginx — solo hay que correr `collectstatic`.
 
 ### Pasos
 ```bash
-# Construir e iniciar el backend (con las env de producción cargadas)
-docker build -t veragro-backend ./backend
-docker run -d --env-file .env.prod -p 8000:8000 veragro-backend
+# 1. Preparar variables de producción
+cp .env.prod.example .env.prod      # y editar con valores reales
 
-# Migraciones y archivos estáticos (admin/Swagger)
-docker exec <contenedor> python manage.py migrate
-docker exec <contenedor> python manage.py collectstatic --noinput
+# 2. Construir e iniciar Postgres + backend (Gunicorn)
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 
-# Verificación de seguridad (debe salir sin warnings críticos)
-docker exec <contenedor> python manage.py check --deploy
+# 3. Migraciones, estáticos y superusuario
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py migrate
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py collectstatic --noinput
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py createsuperuser
+
+# 4. Verificación de seguridad (debe salir sin warnings críticos)
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py check --deploy
 ```
+El backend queda escuchando en `127.0.0.1:8000` (solo localhost); lo expones con el Nginx del host.
 
 ### Nginx — bloque del backend
 ```nginx
 location /api/   { proxy_pass http://127.0.0.1:8000; include proxy_params; }
 location /admin/ { proxy_pass http://127.0.0.1:8000; include proxy_params; }
 
-# Archivos subidos (fotos de órdenes, logo de empresa) y estáticos del admin.
-location /media/  { alias /ruta/al/backend/media/; }
-location /static/ { alias /ruta/al/backend/staticfiles/; }
+# Archivos subidos (fotos de órdenes, logo de empresa). Bind mount del compose: ./backend/media
+location /media/  { alias /ruta/al/repo/backend/media/; }
+
+# /static/ es OPCIONAL: WhiteNoise ya los sirve vía el backend. Solo añádelo si quieres
+# que Nginx los sirva directo (un poco más rápido):
+# location /static/ { alias /ruta/al/repo/backend/static/; }
 ```
 `proxy_params` debe pasar `X-Forwarded-Proto $scheme` (production.py lo usa para detectar HTTPS).
 

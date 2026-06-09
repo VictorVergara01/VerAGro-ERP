@@ -12,7 +12,7 @@ htmlcov/
 
 # Datos locales (no deben entrar a la imagen)
 media/
-staticfiles/
+static/
 *.sqlite3
 *.log
 

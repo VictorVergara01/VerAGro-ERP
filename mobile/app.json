@@ -18,7 +18,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,6 +36,11 @@
           "cameraPermission": "Veragro usa la cámara para tomar fotos de las órdenes de servicio."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cb8d3090-4988-4dea-b331-0da6d914cb52"
+      }
+    }
   }
 }
