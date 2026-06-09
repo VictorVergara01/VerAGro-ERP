@@ -21,6 +21,9 @@ venv/
 node_modules/
 dist/
 
+# APK servido por el web (grande, cambia en cada release; se coloca al desplegar)
+*.apk
+
 # OS / editores
 .DS_Store
 Thumbs.db

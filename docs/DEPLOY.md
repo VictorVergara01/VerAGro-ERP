@@ -143,9 +143,20 @@ eas build --platform android --profile preview
   (activar "instalar apps de orígenes desconocidos").
 - Para subir a otro dispositivo, comparte ese mismo link o el archivo.
 
+### Publicar el APK en el panel web (botón de descarga)
+El sidebar del web tiene un botón **"Descargar APK"** que por defecto apunta a
+`/downloads/veragro.apk` (servido por el propio web). Para que funcione:
+
+1. Descarga el `.apk` que generó EAS.
+2. Cópialo como `frontend/public/downloads/veragro.apk` **antes** de compilar el web (Vite lo copia al
+   `dist/`), o déjalo en la carpeta `downloads/` del web ya desplegado.
+
+Así cualquiera entra al panel y se baja la app desde ahí, con una URL fija que no cambia entre builds.
+(Si prefieres usar el link directo de EAS, define `VITE_APK_URL` en el `.env` del frontend.)
+
 ### Subir una versión nueva
-Incrementa `expo.android.versionCode` (y opcionalmente `expo.version`) en `mobile/app.json` y vuelve a
-correr el build.
+Incrementa `expo.android.versionCode` (y opcionalmente `expo.version`) en `mobile/app.json`, vuelve a
+correr el build y reemplaza `frontend/public/downloads/veragro.apk` con el nuevo archivo.
 
 ### Play Store (opcional, más adelante)
 El perfil `production` de `eas.json` produce un **AAB** (`app-bundle`) para la Play Store. El envío se
