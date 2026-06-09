@@ -57,5 +57,19 @@ services:
     depends_on:
       - backend
 
+  cloudflared:
+    # Tunnel de Cloudflare (gestionado por dashboard con token). Publica los
+    # dominios sin abrir puertos. Alcanza a los servicios por su nombre de red:
+    # api.<dominio> → backend:8000 ; erp.<dominio> → web:80 (se configura en el dashboard).
+    # TUNNEL_TOKEN va en .env.prod (no se versiona).
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - backend
+      - web
+
 volumes:
   postgres_data_prod:
