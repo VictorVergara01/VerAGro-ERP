@@ -12,17 +12,11 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.veragro.tech"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.veragro.tech"
       }
     }
   },
