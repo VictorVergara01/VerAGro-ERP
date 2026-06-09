@@ -34,8 +34,9 @@ npm start          # abre Expo; escanea el QR con Expo Go (Android) o la cámara
 Se usa **EAS Build** (nube de Expo, no necesita Android Studio). La config está en `eas.json` y
 `app.json` (`android.package = com.veragro.erp`).
 
-> **Antes de compilar:** edita `eas.json` y pon la URL real del backend en
-> `build.preview.env.EXPO_PUBLIC_API_URL` (un APK NO deriva la IP del host como en desarrollo).
+> **Antes de compilar:** define la URL del backend como variable de EAS (un APK NO deriva la IP del
+> host como en desarrollo). Se guarda en los servidores de Expo, **no en git**:
+> `eas env:create --name EXPO_PUBLIC_API_URL --value https://api.tudominio.com --environment preview --visibility plaintext`
 
 ```bash
 npm install -g eas-cli

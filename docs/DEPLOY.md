@@ -1,7 +1,7 @@
 # Despliegue en producción — Veragro ERP
 
 Guía para poner en producción los tres componentes: **backend** (API), **panel web** y **app móvil
-(APK)**. Reemplaza los dominios de ejemplo (`api.veragro.tech`, `erp.veragro.tech`) por los tuyos.
+(APK)**. Reemplaza los dominios de ejemplo (`api.tudominio.com`, `erp.tudominio.com`) por los tuyos.
 
 Arquitectura asumida: un **Nginx** (en Proxmox) que termina TLS y hace de reverse proxy. Detrás:
 el backend (Gunicorn) y los archivos estáticos del panel web.
@@ -24,8 +24,8 @@ no arranca):
 |---|---|
 | `DJANGO_SETTINGS_MODULE` | `config.settings.production` |
 | `DJANGO_SECRET_KEY` | una clave larga y aleatoria |
-| `DJANGO_ALLOWED_HOSTS` | `api.veragro.tech` |
-| `CORS_ALLOWED_ORIGINS` | `https://erp.veragro.tech` |
+| `DJANGO_ALLOWED_HOSTS` | `api.tudominio.com` |
+| `CORS_ALLOWED_ORIGINS` | `https://erp.tudominio.com` |
 | `DATABASE_*` | credenciales de PostgreSQL |
 
 Opcionales de hardening (tienen default seguro): `DJANGO_SECURE_SSL_REDIRECT`,
@@ -82,8 +82,8 @@ ANTES de compilar.
 ```bash
 cd frontend
 npm ci
-VITE_API_URL=https://api.veragro.tech npm run build   # genera dist/
-#   PowerShell:  $env:VITE_API_URL="https://api.veragro.tech"; npm run build
+VITE_API_URL=https://api.tudominio.com npm run build   # genera dist/
+#   PowerShell:  $env:VITE_API_URL="https://api.tudominio.com"; npm run build
 ```
 Copia el contenido de `dist/` al servidor (p. ej. `/var/www/veragro-web/`).
 
@@ -91,7 +91,7 @@ Copia el contenido de `dist/` al servidor (p. ej. `/var/www/veragro-web/`).
 ```nginx
 server {
     listen 443 ssl;
-    server_name erp.veragro.tech;
+    server_name erp.tudominio.com;
     # ... certificados TLS ...
 
     root /var/www/veragro-web;
@@ -109,7 +109,7 @@ Si prefieres un contenedor en vez de servir desde tu Nginx, hay un `frontend/Doc
 (multi-stage build + `nginx:alpine`, ya incluye `frontend/nginx.conf`):
 ```bash
 cd frontend
-docker build -f Dockerfile.prod --build-arg VITE_API_URL=https://api.veragro.tech -t veragro-web .
+docker build -f Dockerfile.prod --build-arg VITE_API_URL=https://api.tudominio.com -t veragro-web .
 docker run -d -p 8080:80 veragro-web
 ```
 
@@ -121,9 +121,9 @@ docker run -d -p 8080:80 veragro-web
 La configuración está en `mobile/eas.json` y `mobile/app.json` (`android.package = com.veragro.erp`).
 
 > **Importante:** un APK de producción NO deriva la IP del backend del host de Metro (eso es solo en
-> desarrollo). La URL se inyecta vía `EXPO_PUBLIC_API_URL` en el perfil de build de `eas.json`.
-> **Edita `mobile/eas.json` y pon tu dominio real** (`https://api.veragro.tech`) en el perfil `preview`
-> antes de compilar.
+> desarrollo). La URL se inyecta vía la variable `EXPO_PUBLIC_API_URL`. Para **no exponer tu dominio en
+> el repo**, se define como **variable de entorno de EAS** (vive en los servidores de Expo, no en git),
+> no en `eas.json`.
 
 ### Una sola vez
 ```bash
@@ -131,7 +131,14 @@ npm install -g eas-cli
 eas login                      # cuenta Expo (gratuita)
 cd mobile
 eas build:configure           # vincula el proyecto (crea/usa el projectId)
+
+# Define la URL del backend como variable de EAS (no queda en git).
+# Reemplaza por tu dominio real. Hazlo para los entornos que vayas a compilar.
+eas env:create --name EXPO_PUBLIC_API_URL --value https://api.tudominio.com --environment preview --visibility plaintext
+eas env:create --name EXPO_PUBLIC_API_URL --value https://api.tudominio.com --environment production --visibility plaintext
 ```
+> Alternativa rápida (sin EAS env): edita `mobile/eas.json` y añade `"env": { "EXPO_PUBLIC_API_URL":
+> "https://api.tudominio.com" }` en el perfil — pero **no lo subas a git** si el repo es público.
 
 ### Generar el APK
 ```bash
@@ -181,5 +188,5 @@ Requiere el SDK de Android y firmar el APK. EAS Build evita todo esto.
 - [ ] Superusuario creado (`createsuperuser` → rol `super_admin`).
 - [ ] Nginx con TLS, reverse proxy a `/api/` y `/admin/`, sirviendo `/media/`, `/static/` y el `dist/` del web.
 - [ ] Web compilado con `VITE_API_URL` apuntando al dominio del backend.
-- [ ] `mobile/eas.json` con `EXPO_PUBLIC_API_URL` = dominio real del backend.
+- [ ] `EXPO_PUBLIC_API_URL` (variable de EAS) = dominio real del backend.
 - [ ] APK generado con `eas build` y probado en un teléfono real contra el backend de producción.
