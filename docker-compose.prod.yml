@@ -1,0 +1,46 @@
+# Stack de producción: PostgreSQL + backend (Gunicorn).
+# Las variables se leen de .env.prod (ver .env.prod.example).
+#
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py migrate
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py collectstatic --noinput
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm backend python manage.py createsuperuser
+#
+# El backend escucha solo en localhost:8000; el Nginx del host hace de reverse proxy + TLS.
+# WhiteNoise sirve /static/; /media/ (subidas) se sirve desde el bind mount ./backend/media.
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    # Usa el CMD del Dockerfile (Gunicorn). NO se sobreescribe el comando.
+    env_file:
+      - .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    volumes:
+      - ./backend/media:/app/media     # subidas (fotos, logo) → las sirve Nginx del host
+      - ./backend/static:/app/static   # estáticos colectados (WhiteNoise los sirve igual)
+    ports:
+      - "127.0.0.1:8000:8000"          # solo localhost; expón con el Nginx del host
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data_prod:

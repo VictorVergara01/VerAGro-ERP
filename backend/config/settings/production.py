@@ -34,3 +34,12 @@ X_FRAME_OPTIONS = "DENY"
 # Orígenes de confianza para CSRF (admin de Django con sesión). Mismos hosts/orígenes
 # que sirven el frontend; tomados de env para no hardcodear el dominio.
 CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=CORS_ALLOWED_ORIGINS)
+
+# Estáticos comprimidos y versionados servidos por WhiteNoise. Requiere correr
+# `collectstatic` en el despliegue (genera el manifiesto que usa esta storage).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    },
+}
