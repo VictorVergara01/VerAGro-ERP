@@ -37,7 +37,9 @@ services:
       - ./backend/media:/app/media     # subidas (fotos, logo) → las sirve Nginx del host
       - ./backend/static:/app/static   # estáticos colectados (WhiteNoise los sirve igual)
     ports:
-      - "127.0.0.1:8000:8000"          # solo localhost; expón con el Nginx del host
+      # Por defecto solo localhost. Para exponerlo a un reverse proxy externo
+      # (p. ej. Nginx Proxy Manager en otro contenedor), pon BIND_ADDR=0.0.0.0 en .env.prod.
+      - "${BIND_ADDR:-127.0.0.1}:8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -53,17 +55,19 @@ services:
         VITE_API_URL: ${VITE_API_URL}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:80"            # solo localhost; lo publica cloudflared/Nginx
+      - "${BIND_ADDR:-127.0.0.1}:8080:80"
     depends_on:
       - backend
 
   cloudflared:
-    # Tunnel de Cloudflare (gestionado por dashboard con token). Publica los
-    # dominios sin abrir puertos. Alcanza a los servicios por su nombre de red:
-    # api.<dominio> → backend:8000 ; erp.<dominio> → web:80 (se configura en el dashboard).
+    # OPCIONAL (perfil "tunnel"): túnel de Cloudflare dedicado para este stack.
+    # Solo arranca con COMPOSE_PROFILES=tunnel. Si publicas con un reverse proxy
+    # externo (Nginx Proxy Manager, etc.) no lo necesitas: deja el perfil sin activar.
+    # Alcanza los servicios por nombre de red: api→backend:8000, erp→web:80.
     # TUNNEL_TOKEN va en .env.prod (no se versiona).
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
+    profiles: ["tunnel"]
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN}
