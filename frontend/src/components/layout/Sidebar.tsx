@@ -19,7 +19,10 @@ function isActive(pathname: string, to: string) {
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
-  const apkUrl = import.meta.env.VITE_APK_URL as string | undefined;
+  // APK servido junto al web (frontend/public/downloads/veragro.apk → /downloads/veragro.apk).
+  // Se puede sobreescribir con VITE_APK_URL (p. ej. un link de EAS Build).
+  const apkUrl =
+    (import.meta.env.VITE_APK_URL as string | undefined) ?? "/downloads/veragro.apk";
 
   return (
     <Stack gap="lg" h="100%">
@@ -68,24 +71,19 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </Stack>
 
       <Card
+        component="a"
+        href={apkUrl}
+        download
+        onClick={onNavigate}
         radius="lg"
         p="md"
         withBorder={false}
-        {...(apkUrl
-          ? {
-              component: "a" as const,
-              href: apkUrl,
-              target: "_blank",
-              rel: "noopener noreferrer",
-              onClick: onNavigate,
-            }
-          : {})}
         style={{
           background:
             "linear-gradient(135deg, var(--mantine-color-green-8), var(--mantine-color-green-6))",
           color: "white",
           textDecoration: "none",
-          cursor: apkUrl ? "pointer" : "default",
+          cursor: "pointer",
         }}
       >
         <ThemeIcon variant="white" color="green" radius="md" size={36} mb="xs">
@@ -95,18 +93,14 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           App de campo
         </Text>
         <Text size="xs" opacity={0.9} mt={2}>
-          {apkUrl
-            ? "Descarga la app para técnicos."
-            : "Los técnicos gestionan sus órdenes desde el móvil."}
+          Descarga la app para técnicos.
         </Text>
-        {apkUrl && (
-          <Group gap={6} mt="sm" wrap="nowrap">
-            <IconDownload size={16} />
-            <Text size="xs" fw={700}>
-              Descargar APK
-            </Text>
-          </Group>
-        )}
+        <Group gap={6} mt="sm" wrap="nowrap">
+          <IconDownload size={16} />
+          <Text size="xs" fw={700}>
+            Descargar APK
+          </Text>
+        </Group>
       </Card>
 
       <Box>
