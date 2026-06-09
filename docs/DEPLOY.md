@@ -1,7 +1,7 @@
 # Despliegue en producción — Veragro ERP
 
 Guía para poner en producción los tres componentes: **backend** (API), **panel web** y **app móvil
-(APK)**. Reemplaza los dominios de ejemplo (`api.veragro.com`, `app.veragro.com`) por los tuyos.
+(APK)**. Reemplaza los dominios de ejemplo (`api.veragro.tech`, `erp.veragro.tech`) por los tuyos.
 
 Arquitectura asumida: un **Nginx** (en Proxmox) que termina TLS y hace de reverse proxy. Detrás:
 el backend (Gunicorn) y los archivos estáticos del panel web.
@@ -24,8 +24,8 @@ no arranca):
 |---|---|
 | `DJANGO_SETTINGS_MODULE` | `config.settings.production` |
 | `DJANGO_SECRET_KEY` | una clave larga y aleatoria |
-| `DJANGO_ALLOWED_HOSTS` | `api.veragro.com` |
-| `CORS_ALLOWED_ORIGINS` | `https://app.veragro.com` |
+| `DJANGO_ALLOWED_HOSTS` | `api.veragro.tech` |
+| `CORS_ALLOWED_ORIGINS` | `https://erp.veragro.tech` |
 | `DATABASE_*` | credenciales de PostgreSQL |
 
 Opcionales de hardening (tienen default seguro): `DJANGO_SECURE_SSL_REDIRECT`,
@@ -82,8 +82,8 @@ ANTES de compilar.
 ```bash
 cd frontend
 npm ci
-VITE_API_URL=https://api.veragro.com npm run build   # genera dist/
-#   PowerShell:  $env:VITE_API_URL="https://api.veragro.com"; npm run build
+VITE_API_URL=https://api.veragro.tech npm run build   # genera dist/
+#   PowerShell:  $env:VITE_API_URL="https://api.veragro.tech"; npm run build
 ```
 Copia el contenido de `dist/` al servidor (p. ej. `/var/www/veragro-web/`).
 
@@ -91,7 +91,7 @@ Copia el contenido de `dist/` al servidor (p. ej. `/var/www/veragro-web/`).
 ```nginx
 server {
     listen 443 ssl;
-    server_name app.veragro.com;
+    server_name erp.veragro.tech;
     # ... certificados TLS ...
 
     root /var/www/veragro-web;
@@ -109,7 +109,7 @@ Si prefieres un contenedor en vez de servir desde tu Nginx, hay un `frontend/Doc
 (multi-stage build + `nginx:alpine`, ya incluye `frontend/nginx.conf`):
 ```bash
 cd frontend
-docker build -f Dockerfile.prod --build-arg VITE_API_URL=https://api.veragro.com -t veragro-web .
+docker build -f Dockerfile.prod --build-arg VITE_API_URL=https://api.veragro.tech -t veragro-web .
 docker run -d -p 8080:80 veragro-web
 ```
 
@@ -122,7 +122,7 @@ La configuración está en `mobile/eas.json` y `mobile/app.json` (`android.packa
 
 > **Importante:** un APK de producción NO deriva la IP del backend del host de Metro (eso es solo en
 > desarrollo). La URL se inyecta vía `EXPO_PUBLIC_API_URL` en el perfil de build de `eas.json`.
-> **Edita `mobile/eas.json` y pon tu dominio real** (`https://api.veragro.com`) en el perfil `preview`
+> **Edita `mobile/eas.json` y pon tu dominio real** (`https://api.veragro.tech`) en el perfil `preview`
 > antes de compilar.
 
 ### Una sola vez
