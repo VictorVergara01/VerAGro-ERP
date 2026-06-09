@@ -42,5 +42,20 @@ services:
       db:
         condition: service_healthy
 
+  web:
+    # Panel web (Vite/React) servido por Nginx. VITE_API_URL se hornea en el build
+    # (se toma de .env.prod → no queda en el repo). Coloca el APK en
+    # frontend/public/downloads/veragro.apk antes de construir para el botón de descarga.
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"            # solo localhost; lo publica cloudflared/Nginx
+    depends_on:
+      - backend
+
 volumes:
   postgres_data_prod:
