@@ -36,7 +36,7 @@ def test_create_po_with_new_product():
     assert Product.objects.filter(name="Filtro nuevo").exists()
     product = Product.objects.get(name="Filtro nuevo")
     assert product.stock_quantity == 0
-    assert product.sku  # autogenerado
+    assert product.sku == f"SKU-{product.pk:06d}"  # autogenerado, formato compartido
     assert resp.data["lines"][0]["product"] == product.id
 
 
