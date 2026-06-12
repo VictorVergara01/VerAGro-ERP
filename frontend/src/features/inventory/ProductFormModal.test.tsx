@@ -35,7 +35,7 @@ describe("ProductFormModal", () => {
   it("permite guardar sin SKU (se autogenera en el backend)", async () => {
     saveMutate.mockClear();
     renderModal();
-    fireEvent.change(screen.getByLabelText("Nombre"), {
+    fireEvent.change(screen.getByLabelText(/Nombre/), {
       target: { value: "Producto sin SKU" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));

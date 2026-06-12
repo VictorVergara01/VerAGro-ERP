@@ -137,7 +137,7 @@ export function ProductFormModal({
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
-            <TextInput label="Nombre" {...form.getInputProps("name")} />
+            <TextInput label="Nombre" withAsterisk {...form.getInputProps("name")} />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
