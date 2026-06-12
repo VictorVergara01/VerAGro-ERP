@@ -25,3 +25,15 @@ window.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // jsdom no implementa scrollIntoView (Mantine ScrollArea).
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
+// jsdom no implementa document.fonts (Mantine Textarea autosize).
+if (!document.fonts) {
+  Object.defineProperty(document, "fonts", {
+    value: {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      ready: Promise.resolve(),
+      status: "loaded",
+    },
+  });
+}
