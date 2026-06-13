@@ -17,6 +17,11 @@ def _q(value):
     return Decimal(value).quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
+def generate_product_sku(pk):
+    """SKU autogenerado: prefijo fijo + pk con relleno de ceros a 6 dígitos."""
+    return f"SKU-{pk:06d}"
+
+
 def effective_margin(product):
     """Margen efectivo: el del producto si > 0; si no, el de su categoría; si ninguno, 0."""
     if product.default_margin_percentage and product.default_margin_percentage > 0:

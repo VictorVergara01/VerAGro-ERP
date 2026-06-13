@@ -1,7 +1,10 @@
+import uuid
+
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from .models import InventoryMovement, Product, ProductCategory
-from .services import apply_adjustment
+from .services import apply_adjustment, generate_product_sku
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -24,6 +27,14 @@ class ProductSerializer(serializers.ModelSerializer):
     available_quantity = serializers.DecimalField(
         max_digits=12, decimal_places=2, read_only=True
     )
+    # Opcional: si llega vacío se autogenera en create(). El UniqueValidator
+    # preserva el rechazo (400) de SKUs manuales duplicados que daba __all__.
+    sku = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=50,
+        validators=[UniqueValidator(queryset=Product.objects.all())],
+    )
 
     class Meta:
         model = Product
@@ -37,7 +48,15 @@ class ProductSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
+        provided_sku = (validated_data.get("sku") or "").strip()
+        if not provided_sku:
+            # Valor temporal único para no violar unique en la inserción;
+            # se reemplaza por el correlativo una vez conocido el pk.
+            validated_data["sku"] = f"TMP-{uuid.uuid4().hex[:12]}"
         product = super().create(validated_data)
+        if not provided_sku:
+            product.sku = generate_product_sku(product.pk)
+            product.save(update_fields=["sku"])
         from .services import apply_margin
 
         apply_margin(product)

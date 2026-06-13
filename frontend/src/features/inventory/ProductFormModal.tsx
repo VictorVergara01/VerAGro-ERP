@@ -71,7 +71,6 @@ export function ProductFormModal({
   const form = useForm<FormValues>({
     initialValues: EMPTY,
     validate: {
-      sku: (v) => (v.trim() ? null : "El SKU es obligatorio."),
       name: (v) => (v.trim() ? null : "El nombre es obligatorio."),
     },
   });
@@ -131,7 +130,11 @@ export function ProductFormModal({
       <form onSubmit={handleSubmit}>
         <Grid>
           <Grid.Col span={{ base: 12, sm: 6 }}>
-            <TextInput label="SKU" withAsterisk {...form.getInputProps("sku")} />
+            <TextInput
+              label="SKU"
+              placeholder="Déjalo vacío para generar automáticamente"
+              {...form.getInputProps("sku")}
+            />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <TextInput label="Nombre" withAsterisk {...form.getInputProps("name")} />

@@ -4,6 +4,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from apps.inventory.models import Product, ProductCategory
+from apps.inventory.services import generate_product_sku
 
 from .models import PurchaseAdditionalCost, PurchaseOrder, PurchaseOrderLine
 from .services import recalculate_costs
@@ -30,7 +31,7 @@ def create_product_from_payload(data):
         unit_of_measure=data.get("unit_of_measure", "") or "",
     )
     if not sku:
-        product.sku = f"SKU-{product.pk:06d}"
+        product.sku = generate_product_sku(product.pk)
         product.save(update_fields=["sku"])
     return product
 

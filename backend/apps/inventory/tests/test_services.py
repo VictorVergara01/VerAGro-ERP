@@ -182,3 +182,11 @@ def test_consume_stock_sale_out_movement_type():
     mov = InventoryMovement.objects.get(product=p)
     assert mov.movement_type == "sale_out"
     assert mov.reference_type == "invoice"
+
+
+def test_generate_product_sku_formats_pk_with_prefix_and_padding():
+    from apps.inventory.services import generate_product_sku
+
+    assert generate_product_sku(42) == "SKU-000042"
+    assert generate_product_sku(1) == "SKU-000001"
+    assert generate_product_sku(1234567) == "SKU-1234567"

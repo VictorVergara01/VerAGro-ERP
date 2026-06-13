@@ -210,3 +210,49 @@ def test_adjustment_on_inactive_product_rejected(inv_client):
     assert resp.status_code == 400
     p.refresh_from_db()
     assert p.stock_quantity == Decimal("5")  # intacto
+
+
+@pytest.mark.django_db
+def test_create_product_without_sku_autogenerates(inv_client):
+    resp = inv_client.post(
+        "/api/inventory/products/", {"name": "Sin SKU"}, format="json"
+    )
+    assert resp.status_code == 201, resp.content
+    product = Product.objects.get(name="Sin SKU")
+    assert resp.data["sku"] == f"SKU-{product.pk:06d}"
+
+
+@pytest.mark.django_db
+def test_create_product_with_manual_sku_is_respected(inv_client):
+    resp = inv_client.post(
+        "/api/inventory/products/",
+        {"sku": "MANUAL-9", "name": "Con SKU"},
+        format="json",
+    )
+    assert resp.status_code == 201, resp.content
+    assert resp.data["sku"] == "MANUAL-9"
+
+
+@pytest.mark.django_db
+def test_create_two_products_without_sku_get_distinct_skus(inv_client):
+    r1 = inv_client.post(
+        "/api/inventory/products/", {"name": "Uno sin SKU"}, format="json"
+    )
+    r2 = inv_client.post(
+        "/api/inventory/products/", {"name": "Dos sin SKU"}, format="json"
+    )
+    assert r1.status_code == 201 and r2.status_code == 201
+    assert r1.data["sku"] != r2.data["sku"]
+    assert r1.data["sku"].startswith("SKU-")
+    assert r2.data["sku"].startswith("SKU-")
+
+
+@pytest.mark.django_db
+def test_create_product_with_duplicate_sku_returns_400(inv_client):
+    Product.objects.create(sku="DUP-1", name="Existente")
+    resp = inv_client.post(
+        "/api/inventory/products/",
+        {"sku": "DUP-1", "name": "Repetido"},
+        format="json",
+    )
+    assert resp.status_code == 400
