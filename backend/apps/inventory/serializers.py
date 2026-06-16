@@ -10,7 +10,7 @@ from .services import apply_adjustment, generate_product_sku
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = ("id", "name", "is_active", "default_margin_percentage")
+        fields = ("id", "name", "description", "is_active", "default_margin_percentage")
         read_only_fields = ("id",)
 
     def update(self, instance, validated_data):

@@ -140,6 +140,24 @@ export function useDeleteProduct() {
   });
 }
 
+export function useDeleteManyProducts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      await Promise.all(
+        ids.map((id) =>
+          api.DELETE("/api/inventory/products/{id}/", {
+            params: { path: { id } },
+          }),
+        ),
+      );
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
 export interface AdjustInput {
   product: number;
   movement_type: "adjustment_in" | "adjustment_out";

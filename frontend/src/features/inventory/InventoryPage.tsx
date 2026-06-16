@@ -3,6 +3,7 @@ import {
   Alert,
   Badge,
   Button,
+  Checkbox,
   Group,
   Pagination,
   Select,
@@ -36,6 +37,7 @@ import { useAuth } from "../auth/useAuth";
 import { AdjustStockModal } from "./AdjustStockModal";
 import {
   useCategories,
+  useDeleteManyProducts,
   useDeleteProduct,
   useLowStock,
   useProducts,
@@ -52,6 +54,7 @@ export function InventoryPage() {
   const [includeInactive, setIncludeInactive] = useState(false);
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [editing, setEditing] = useState<Product | null>(null);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const [formOpen, { open: openForm, close: closeForm }] = useDisclosure(false);
@@ -76,10 +79,52 @@ export function InventoryPage() {
   });
   const low = useLowStock();
   const del = useDeleteProduct();
+  const delMany = useDeleteManyProducts();
 
   const rows = lowStockOnly ? (low.data ?? []) : (list.data?.results ?? []);
   const loading = lowStockOnly ? low.isLoading : list.isLoading;
   const error = lowStockOnly ? low.error : list.error;
+
+  const allPageIds = rows.map((p) => p.id);
+  const allSelected = allPageIds.length > 0 && allPageIds.every((id) => selected.has(id));
+  const someSelected = allPageIds.some((id) => selected.has(id));
+
+  const toggleRow = (id: number) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const toggleAll = () =>
+    setSelected((prev) => {
+      if (allSelected) {
+        const next = new Set(prev);
+        allPageIds.forEach((id) => next.delete(id));
+        return next;
+      }
+      return new Set([...prev, ...allPageIds]);
+    });
+
+  const confirmDeleteMany = () =>
+    modals.openConfirmModal({
+      title: "Eliminar productos",
+      children: `¿Marcar ${selected.size} producto${selected.size > 1 ? "s" : ""} como inactivo${selected.size > 1 ? "s" : ""}?`,
+      labels: { confirm: "Eliminar", cancel: "Cancelar" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        try {
+          await delMany.mutateAsync([...selected]);
+          setSelected(new Set());
+          notifications.show({
+            color: "green",
+            message: `${selected.size} producto${selected.size > 1 ? "s" : ""} eliminado${selected.size > 1 ? "s" : ""}.`,
+          });
+        } catch {
+          notifications.show({ color: "red", message: "Error al eliminar productos." });
+        }
+      },
+    });
 
   const exportCsv = async () => {
     try {
@@ -125,6 +170,25 @@ export function InventoryPage() {
   };
 
   const columns: Column<Product>[] = [
+    {
+      header: (
+        <Checkbox
+          checked={allSelected}
+          indeterminate={!allSelected && someSelected}
+          onChange={toggleAll}
+          aria-label="Seleccionar todos"
+        />
+      ),
+      width: 40,
+      render: (p) => (
+        <Checkbox
+          checked={selected.has(p.id)}
+          onChange={() => toggleRow(p.id)}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Seleccionar ${p.name}`}
+        />
+      ),
+    },
     { header: "SKU", render: (p) => p.sku },
     { header: "Nombre", render: (p) => p.name },
     {
@@ -205,6 +269,16 @@ export function InventoryPage() {
         action={
           canWrite ? (
             <Group gap="xs">
+              {selected.size > 0 && (
+                <Button
+                  color="red"
+                  leftSection={<IconTrash size={18} />}
+                  onClick={confirmDeleteMany}
+                  loading={delMany.isPending}
+                >
+                  Eliminar ({selected.size})
+                </Button>
+              )}
               <Button
                 variant="default"
                 leftSection={<IconDownload size={18} />}
@@ -248,6 +322,7 @@ export function InventoryPage() {
                     onChange={(e) => {
                       setSearch(e.currentTarget.value);
                       setPage(1);
+                      setSelected(new Set());
                     }}
                     w={360}
                     disabled={lowStockOnly}
@@ -262,6 +337,7 @@ export function InventoryPage() {
                     onChange={(v) => {
                       setCategory(v);
                       setPage(1);
+                      setSelected(new Set());
                     }}
                     clearable
                     searchable
@@ -296,7 +372,11 @@ export function InventoryPage() {
           footer={
             !lowStockOnly && totalPages > 1 ? (
               <Group justify="flex-end">
-                <Pagination value={page} onChange={setPage} total={totalPages} />
+                <Pagination
+            value={page}
+            onChange={(p) => { setPage(p); setSelected(new Set()); }}
+            total={totalPages}
+          />
               </Group>
             ) : undefined
           }
