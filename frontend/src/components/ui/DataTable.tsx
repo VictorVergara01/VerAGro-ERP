@@ -2,7 +2,7 @@ import { Box, Card, Center, Loader, rem, Table, Text } from "@mantine/core";
 import type { ReactNode } from "react";
 
 export interface Column<T> {
-  header: string;
+  header: ReactNode;
   /** Render de la celda; recibe la fila completa. */
   render: (row: T) => ReactNode;
   width?: number | string;

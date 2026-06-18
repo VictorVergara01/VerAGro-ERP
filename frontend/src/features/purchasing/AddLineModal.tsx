@@ -52,7 +52,7 @@ export function AddLineModal({
 }) {
   const addLine = useAddOrderLine(orderId);
   const updateLine = useUpdateOrderLine(orderId);
-  const products = useProducts({});
+  const products = useProducts({ pageSize: 10000 });
   const categories = useCategories();
   const isEdit = !!line;
 
