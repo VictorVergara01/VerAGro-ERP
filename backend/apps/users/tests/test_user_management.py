@@ -62,7 +62,8 @@ def test_patch_with_password_resets_it():
 def test_patch_without_password_keeps_it():
     c = _client(_make("super_admin"))
     target = _make("technician", email="t@v.com")
-    c.patch(f"{URL}{target.id}/", {"full_name": "X"}, format="json")
+    resp = c.patch(f"{URL}{target.id}/", {"full_name": "X"}, format="json")
+    assert resp.status_code == 200
     target.refresh_from_db()
     assert target.check_password("Str0ngPass!")
 
