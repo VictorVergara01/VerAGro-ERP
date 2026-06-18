@@ -9,6 +9,7 @@ export interface ProductListParams {
   category?: number;
   includeInactive?: boolean;
   page?: number;
+  pageSize?: number;
 }
 
 export function useProducts(params: ProductListParams) {
@@ -22,6 +23,7 @@ export function useProducts(params: ProductListParams) {
             category: params.category,
             include_inactive: params.includeInactive ? "true" : undefined,
             page: params.page,
+            page_size: params.pageSize,
           },
         },
       });
