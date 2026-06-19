@@ -75,11 +75,11 @@ export function UsersManager() {
       align: "right",
       render: (u) => (
         <Group gap={4} justify="flex-end" wrap="nowrap">
-          <ActionIcon variant="subtle" onClick={() => openEdit(u)}>
+          <ActionIcon variant="subtle" aria-label="Editar usuario" onClick={() => openEdit(u)}>
             <IconEdit size={18} />
           </ActionIcon>
           {u.is_active && u.id !== user?.id && (
-            <ActionIcon variant="subtle" color="red" onClick={() => confirmDeactivate(u)}>
+            <ActionIcon variant="subtle" color="red" aria-label="Desactivar usuario" onClick={() => confirmDeactivate(u)}>
               <IconTrash size={18} />
             </ActionIcon>
           )}

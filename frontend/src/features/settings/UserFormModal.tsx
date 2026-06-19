@@ -56,6 +56,7 @@ export function UserFormModal({
             }
           : { email: "", full_name: "", role: "technician", is_active: true, password: "" },
       );
+      form.clearErrors();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, editing]);

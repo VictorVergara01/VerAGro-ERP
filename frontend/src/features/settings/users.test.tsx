@@ -42,4 +42,9 @@ describe("UserFormModal", () => {
     renderModal({ currentRole: "general_admin" });
     expect(screen.queryByText("Super Administrador")).not.toBeInTheDocument();
   });
+
+  it("muestra el rol super_admin para un super_admin", () => {
+    renderModal({ currentRole: "super_admin" });
+    expect(screen.getByText("Super Administrador")).toBeInTheDocument();
+  });
 });
