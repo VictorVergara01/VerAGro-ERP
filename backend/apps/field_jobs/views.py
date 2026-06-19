@@ -1,6 +1,7 @@
 from rest_framework import filters, status as http_status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.core import roles
@@ -99,7 +100,12 @@ class FieldJobViewSet(viewsets.ModelViewSet):
             InvoiceSerializer(invoice).data, status=http_status.HTTP_201_CREATED
         )
 
-    @action(detail=False, methods=["post"], url_path="calculate-mix")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate-mix",
+        permission_classes=[IsAuthenticated],
+    )
     def calculate_mix(self, request):
         data = request.data
         result = calculate_spray_mix(

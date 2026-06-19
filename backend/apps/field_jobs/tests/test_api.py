@@ -115,6 +115,20 @@ def test_calculate_mix_validation_error(customer):
 
 
 @pytest.mark.django_db
+def test_calculate_mix_allowed_for_readonly_denied_for_anon():
+    payload = {
+        "hectares": 12.0, "water_per_hectare": 8.0, "tank_volume_liters": 30.0,
+        "products": [{"name": "X", "dose_per_liter": 8.0, "dose_unit": "mL/L"}],
+    }
+    # readonly (no write role) puede usar la calculadora
+    readonly = _client("readonly")
+    assert readonly.post(f"{URL}calculate-mix/", payload, format="json").status_code == 200
+    # anónimo no
+    from rest_framework.test import APIClient
+    assert APIClient().post(f"{URL}calculate-mix/", payload, format="json").status_code == 401
+
+
+@pytest.mark.django_db
 def test_permissions_viewer_readonly_anon_denied(customer):
     FieldJob.objects.create(customer=customer)
     # readonly puede leer
