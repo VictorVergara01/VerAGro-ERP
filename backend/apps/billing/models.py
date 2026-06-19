@@ -93,6 +93,7 @@ class Invoice(TimeStampedModel):
         SERVICE = "service_invoice", "Factura de servicio"
         FINAL = "final_invoice", "Factura final"
         PRODUCT_SALE = "product_sale", "Venta de producto"
+        FIELD_JOB = "field_job", "Factura de fumigación"
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Borrador"
@@ -117,6 +118,13 @@ class Invoice(TimeStampedModel):
     )
     quote = models.ForeignKey(
         Quote, on_delete=models.SET_NULL, null=True, blank=True, related_name="invoices"
+    )
+    field_job = models.ForeignKey(
+        "field_jobs.FieldJob",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invoices",
     )
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.DRAFT
@@ -145,9 +153,12 @@ class Invoice(TimeStampedModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if not self.invoice_number:
-            # Prefijo según el tipo: facturas de orden de servicio con OS-,
-            # ventas de producto (y demás) con FAC-.
-            prefix = "OS" if self.invoice_type == self.InvoiceType.SERVICE else "FAC"
+            if self.invoice_type == self.InvoiceType.FIELD_JOB:
+                prefix = "FUM"
+            elif self.invoice_type == self.InvoiceType.SERVICE:
+                prefix = "OS"
+            else:
+                prefix = "FAC"
             self.invoice_number = f"{prefix}-{self.pk:06d}"
             super().save(update_fields=["invoice_number"])
 
