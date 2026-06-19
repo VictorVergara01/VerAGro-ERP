@@ -1,9 +1,12 @@
 import { Tabs } from "@mantine/core";
 
 import { PageHeader } from "../../components/ui/PageHeader";
+import { useAuth } from "../auth/useAuth";
+import { isAdmin } from "../auth/roles";
 import { ChecklistTemplatesManager } from "./ChecklistTemplatesManager";
 import { CompanySettings } from "./CompanySettings";
 import { LookupManager } from "./LookupManager";
+import { UsersManager } from "./UsersManager";
 import {
   useCategoryList,
   useDeleteCategory,
@@ -41,6 +44,9 @@ function TypesTab() {
 }
 
 export function SettingsPage() {
+  const { user } = useAuth();
+  const showUsers = isAdmin(user?.role);
+
   return (
     <>
       <PageHeader title="Configuración" />
@@ -50,6 +56,7 @@ export function SettingsPage() {
           <Tabs.Tab value="categories">Categorías de inventario</Tabs.Tab>
           <Tabs.Tab value="types">Tipos de equipo</Tabs.Tab>
           <Tabs.Tab value="checklists">Plantillas de checklist</Tabs.Tab>
+          {showUsers && <Tabs.Tab value="users">Usuarios</Tabs.Tab>}
         </Tabs.List>
         <Tabs.Panel value="company">
           <CompanySettings />
@@ -63,6 +70,11 @@ export function SettingsPage() {
         <Tabs.Panel value="checklists">
           <ChecklistTemplatesManager />
         </Tabs.Panel>
+        {showUsers && (
+          <Tabs.Panel value="users">
+            <UsersManager />
+          </Tabs.Panel>
+        )}
       </Tabs>
     </>
   );
