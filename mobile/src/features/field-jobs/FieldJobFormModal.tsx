@@ -7,6 +7,7 @@ import { Button, LabeledInput } from "../../components/ui";
 import { formatCurrency } from "../../utils/format";
 import { useCustomers } from "../customers/api";
 import { useEquipmentList } from "../equipment/api";
+import { useAuth } from "../auth/useAuth";
 import {
   useCompany,
   useSaveFieldJob,
@@ -28,6 +29,7 @@ export function FieldJobFormModal({
   onClose: () => void;
   job?: FieldJob | null;
 }) {
+  const { user } = useAuth();
   const save = useSaveFieldJob();
   const customers = useCustomers("");
   const equipments = useEquipmentList("");
@@ -107,6 +109,7 @@ export function FieldJobFormModal({
       job_type: jobType,
       customer,
       equipment,
+      technician: job?.technician ?? user?.id ?? null,
       location,
       crop,
       applied_product: appliedProduct,

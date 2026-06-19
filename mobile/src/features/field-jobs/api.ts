@@ -109,6 +109,7 @@ export interface FieldJobInput {
   job_type: string;
   customer: number;
   equipment?: number | null;
+  technician?: number | null;
   scheduled_date?: string;
   location?: string;
   crop?: string;
