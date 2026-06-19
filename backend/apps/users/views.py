@@ -85,6 +85,10 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             if not new_active:
                 raise ValidationError({"is_active": "No puedes desactivar tu propia cuenta."})
 
+        # Defensa en profundidad: bajo los invariantes actuales (anti-escalada +
+        # auto-bloqueo) esta rama no es alcanzable, porque para tocar a un super
+        # hay que ser super y no puedes actuar sobre ti mismo. Se conserva por si
+        # un refactor futuro relaja esas reglas. No removerla sin cubrir ese caso.
         if instance.role == roles.SUPER_ADMIN and instance.is_active:
             if (new_role != roles.SUPER_ADMIN or not new_active) and self._is_last_active_super(
                 instance.pk
@@ -103,6 +107,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             )
         if instance.pk == actor.pk:
             raise ValidationError({"is_active": "No puedes desactivar tu propia cuenta."})
+        # Defensa en profundidad (no alcanzable hoy): ver nota en perform_update.
         if (
             instance.role == roles.SUPER_ADMIN
             and instance.is_active
