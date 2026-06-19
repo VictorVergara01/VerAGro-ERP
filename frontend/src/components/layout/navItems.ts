@@ -1,6 +1,7 @@
 import {
   IconBox,
   IconDeviceDesktop,
+  IconDrone,
   IconFileInvoice,
   IconHome,
   IconReceipt,
@@ -29,6 +30,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Dashboard", to: "/", icon: IconHome },
       { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool },
+      { label: "Trabajos de campo", to: "/field-jobs", icon: IconDrone },
       { label: "Clientes", to: "/customers", icon: IconUsers },
       { label: "Equipos", to: "/equipment", icon: IconDeviceDesktop },
       { label: "Inventario", to: "/inventory", icon: IconBox },
