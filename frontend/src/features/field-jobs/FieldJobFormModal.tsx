@@ -131,8 +131,8 @@ export function FieldJobFormModal({
 
   const isFumigation = form.values.job_type === "fumigation";
   const liveTotal =
-    Number(isFumigation ? form.values.hectares : form.values.quintals || 0) *
-    Number(form.values.unit_price || 0);
+    (Number(isFumigation ? form.values.hectares : form.values.quintals) || 0) *
+    (Number(form.values.unit_price) || 0);
 
   const submit = form.onSubmit(async (values) => {
     const payload = {
