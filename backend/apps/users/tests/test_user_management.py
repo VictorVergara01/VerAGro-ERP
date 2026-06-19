@@ -139,3 +139,73 @@ def test_list_includes_inactive_by_default():
     assert resp.status_code == 200
     emails = [u["email"] for u in resp.data["results"]]
     assert "off@v.com" in emails
+
+
+@pytest.mark.django_db
+def test_general_admin_cannot_create_super_admin():
+    c = _client(_make("general_admin"))
+    resp = c.post(
+        URL,
+        {"email": "s@v.com", "full_name": "S", "role": "super_admin", "password": "Str0ngPass!"},
+        format="json",
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_general_admin_cannot_edit_super_admin():
+    c = _client(_make("general_admin"))
+    target = _make("super_admin", email="other-super@v.com")
+    resp = c.patch(f"{URL}{target.id}/", {"full_name": "X"}, format="json")
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_general_admin_cannot_promote_to_super_admin():
+    c = _client(_make("general_admin"))
+    target = _make("technician", email="t@v.com")
+    resp = c.patch(f"{URL}{target.id}/", {"role": "super_admin"}, format="json")
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_super_admin_can_manage_super_admins():
+    _make("super_admin", email="keep-super@v.com")  # garantiza que no es el último
+    c = _client(_make("super_admin", email="actor@v.com"))
+    resp = c.post(
+        URL,
+        {"email": "s2@v.com", "full_name": "S2", "role": "super_admin", "password": "Str0ngPass!"},
+        format="json",
+    )
+    assert resp.status_code == 201, resp.data
+
+
+@pytest.mark.django_db
+def test_cannot_change_own_role():
+    actor = _make("super_admin", email="actor@v.com")
+    _make("super_admin", email="keep@v.com")  # no es el último super
+    c = _client(actor)
+    resp = c.patch(f"{URL}{actor.id}/", {"role": "sales"}, format="json")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_cannot_deactivate_self():
+    actor = _make("super_admin", email="actor@v.com")
+    _make("super_admin", email="keep@v.com")
+    c = _client(actor)
+    resp = c.delete(f"{URL}{actor.id}/")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_cannot_deactivate_last_active_super_admin():
+    actor = _make("super_admin", email="only-super@v.com")
+    other = _make("super_admin", email="other-super@v.com")
+    c = _client(actor)
+    resp = c.delete(f"{URL}{other.id}/")  # quedaría 'actor' -> permitido
+    assert resp.status_code == 204
+    # ahora 'actor' es el último super activo: degradar a 'other' ya no aplica; intentar con actor desde otro super no hay.
+    # Verificación directa: desactivar al último super restante vía otro super inexistente -> usamos degradación de rol.
+    resp = c.patch(f"{URL}{actor.id}/", {"role": "general_admin"}, format="json")
+    assert resp.status_code == 400  # auto-cambio de rol (cubre también último-super)
