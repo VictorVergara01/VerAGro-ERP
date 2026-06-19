@@ -198,6 +198,10 @@ export interface CompanyInput {
   whatsapp?: string;
   invoice_footer?: string;
   logo?: File | null;
+  fumigation_price_per_hectare?: string;
+  spreading_price_per_quintal?: string;
+  drone_tank_volume_liters?: string;
+  default_water_per_hectare?: string;
 }
 
 export function useSaveCompany() {
