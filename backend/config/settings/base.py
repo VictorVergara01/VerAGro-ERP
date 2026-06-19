@@ -39,6 +39,7 @@ LOCAL_APPS = [
     "apps.service_orders",
     "apps.checklists",
     "apps.billing",
+    "apps.field_jobs",
     "apps.reports",
 ]
 
