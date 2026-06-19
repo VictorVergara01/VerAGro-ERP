@@ -24,8 +24,12 @@ import { InvoicesScreen } from "../features/billing/InvoicesScreen";
 import { InvoiceDetailScreen } from "../features/billing/InvoiceDetailScreen";
 import { ReportsScreen } from "../features/reports/ReportsScreen";
 import { SettingsScreen } from "../features/settings/SettingsScreen";
+import { FieldJobsScreen } from "../features/field-jobs/FieldJobsScreen";
+import { FieldJobDetailScreen } from "../features/field-jobs/FieldJobDetailScreen";
+import { SprayCalculatorScreen } from "../features/field-jobs/SprayCalculatorScreen";
 import type {
   DashboardStackParamList,
+  FieldJobsStackParamList,
   InventoryStackParamList,
   MoreStackParamList,
   OrdersStackParamList,
@@ -51,6 +55,30 @@ function DashboardNavigator() {
         options={{ title: "Inicio" }}
       />
     </DashboardStack.Navigator>
+  );
+}
+
+const FieldJobsStack = createNativeStackNavigator<FieldJobsStackParamList>();
+function FieldJobsNavigator() {
+  const { colors } = useTheme();
+  return (
+    <FieldJobsStack.Navigator screenOptions={makeStackOptions(colors)}>
+      <FieldJobsStack.Screen
+        name="FieldJobsList"
+        component={FieldJobsScreen}
+        options={{ title: "Trabajos de campo" }}
+      />
+      <FieldJobsStack.Screen
+        name="FieldJobDetail"
+        component={FieldJobDetailScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
+      <FieldJobsStack.Screen
+        name="SprayCalculator"
+        component={SprayCalculatorScreen}
+        options={{ title: "Calculadora de mezcla" }}
+      />
+    </FieldJobsStack.Navigator>
   );
 }
 
@@ -171,6 +199,14 @@ export function MainTabs() {
         options={{
           title: "Inicio",
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="FieldJobsTab"
+        component={FieldJobsNavigator}
+        options={{
+          title: "Campo",
+          tabBarIcon: ({ color, size }) => <Ionicons name="leaf" size={size} color={color} />,
         }}
       />
       <Tab.Screen
