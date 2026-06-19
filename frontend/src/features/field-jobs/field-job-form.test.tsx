@@ -33,4 +33,14 @@ describe("FieldJobFormModal", () => {
     fireEvent.click(screen.getByText("Esparcido / abono"));
     expect(screen.getByLabelText(/quintales/i)).toBeInTheDocument();
   });
+
+  it("actualiza el precio al precio por defecto del nuevo tipo al cambiar job_type", () => {
+    renderForm();
+    // Initially fumigation type — price should be 20
+    const priceInput = screen.getByLabelText(/precio/i) as HTMLInputElement;
+    expect(priceInput.value).toBe("20");
+    // Switch to spreading
+    fireEvent.click(screen.getByText("Esparcido / abono"));
+    expect((screen.getByLabelText(/precio/i) as HTMLInputElement).value).toBe("10");
+  });
 });

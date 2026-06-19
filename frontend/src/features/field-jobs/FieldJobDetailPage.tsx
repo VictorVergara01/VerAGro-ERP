@@ -136,7 +136,7 @@ export function FieldJobDetailPage() {
 
       {hasGps && (
         <Card><Text fw={600} mb="xs">Coordenadas</Text>
-          <Anchor href={`https://www.google.com/maps?q=${job.latitude},${job.longitude}`} target="_blank">
+          <Anchor href={`https://www.google.com/maps?q=${job.latitude},${job.longitude}`} target="_blank" rel="noopener noreferrer">
             {job.latitude}, {job.longitude} — abrir en Google Maps
           </Anchor>
         </Card>

@@ -178,7 +178,17 @@ export function FieldJobFormModal({
               fullWidth
               data={JOB_TYPE_OPTIONS}
               value={form.values.job_type}
-              onChange={(v) => form.setFieldValue("job_type", v)}
+              onChange={(v) => {
+                if (!v) return;
+                const c = company.data as Record<string, string> | undefined;
+                const defaultFor = (t: string) =>
+                  t === "spreading" ? (c?.spreading_price_per_quintal ?? "10") : (c?.fumigation_price_per_hectare ?? "20");
+                const prevDefault = defaultFor(form.values.job_type);
+                form.setFieldValue("job_type", v);
+                if (!editing && String(form.values.unit_price) === String(prevDefault)) {
+                  form.setFieldValue("unit_price", defaultFor(v));
+                }
+              }}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
