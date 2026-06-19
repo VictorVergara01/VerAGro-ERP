@@ -17,6 +17,7 @@ import { PurchaseOrderDetailPage } from "../features/purchasing/PurchaseOrderDet
 import { PurchasingPage } from "../features/purchasing/PurchasingPage";
 import { ReportsPage } from "../features/reports/ReportsPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
+import { FieldJobDetailPage } from "../features/field-jobs/FieldJobDetailPage";
 import { FieldJobsPage } from "../features/field-jobs/FieldJobsPage";
 import { ServiceOrderDetailPage } from "../features/service-orders/ServiceOrderDetailPage";
 import { ServiceOrdersPage } from "../features/service-orders/ServiceOrdersPage";
@@ -44,6 +45,7 @@ export function AppRoutes() {
           <Route path="/service-orders" element={<ServiceOrdersPage />} />
           <Route path="/service-orders/:id" element={<ServiceOrderDetailPage />} />
           <Route path="/field-jobs" element={<FieldJobsPage />} />
+          <Route path="/field-jobs/:id" element={<FieldJobDetailPage />} />
           <Route path="/quotes" element={<QuotesPage />} />
           <Route path="/quotes/:id" element={<QuoteDetailPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
