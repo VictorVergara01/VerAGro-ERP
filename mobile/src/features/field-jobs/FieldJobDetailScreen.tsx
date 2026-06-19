@@ -170,6 +170,8 @@ export function FieldJobDetailScreen() {
             <Text style={styles.cancelText}>Cancelar trabajo</Text>
           </TouchableOpacity>
         </>
+      ) : status === "invoiced" ? (
+        <Text style={styles.dimmedCenter}>Facturado · {job.invoice_number ?? "—"}</Text>
       ) : (
         <Text style={styles.dimmedCenter}>No hay acciones disponibles en este estado.</Text>
       )}

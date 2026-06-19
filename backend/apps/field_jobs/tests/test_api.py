@@ -138,3 +138,19 @@ def test_permissions_viewer_readonly_anon_denied(customer):
     assert viewer.post(URL, {"customer": customer.id}, format="json").status_code == 403
     # anónimo no puede leer
     assert APIClient().get(URL).status_code == 401
+
+
+@pytest.mark.django_db
+def test_detail_exposes_invoice_number_after_invoicing(customer):
+    c = _client("technician")
+    job = FieldJob.objects.create(
+        customer=customer, job_type="fumigation", hectares=Decimal("10"), unit_price=Decimal("20"),
+    )
+    job.total = Decimal("200")
+    job.save(update_fields=["total"])
+    # Antes de facturar no hay número de factura.
+    assert c.get(f"{URL}{job.id}/").data["invoice_number"] is None
+    # Tras hecho + facturar, el detalle expone el FUM-.
+    c.post(f"{URL}{job.id}/mark-done/")
+    c.post(f"{URL}{job.id}/generate-invoice/")
+    assert c.get(f"{URL}{job.id}/").data["invoice_number"].startswith("FUM-")

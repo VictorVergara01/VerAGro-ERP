@@ -43,7 +43,9 @@ class FieldJobViewSet(viewsets.ModelViewSet):
     search_fields = ["number", "location", "crop", "customer__name", "applied_product"]
 
     def get_queryset(self):
-        qs = FieldJob.objects.select_related("customer", "equipment", "technician")
+        qs = FieldJob.objects.select_related(
+            "customer", "equipment", "technician"
+        ).prefetch_related("invoices")
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),

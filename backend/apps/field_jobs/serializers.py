@@ -14,6 +14,15 @@ class FieldJobSerializer(serializers.ModelSerializer):
     application_rate_unit_display = serializers.CharField(
         source="get_application_rate_unit_display", read_only=True, default=""
     )
+    invoice_number = serializers.SerializerMethodField()
+
+    def get_invoice_number(self, obj):
+        # Número de la factura activa (no cancelada) del trabajo, si existe.
+        invoice = next(
+            (inv for inv in obj.invoices.all() if inv.status != "cancelled"),
+            None,
+        )
+        return invoice.invoice_number if invoice else None
 
     class Meta:
         model = FieldJob
@@ -51,6 +60,7 @@ class FieldJobSerializer(serializers.ModelSerializer):
             "temperature_celsius",
             "humidity_percentage",
             "weather_notes",
+            "invoice_number",
             "created_by",
             "created_at",
             "updated_at",

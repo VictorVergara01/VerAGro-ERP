@@ -1876,6 +1876,7 @@ export interface components {
             /** Format: decimal */
             humidity_percentage?: string | null;
             weather_notes?: string;
+            readonly invoice_number: string;
             readonly created_by: number | null;
             /** Format: date-time */
             readonly created_at: string;
@@ -2490,6 +2491,7 @@ export interface components {
             /** Format: decimal */
             humidity_percentage?: string | null;
             weather_notes?: string;
+            readonly invoice_number?: string;
             readonly created_by?: number | null;
             /** Format: date-time */
             readonly created_at?: string;
