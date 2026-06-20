@@ -71,11 +71,20 @@ class FieldJobViewSet(viewsets.ModelViewSet):
         job = serializer.save(created_by=self.request.user)
         job.recalculate_total()
         job.save(update_fields=["total", "updated_at"])
+        if job.technician_id:
+            from apps.notifications.services import notify_assignment
+
+            notify_assignment(job, job.technician)
 
     def perform_update(self, serializer):
+        previous_tech_id = serializer.instance.technician_id
         job = serializer.save()
         job.recalculate_total()
         job.save(update_fields=["total", "updated_at"])
+        if job.technician_id and job.technician_id != previous_tech_id:
+            from apps.notifications.services import notify_assignment
+
+            notify_assignment(job, job.technician)
 
     @action(detail=True, methods=["post"], url_path="mark-done")
     def mark_done_action(self, request, pk=None):

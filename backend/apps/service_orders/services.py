@@ -109,6 +109,10 @@ def finish_order(order, user=None):
     order.save(update_fields=["status", "finished_date", "updated_at"])
     recalculate_totals(order)
 
+    from apps.notifications.services import notify_completed
+
+    notify_completed(order)
+
     # Al finalizar se genera la factura automáticamente (si aún no existe).
     from apps.billing.models import Invoice
     from apps.billing.services import create_invoice_from_service_order
