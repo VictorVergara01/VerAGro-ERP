@@ -17,6 +17,16 @@ def _q(value):
     return Decimal(value).quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
+def _notify_if_crossed(product, before_available):
+    """Notifica stock bajo solo si esta operación cruzó el umbral hacia abajo."""
+    if product.minimum_stock <= 0:
+        return
+    if before_available >= product.minimum_stock and product.available_quantity < product.minimum_stock:
+        from apps.notifications.services import notify_low_stock
+
+        notify_low_stock(product)
+
+
 def generate_product_sku(pk):
     """SKU autogenerado: prefijo fijo + pk con relleno de ceros a 6 dígitos."""
     return f"SKU-{pk:06d}"
@@ -73,6 +83,7 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
         raise ValidationError({"quantity": "La cantidad debe ser mayor que cero."})
 
     locked = Product.objects.select_for_update().get(pk=product.pk)
+    before_available = locked.available_quantity
 
     if movement_type == "adjustment_out":
         # Se valida contra available_quantity (stock − reservado): no se puede
@@ -87,6 +98,7 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
 
     # updated_at es auto_now pero NO se actualiza si se omite de update_fields.
     locked.save(update_fields=["stock_quantity", "updated_at"])
+    _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,
@@ -185,11 +197,13 @@ def consume_stock(
     locked = Product.objects.select_for_update().get(pk=product.pk)
     if quantity > locked.stock_quantity:
         raise ValidationError({"quantity": "Stock insuficiente para el consumo."})
+    before_available = locked.available_quantity
     locked.stock_quantity = locked.stock_quantity - quantity
     if was_reserved:
         released = min(quantity, locked.reserved_quantity)
         locked.reserved_quantity = locked.reserved_quantity - released
     locked.save(update_fields=["stock_quantity", "reserved_quantity", "updated_at"])
+    _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,
