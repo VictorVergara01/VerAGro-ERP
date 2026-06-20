@@ -22,5 +22,8 @@ class RegisterPushView(APIView):
     def delete(self, request):
         serializer = PushTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        PushDevice.objects.filter(token=serializer.validated_data["token"]).delete()
+        # Solo el dueño actual del token puede darlo de baja.
+        PushDevice.objects.filter(
+            user=request.user, token=serializer.validated_data["token"]
+        ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
