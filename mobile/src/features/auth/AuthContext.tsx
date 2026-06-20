@@ -10,6 +10,7 @@ import {
 import { api, onAuthExpired } from "../../lib/api/client";
 import { API_BASE_URL } from "../../lib/api/baseUrl";
 import { clearTokens, getAccess, setTokens } from "../../lib/auth/tokens";
+import { registerForPush, unregisterPush } from "../notifications/push";
 
 export interface AuthUser {
   id: number;
@@ -43,9 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(data as AuthUser);
     setStatus("authenticated");
+    void registerForPush();
   }, []);
 
   const logout = useCallback(async () => {
+    await unregisterPush();
     await clearTokens();
     setUser(null);
     setStatus("anonymous");
