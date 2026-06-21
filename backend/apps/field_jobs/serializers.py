@@ -1,9 +1,16 @@
 from rest_framework import serializers
 
-from .models import FieldJob
+from .models import FieldJob, FieldJobProduct
+
+
+class FieldJobProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FieldJobProduct
+        fields = ("id", "name", "dose_per_hectare", "unit")
 
 
 class FieldJobSerializer(serializers.ModelSerializer):
+    products = FieldJobProductSerializer(many=True, required=False)
     customer_name = serializers.CharField(source="customer.name", read_only=True)
     equipment_name = serializers.CharField(source="equipment.name", read_only=True, default="")
     technician_name = serializers.CharField(
@@ -44,6 +51,7 @@ class FieldJobSerializer(serializers.ModelSerializer):
             "location",
             "crop",
             "applied_product",
+            "products",
             "hectares",
             "quintals",
             "unit_price",
@@ -75,3 +83,19 @@ class FieldJobSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+    def create(self, validated_data):
+        products = validated_data.pop("products", [])
+        job = super().create(validated_data)
+        for product in products:
+            FieldJobProduct.objects.create(field_job=job, **product)
+        return job
+
+    def update(self, instance, validated_data):
+        products = validated_data.pop("products", None)
+        job = super().update(instance, validated_data)
+        if products is not None:
+            job.products.all().delete()
+            for product in products:
+                FieldJobProduct.objects.create(field_job=job, **product)
+        return job

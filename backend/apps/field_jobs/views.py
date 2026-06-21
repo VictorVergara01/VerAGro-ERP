@@ -45,7 +45,7 @@ class FieldJobViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = FieldJob.objects.select_related(
             "customer", "equipment", "technician"
-        ).prefetch_related("invoices")
+        ).prefetch_related("invoices", "products")
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),
