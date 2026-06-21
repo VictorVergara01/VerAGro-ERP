@@ -128,8 +128,10 @@ def reserve_stock(
         raise ValidationError(
             {"quantity": "No hay stock disponible suficiente para reservar."}
         )
+    before_available = locked.available_quantity
     locked.reserved_quantity = locked.reserved_quantity + quantity
     locked.save(update_fields=["reserved_quantity", "updated_at"])
+    _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,

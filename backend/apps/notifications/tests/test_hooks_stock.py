@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 
 from apps.inventory.models import Product
-from apps.inventory.services import apply_adjustment, consume_stock
+from apps.inventory.services import apply_adjustment, consume_stock, reserve_stock
 from apps.notifications import services as notif
 
 
@@ -18,6 +18,20 @@ def test_consume_crossing_threshold_notifies(spy_low):
     p = Product.objects.create(sku="P1", name="Hélice", stock_quantity=Decimal("10"), minimum_stock=Decimal("5"))
     consume_stock(product=p, quantity=Decimal("6"))  # 10 -> 4, cruza el 5
     assert spy_low == [p.pk]
+
+
+@pytest.mark.django_db
+def test_reserve_crossing_threshold_notifies(spy_low):
+    p = Product.objects.create(sku="P1", name="Hélice", stock_quantity=Decimal("10"), minimum_stock=Decimal("5"))
+    reserve_stock(product=p, quantity=Decimal("6"))  # disponible 10 -> 4, cruza el 5
+    assert spy_low == [p.pk]
+
+
+@pytest.mark.django_db
+def test_reserve_staying_above_does_not_notify(spy_low):
+    p = Product.objects.create(sku="P1", name="Hélice", stock_quantity=Decimal("20"), minimum_stock=Decimal("5"))
+    reserve_stock(product=p, quantity=Decimal("3"))  # disponible 20 -> 17, sigue arriba
+    assert spy_low == []
 
 
 @pytest.mark.django_db
