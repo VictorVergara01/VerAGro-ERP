@@ -141,7 +141,7 @@ from apps.field_jobs.services import calculate_mix
 def _products():
     return [
         {"name": "Glifosato", "dose_per_hectare": 1.5, "unit": "L/ha"},
-        {"name": "Coadyuvante", "dose_per_hectare": 200, "unit": "mL/ha"},
+        {"name": "Coadyuvante", "dose_per_hectare": 200, "unit": "cc/ha"},
         {"name": "Urea", "dose_per_hectare": 2, "unit": "kg/ha"},
     ]
 
@@ -149,7 +149,7 @@ def _products():
 def test_multi_tank_example():
     r = calculate_mix(hectares=50, caldo_per_hectare=8, tank_volume_liters=200, products=_products())
     assert r["total_caldo_liters"] == 400.0
-    assert r["liquid_chemical_liters"] == 85.0   # 75 L + 10 L (2000 mL... 200mL/ha*50=10000mL=10L)
+    assert r["liquid_chemical_liters"] == 85.0   # 75 L + 10 L (200 cc/ha * 50 ha = 10000 cc = 10 L)
     assert r["water_liters"] == 315.0
     assert r["tanks_needed"] == 2
     assert r["full_tanks"] == 2
@@ -174,7 +174,7 @@ def test_single_partial_tank():
     assert r["tanks_needed"] == 1
     assert r["full_tanks"] == 0
     assert r["last_tank_liters"] == 80.0
-    # 1.5*10=15 L glifosato; 200mL*10=2000mL=2 L coadyuvante; urea 20 kg
+    # 1.5*10=15 L glifosato; 200cc*10=2000cc=2 L coadyuvante; urea 20 kg
     assert r["water_last_tank"] == 63.0  # 80 - (15+2)
     assert r["last_tank"][0] == {"name": "Glifosato", "quantity": 15.0, "unit": "L"}
     assert r["last_tank"][2] == {"name": "Urea", "quantity": 20.0, "unit": "kg"}
@@ -234,7 +234,6 @@ En `backend/apps/field_jobs/services.py`, **quitar** `_unit_label` y `calculate_
 ```python
 _UNIT_BASE = {
     "L/ha": ("L", 1.0),
-    "mL/ha": ("L", 0.001),
     "cc/ha": ("L", 0.001),
     "kg/ha": ("kg", 1.0),
     "g/ha": ("kg", 0.001),

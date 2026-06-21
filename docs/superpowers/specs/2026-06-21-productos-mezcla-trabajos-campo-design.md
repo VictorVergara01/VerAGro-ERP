@@ -33,11 +33,11 @@ Hereda `TimeStampedModel`.
 | `field_job` | FK `FieldJob`, CASCADE, `related_name="products"` | |
 | `name` | `CharField(150)` | Nombre del producto/medicamento |
 | `dose_per_hectare` | `Decimal(10,4)` | Dosis por hectárea |
-| `unit` | `CharField(10)` choices | `L/ha`, `mL/ha`, `cc/ha` (líquidos); `kg/ha`, `g/ha` (sólidos) |
+| `unit` | `CharField(10)` choices | `L/ha`, `cc/ha` (líquidos); `kg/ha`, `g/ha` (sólidos) |
 
 `Meta.ordering = ("id",)`.
 
-Clasificación líquido/sólido por unidad: líquidas = `L/ha, mL/ha, cc/ha`; sólidas = `kg/ha, g/ha`.
+Clasificación líquido/sólido por unidad: líquidas = `L/ha, cc/ha`; sólidas = `kg/ha, g/ha`.
 
 ### 2.2 Reutilización de campos existentes en `FieldJob`
 
@@ -64,7 +64,7 @@ calculate_mix(*, hectares, caldo_per_hectare, tank_volume_liters, products) -> d
 
 ### 3.1 Lógica
 
-Conversión a base: líquidos → **litros** (`L/ha`=×1, `mL/ha`=÷1000, `cc/ha`=÷1000);
+Conversión a base: líquidos → **litros** (`L/ha`=×1, `cc/ha`=÷1000);
 sólidos → **kilogramos** (`kg/ha`=×1, `g/ha`=÷1000).
 
 ```
@@ -104,7 +104,7 @@ es `"L"` o `"kg"`. Si hay un solo tanque (caldo ≤ capacidad), `full_tanks=0` y
 
 ### 3.3 Ejemplo (multi-tanque)
 
-50 ha · caldo 8 L/ha · tanque 200 L · productos: Glifosato 1.5 L/ha, Coadyuvante 200 mL/ha,
+50 ha · caldo 8 L/ha · tanque 200 L · productos: Glifosato 1.5 L/ha, Coadyuvante 200 cc/ha,
 Urea 2 kg/ha.
 - total_caldo = 400 L → **2 tanques completos**, sin parcial.
 - Totales: Glifosato 75 L, Coadyuvante 10 L, Urea 100 kg.
@@ -131,7 +131,7 @@ crear los nuevos; simple y suficiente para el volumen). El detalle (`GET`) devue
 ## 5. Frontend web (`features/field-jobs/`)
 
 - **`FieldJobFormModal`**: quitar el `TextInput` "Producto aplicado"; agregar una **lista
-  dinámica de productos** (filas: Nombre, Dosis/ha `NumberInput`, Unidad `Select` con las 5
+  dinámica de productos** (filas: Nombre, Dosis/ha `NumberInput`, Unidad `Select` con las 4
   opciones) con "+ Agregar producto" y quitar por fila. Relabel "Agua/ha" → **"Caldo/ha (L)"**;
   "Tanque (L)" con prefill 200. El submit incluye `products`. El botón "Calcular mezcla" abre el
   modal con el nuevo desglose.
@@ -152,7 +152,7 @@ crear los nuevos; simple y suficiente para el volumen). El detalle (`GET`) devue
 
 ### 7.1 Backend (pytest)
 - `calculate_mix`: el ejemplo multi-tanque (agua=caldo−líquido; granulado aparte en kg;
-  reparto por tanque); caso de un solo tanque; conversión de unidades (mL/cc→L, g→kg);
+  reparto por tanque); caso de un solo tanque; conversión de unidades (cc→L, g→kg);
   validaciones (400 en hectáreas/caldo/tanque ≤0, productos vacío, dosis≤0).
 - Serializer anidado: crear un `FieldJob` con `products` los persiste; editar reemplaza la lista;
   el detalle devuelve `products`.
