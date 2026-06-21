@@ -114,6 +114,14 @@ Urea 2 kg/ha.
 Caso chico (10 ha, caldo 8, tanque 200): total_caldo 80 → 1 tanque (parcial 80 L), agua 63 L
 con Glifosato 15 L + Coadyuvante 2 L líquidos y Urea 20 kg aparte.
 
+Ejemplo del usuario (confirma el modelo) — 15 ha · **tasa de aplicación 20 L/ha** · tanque 200 ·
+Glifosato 10 L/ha: caldo total = 300 L → **2 tanques** (1 lleno de 200, 1 parcial de 100).
+Tanque 1 (200 L) = 100 L glifosato + 100 L agua (cubre 10 ha); Tanque 2 (100 L) = 50 L glifosato
++ 50 L agua (5 ha restantes).
+
+**Terminología UI:** el caldo/ha (`caldo_per_hectare` en el endpoint; campo `water_per_hectare`)
+se muestra en web/móvil como **"Tasa de aplicación (L/ha)"** (término del usuario).
+
 ### 3.4 Endpoint
 
 Revisar la acción existente `POST /api/field-jobs/calculate-mix/` al nuevo cuerpo:
