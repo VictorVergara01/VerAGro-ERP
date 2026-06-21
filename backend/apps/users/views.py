@@ -1,19 +1,47 @@
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, permissions, viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.core import roles
 from apps.core.permissions import role_required
 
 from .models import User
-from .serializers import UserManagementSerializer, UserSerializer
+from .serializers import ChangePasswordSerializer, UserManagementSerializer, UserSerializer
 
 
-class MeView(generics.RetrieveAPIView):
+class MeView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(request=ChangePasswordSerializer, responses=OpenApiTypes.OBJECT)
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        if not user.check_password(serializer.validated_data["current_password"]):
+            raise ValidationError(
+                {"current_password": "La contraseña actual no es correcta."}
+            )
+        new_password = serializer.validated_data["new_password"]
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as exc:
+            raise ValidationError({"new_password": exc.messages})
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+        return Response({"detail": "Contraseña actualizada."})
 
 
 class UserListView(generics.ListAPIView):
