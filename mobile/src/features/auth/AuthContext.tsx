@@ -27,6 +27,7 @@ export interface AuthContextValue {
   status: AuthStatus;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -96,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => onAuthExpired(() => void logout()), [logout]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, logout }),
-    [user, status, login, logout],
+    () => ({ user, status, login, logout, refreshUser: loadMe }),
+    [user, status, login, logout, loadMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

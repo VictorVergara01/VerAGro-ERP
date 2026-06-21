@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/auth/change-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_change_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login/": {
         parameters: {
             query?: never;
@@ -32,12 +48,12 @@ export interface paths {
             cookie?: never;
         };
         get: operations["auth_me_retrieve"];
-        put?: never;
+        put: operations["auth_me_update"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["auth_me_partial_update"];
         trace?: never;
     };
     "/api/auth/refresh/": {
@@ -1743,6 +1759,10 @@ export interface components {
         ApplicationRateUnitEnum: "L/ha" | "mL/ha" | "kg/ha" | "cc/ha";
         /** @enum {unknown} */
         BlankEnum: "";
+        ChangePassword: {
+            current_password: string;
+            new_password: string;
+        };
         ChecklistTemplate: {
             readonly id: number;
             name: string;
@@ -2897,6 +2917,14 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        PatchedUser: {
+            readonly id?: number;
+            /** Format: email */
+            readonly email?: string;
+            full_name?: string;
+            readonly role?: components["schemas"]["RoleEnum"];
+            readonly is_active?: boolean;
+        };
         PatchedUserManagement: {
             readonly id?: number;
             /** Format: email */
@@ -3348,6 +3376,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_change_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePassword"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangePassword"];
+                "multipart/form-data": components["schemas"]["ChangePassword"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     auth_login_create: {
         parameters: {
             query?: never;
@@ -3381,6 +3436,56 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    auth_me_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["User"];
+                "application/x-www-form-urlencoded": components["schemas"]["User"];
+                "multipart/form-data": components["schemas"]["User"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    auth_me_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUser"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUser"];
+                "multipart/form-data": components["schemas"]["PatchedUser"];
+            };
+        };
         responses: {
             200: {
                 headers: {
