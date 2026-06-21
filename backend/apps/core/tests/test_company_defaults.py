@@ -10,8 +10,17 @@ def test_company_profile_field_job_defaults():
     company = CompanyProfile.load()
     assert company.fumigation_price_per_hectare == Decimal("20")
     assert company.spreading_price_per_quintal == Decimal("10")
-    assert company.drone_tank_volume_liters == Decimal("30")
+    assert company.drone_tank_volume_liters == Decimal("200")
     assert company.default_water_per_hectare == Decimal("8")
+
+
+def test_drone_tank_default_is_200():
+    from decimal import Decimal
+
+    from apps.core.models import CompanyProfile
+
+    # Instancia no guardada: aplica el default del campo.
+    assert CompanyProfile().drone_tank_volume_liters == Decimal("200")
 
 
 @pytest.mark.django_db

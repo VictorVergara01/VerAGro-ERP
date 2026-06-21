@@ -39,7 +39,7 @@ class CompanyProfile(models.Model):
         max_digits=10, decimal_places=2, default=10
     )
     drone_tank_volume_liters = models.DecimalField(
-        max_digits=8, decimal_places=2, default=30
+        max_digits=8, decimal_places=2, default=200
     )
     default_water_per_hectare = models.DecimalField(
         max_digits=8, decimal_places=2, default=8
