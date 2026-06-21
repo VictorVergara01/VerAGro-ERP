@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text } from "react-native";
 
 import { Button, Card, LabeledInput, SectionTitle } from "../../components/ui";
-import { useTheme, useThemedStyles, type ThemeColors } from "../../theme";
+import { useThemedStyles, type ThemeColors } from "../../theme";
 import { ROLE_LABELS } from "../auth/roles";
 import { useAuth } from "../auth/useAuth";
 import { useChangePassword, useUpdateName } from "./api";
