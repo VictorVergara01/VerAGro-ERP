@@ -109,3 +109,25 @@ class FieldJob(TimeStampedModel):
         if not self.number:
             self.number = f"TC-{self.pk:06d}"
             super().save(update_fields=["number"])
+
+
+class FieldJobProduct(TimeStampedModel):
+    class Unit(models.TextChoices):
+        L_HA = "L/ha", "L/ha"
+        ML_HA = "mL/ha", "mL/ha"
+        CC_HA = "cc/ha", "cc/ha"
+        KG_HA = "kg/ha", "kg/ha"
+        G_HA = "g/ha", "g/ha"
+
+    field_job = models.ForeignKey(
+        FieldJob, on_delete=models.CASCADE, related_name="products"
+    )
+    name = models.CharField(max_length=150)
+    dose_per_hectare = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    unit = models.CharField(max_length=10, choices=Unit.choices, default=Unit.L_HA)
+
+    class Meta:
+        ordering = ("id",)
+
+    def __str__(self):
+        return f"{self.name} ({self.dose_per_hectare} {self.unit})"
