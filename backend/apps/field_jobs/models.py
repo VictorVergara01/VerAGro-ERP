@@ -114,7 +114,6 @@ class FieldJob(TimeStampedModel):
 class FieldJobProduct(TimeStampedModel):
     class Unit(models.TextChoices):
         L_HA = "L/ha", "L/ha"
-        ML_HA = "mL/ha", "mL/ha"
         CC_HA = "cc/ha", "cc/ha"
         KG_HA = "kg/ha", "kg/ha"
         G_HA = "g/ha", "g/ha"
