@@ -212,7 +212,7 @@ export function FieldJobFormModal({
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
-              label="Técnico"
+              label="Piloto"
               placeholder="Sin asignar"
               data={(technicians.data ?? []).map((t) => ({ value: String(t.id), label: t.full_name }))}
               searchable

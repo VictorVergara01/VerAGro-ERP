@@ -82,7 +82,7 @@ export function FieldJobDetailPage() {
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cliente" value={job.customer_name} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Dron" value={job.equipment_name || "—"} /></Grid.Col>
-          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Técnico" value={job.technician_name || "Sin asignar"} /></Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Piloto" value={job.technician_name || "Sin asignar"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Tipo" value={JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Finca" value={job.location || "—"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cultivo" value={job.crop || "—"} /></Grid.Col>

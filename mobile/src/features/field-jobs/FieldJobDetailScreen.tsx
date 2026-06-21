@@ -90,7 +90,7 @@ export function FieldJobDetailScreen() {
       <View style={styles.card}>
         <Row label="Cliente" value={job.customer_name ?? ""} />
         <Row label="Dron" value={job.equipment_name || "Sin asignar"} />
-        <Row label="Técnico" value={job.technician_name || "Sin asignar"} />
+        <Row label="Piloto" value={job.technician_name || "Sin asignar"} />
         <Row label="Tipo" value={JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} />
         <Row label="Finca" value={job.location ?? ""} />
         <Row label="Cultivo" value={job.crop ?? ""} />
