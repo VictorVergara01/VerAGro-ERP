@@ -24,6 +24,7 @@ import { InvoicesScreen } from "../features/billing/InvoicesScreen";
 import { InvoiceDetailScreen } from "../features/billing/InvoiceDetailScreen";
 import { ReportsScreen } from "../features/reports/ReportsScreen";
 import { SettingsScreen } from "../features/settings/SettingsScreen";
+import { ProfileScreen } from "../features/profile/ProfileScreen";
 import { FieldJobsScreen } from "../features/field-jobs/FieldJobsScreen";
 import { FieldJobDetailScreen } from "../features/field-jobs/FieldJobDetailScreen";
 import { SprayCalculatorScreen } from "../features/field-jobs/SprayCalculatorScreen";
@@ -131,6 +132,7 @@ function MoreNavigator() {
   return (
     <MoreStack.Navigator screenOptions={makeStackOptions(colors)}>
       <MoreStack.Screen name="Menu" component={MenuScreen} options={{ title: "Más" }} />
+      <MoreStack.Screen name="Profile" component={ProfileScreen} options={{ title: "Mi perfil" }} />
       <MoreStack.Screen name="Customers" component={CustomersScreen} options={{ title: "Clientes" }} />
       <MoreStack.Screen
         name="CustomerDetail"

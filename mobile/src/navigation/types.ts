@@ -25,6 +25,7 @@ export type FieldJobsStackParamList = {
 
 export type MoreStackParamList = {
   Menu: undefined;
+  Profile: undefined;
   Customers: undefined;
   CustomerDetail: { id: number; title: string };
   Equipment: undefined;

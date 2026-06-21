@@ -53,6 +53,7 @@ export function MenuScreen() {
       items: [
         { label: "Reportes", icon: "bar-chart", color: colors.primary, onPress: () => nav.navigate("Reports") },
         { label: "Configuración", icon: "settings", color: colors.dimmed, onPress: () => nav.navigate("Settings") },
+        { label: "Mi perfil", icon: "person", color: colors.primary, onPress: () => nav.navigate("Profile") },
       ],
     },
   ];
