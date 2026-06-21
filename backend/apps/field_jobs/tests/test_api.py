@@ -93,13 +93,14 @@ def test_calculate_mix_endpoint(customer):
     c = _client("technician")
     resp = c.post(
         f"{URL}calculate-mix/",
-        {"hectares": 12.0, "water_per_hectare": 8.0, "tank_volume_liters": 30.0,
-         "products": [{"name": "Glifosato", "dose_per_liter": 8.0, "dose_unit": "mL/L"}]},
+        {"hectares": 50, "caldo_per_hectare": 8, "tank_volume_liters": 200,
+         "products": [{"name": "Glifosato", "dose_per_hectare": 1.5, "unit": "L/ha"},
+                      {"name": "Urea", "dose_per_hectare": 2, "unit": "kg/ha"}]},
         format="json",
     )
     assert resp.status_code == 200, resp.data
-    assert resp.data["fills_needed"] == 4
-    assert resp.data["per_full_fill"][0]["quantity"] == 240.0
+    assert resp.data["water_liters"] == 325.0   # 400 caldo - 75 L glifosato
+    assert resp.data["tanks_needed"] == 2
 
 
 @pytest.mark.django_db
@@ -107,8 +108,8 @@ def test_calculate_mix_validation_error(customer):
     c = _client("technician")
     resp = c.post(
         f"{URL}calculate-mix/",
-        {"hectares": 0, "water_per_hectare": 8.0, "tank_volume_liters": 30.0,
-         "products": [{"name": "X", "dose_per_liter": 8.0, "dose_unit": "mL/L"}]},
+        {"hectares": 0, "caldo_per_hectare": 8, "tank_volume_liters": 200,
+         "products": [{"name": "X", "dose_per_hectare": 1, "unit": "L/ha"}]},
         format="json",
     )
     assert resp.status_code == 400
@@ -117,8 +118,8 @@ def test_calculate_mix_validation_error(customer):
 @pytest.mark.django_db
 def test_calculate_mix_allowed_for_readonly_denied_for_anon():
     payload = {
-        "hectares": 12.0, "water_per_hectare": 8.0, "tank_volume_liters": 30.0,
-        "products": [{"name": "X", "dose_per_liter": 8.0, "dose_unit": "mL/L"}],
+        "hectares": 12.0, "caldo_per_hectare": 8.0, "tank_volume_liters": 30.0,
+        "products": [{"name": "X", "dose_per_hectare": 1.5, "unit": "L/ha"}],
     }
     # readonly (no write role) puede usar la calculadora
     readonly = _client("readonly")

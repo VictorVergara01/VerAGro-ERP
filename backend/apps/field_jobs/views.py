@@ -9,7 +9,7 @@ from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import FieldJob
 from .serializers import FieldJobSerializer
-from .services import calculate_spray_mix, cancel_job, mark_done
+from .services import calculate_mix, cancel_job, mark_done
 
 FieldJobWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)
 
@@ -117,11 +117,11 @@ class FieldJobViewSet(viewsets.ModelViewSet):
         url_path="calculate-mix",
         permission_classes=[IsAuthenticated],
     )
-    def calculate_mix(self, request):
+    def calculate_mix_action(self, request):
         data = request.data
-        result = calculate_spray_mix(
+        result = calculate_mix(
             hectares=data.get("hectares"),
-            water_per_hectare=data.get("water_per_hectare"),
+            caldo_per_hectare=data.get("caldo_per_hectare"),
             tank_volume_liters=data.get("tank_volume_liters"),
             products=data.get("products") or [],
         )
