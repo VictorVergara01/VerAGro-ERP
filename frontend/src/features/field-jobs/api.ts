@@ -117,7 +117,7 @@ export function useFieldJobAction(id: number | undefined) {
 
 export interface CalculateMixInput {
   hectares: number;
-  water_per_hectare: number;
+  caldo_per_hectare: number;
   tank_volume_liters: number;
   products: SprayMixProduct[];
 }

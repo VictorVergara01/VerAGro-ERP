@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/auth/change-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_change_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login/": {
         parameters: {
             query?: never;
@@ -32,12 +48,12 @@ export interface paths {
             cookie?: never;
         };
         get: operations["auth_me_retrieve"];
-        put?: never;
+        put: operations["auth_me_update"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["auth_me_partial_update"];
         trace?: never;
     };
     "/api/auth/refresh/": {
@@ -916,6 +932,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/push/register/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["push_register_create"];
+        delete: operations["push_register_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/unregister/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["push_unregister_create"];
+        delete: operations["push_unregister_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/quote-lines/": {
         parameters: {
             query?: never;
@@ -1711,6 +1759,10 @@ export interface components {
         ApplicationRateUnitEnum: "L/ha" | "mL/ha" | "kg/ha" | "cc/ha";
         /** @enum {unknown} */
         BlankEnum: "";
+        ChangePassword: {
+            current_password: string;
+            new_password: string;
+        };
         ChecklistTemplate: {
             readonly id: number;
             name: string;
@@ -1847,6 +1899,7 @@ export interface components {
             location?: string;
             crop?: string;
             applied_product?: string;
+            products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
             /** Format: decimal */
@@ -1876,11 +1929,19 @@ export interface components {
             /** Format: decimal */
             humidity_percentage?: string | null;
             weather_notes?: string;
+            readonly invoice_number: string;
             readonly created_by: number | null;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
             readonly updated_at: string;
+        };
+        FieldJobProduct: {
+            readonly id: number;
+            name: string;
+            /** Format: decimal */
+            dose_per_hectare?: string;
+            unit?: components["schemas"]["UnitEnum"];
         };
         /**
          * @description * `scheduled` - Programado
@@ -2461,6 +2522,7 @@ export interface components {
             location?: string;
             crop?: string;
             applied_product?: string;
+            products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
             /** Format: decimal */
@@ -2490,6 +2552,7 @@ export interface components {
             /** Format: decimal */
             humidity_percentage?: string | null;
             weather_notes?: string;
+            readonly invoice_number?: string;
             readonly created_by?: number | null;
             /** Format: date-time */
             readonly created_at?: string;
@@ -2862,6 +2925,14 @@ export interface components {
             readonly created_at?: string;
             /** Format: date-time */
             readonly updated_at?: string;
+        };
+        PatchedUser: {
+            readonly id?: number;
+            /** Format: email */
+            readonly email?: string;
+            full_name?: string;
+            readonly role?: components["schemas"]["RoleEnum"];
+            readonly is_active?: boolean;
         };
         PatchedUserManagement: {
             readonly id?: number;
@@ -3288,6 +3359,14 @@ export interface components {
             readonly access: string;
             refresh: string;
         };
+        /**
+         * @description * `L/ha` - L/ha
+         *     * `cc/ha` - cc/ha
+         *     * `kg/ha` - kg/ha
+         *     * `g/ha` - g/ha
+         * @enum {string}
+         */
+        UnitEnum: "L/ha" | "cc/ha" | "kg/ha" | "g/ha";
         User: {
             readonly id: number;
             /** Format: email */
@@ -3314,6 +3393,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_change_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePassword"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangePassword"];
+                "multipart/form-data": components["schemas"]["ChangePassword"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     auth_login_create: {
         parameters: {
             query?: never;
@@ -3347,6 +3453,56 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    auth_me_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["User"];
+                "application/x-www-form-urlencoded": components["schemas"]["User"];
+                "multipart/form-data": components["schemas"]["User"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    auth_me_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUser"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUser"];
+                "multipart/form-data": components["schemas"]["PatchedUser"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -5922,6 +6078,78 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PurchaseOrder"];
                 };
+            };
+        };
+    };
+    push_register_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_register_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_unregister_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_unregister_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

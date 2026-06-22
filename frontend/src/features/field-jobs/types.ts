@@ -26,17 +26,17 @@ export const FJ_STATUS_COLOR: Record<string, string> = {
   cancelled: "red",
 };
 
-export const RATE_UNIT_OPTIONS = [
+export const PRODUCT_UNIT_OPTIONS = [
   { value: "L/ha", label: "L/ha" },
-  { value: "mL/ha", label: "mL/ha" },
-  { value: "kg/ha", label: "kg/ha" },
   { value: "cc/ha", label: "cc/ha" },
+  { value: "kg/ha", label: "kg/ha" },
+  { value: "g/ha", label: "g/ha" },
 ];
 
 export interface SprayMixProduct {
   name: string;
-  dose_per_liter: number;
-  dose_unit: "mL/L" | "cc/L";
+  dose_per_hectare: number;
+  unit: string;
 }
 
 export interface SprayMixResultRow {
@@ -46,10 +46,22 @@ export interface SprayMixResultRow {
 }
 
 export interface SprayMixResult {
-  total_volume_liters: number;
-  fills_needed: number;
-  full_fills: number;
-  last_fill_liters: number;
-  per_full_fill: SprayMixResultRow[];
-  last_fill: SprayMixResultRow[];
+  total_caldo_liters: number;
+  liquid_chemical_liters: number;
+  water_liters: number;
+  tanks_needed: number;
+  full_tanks: number;
+  last_tank_liters: number;
+  products_total: SprayMixResultRow[];
+  per_full_tank: SprayMixResultRow[];
+  water_per_full_tank: number;
+  last_tank: SprayMixResultRow[];
+  water_last_tank: number;
+}
+
+export interface SprayMixPrefill {
+  hectares?: number;
+  caldo_per_hectare?: number;
+  tank_volume_liters?: number;
+  products?: SprayMixProduct[];
 }
