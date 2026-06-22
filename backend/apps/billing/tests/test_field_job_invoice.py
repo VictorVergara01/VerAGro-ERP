@@ -50,19 +50,14 @@ def test_invoice_fumigation_line_and_number_and_status():
 
 
 @pytest.mark.django_db
-def test_invoice_spreading_uses_quintals_in_line():
+def test_invoice_spreading_raises_not_implemented():
     job = _done_job(
         job_type=FieldJob.JobType.SPREADING,
-        hectares=Decimal("0"),
-        quintals=Decimal("8"),
         unit_price=Decimal("10"),
         location="Finca Los Naranjos",
     )
-    invoice = create_invoice_from_field_job(job=job)
-    line = invoice.lines.get()
-    assert line.quantity == Decimal("8.00")
-    assert "Esparcido" in line.description
-    assert "qq" in line.description
+    with pytest.raises(ValidationError):
+        create_invoice_from_field_job(job=job)
 
 
 @pytest.mark.django_db

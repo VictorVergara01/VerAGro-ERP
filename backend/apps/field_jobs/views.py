@@ -11,7 +11,7 @@ from .models import FieldJob
 from .serializers import FieldJobSerializer
 from .services import calculate_mix, cancel_job, mark_done
 
-FieldJobWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)
+FieldJobWrite = RoleWriteOrReadOnly(*roles.ADMINS, roles.TECHNICIAN, roles.SALES)
 
 
 def _int_param(params, key):

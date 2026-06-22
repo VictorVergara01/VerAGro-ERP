@@ -242,14 +242,13 @@ def create_invoice_from_field_job(*, job, user=None):
     if job.invoices.exclude(status=Invoice.Status.CANCELLED).exists():
         raise ValidationError({"detail": "El trabajo ya tiene una factura."})
 
-    if job.job_type == FieldJob.JobType.FUMIGATION:
-        quantity = job.hectares
-        unit_word = "ha"
-        type_word = "Fumigación"
-    else:
-        quantity = job.quintals
-        unit_word = "qq"
-        type_word = "Esparcido"
+    if job.job_type != FieldJob.JobType.FUMIGATION:
+        raise ValidationError(
+            {"job_type": "La facturación de esparcido aún no está implementada."}
+        )
+    quantity = job.hectares
+    unit_word = "ha"
+    type_word = "Fumigación"
     description = (
         f"{type_word} {quantity:.2f} {unit_word} @ ${job.unit_price:.2f}/{unit_word}"
     )
