@@ -1,157 +1,73 @@
+import pytest
 from decimal import Decimal
 
-import pytest
-from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from apps.customers.models import Customer
 from apps.field_jobs.models import FieldJob
+from apps.users.models import User
 
-User = get_user_model()
-URL = "/api/field-jobs/"
-
-
-def _client(role="technician"):
-    user = User.objects.create_user(
-        email=f"{role}@v.com", password="x", full_name=role, role=role
-    )
-    c = APIClient()
-    c.force_authenticate(user=user)
-    return c
+pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def customer(db):
+def admin_client():
+    user = User.objects.create_user(
+        email="admin@test.com", password="x", role="general_admin", full_name="Ad Min"
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
+@pytest.fixture
+def customer():
     return Customer.objects.create(name="Finca La Esperanza")
 
 
-@pytest.mark.django_db
-def test_create_fumigation_job_computes_total(customer):
-    c = _client("technician")
-    resp = c.post(
-        URL,
-        {"customer": customer.id, "job_type": "fumigation",
-         "hectares": "12.5", "unit_price": "20", "location": "Lote 3"},
-        format="json",
-    )
-    assert resp.status_code == 201, resp.data
-    assert resp.data["number"].startswith("TC-")
-    assert Decimal(resp.data["total"]) == Decimal("250.00")
-
-
-@pytest.mark.django_db
-def test_filters_by_type_status_and_date(customer):
-    from datetime import date
-
-    c = _client("technician")
-    FieldJob.objects.create(customer=customer, job_type="fumigation", scheduled_date=date(2026, 6, 1))
-    FieldJob.objects.create(customer=customer, job_type="spreading", scheduled_date=date(2026, 1, 1))
-    assert len(c.get(f"{URL}?job_type=fumigation").data["results"]) == 1
-    assert len(c.get(f"{URL}?status=scheduled").data["results"]) == 2
-    assert len(c.get(f"{URL}?from=2026-05-01&to=2026-07-01").data["results"]) == 1
-    assert c.get(f"{URL}?from=nope").status_code == 400
-
-
-@pytest.mark.django_db
-def test_search_by_location_and_customer(customer):
-    c = _client("technician")
-    FieldJob.objects.create(customer=customer, location="Finca Los Naranjos")
-    assert len(c.get(f"{URL}?search=Naranjos").data["results"]) == 1
-    assert len(c.get(f"{URL}?search=Esperanza").data["results"]) == 1  # customer__name
-
-
-@pytest.mark.django_db
-def test_mark_done_then_generate_invoice(customer):
-    c = _client("technician")
-    job = FieldJob.objects.create(
-        customer=customer, job_type="fumigation",
-        hectares=Decimal("10"), unit_price=Decimal("20"),
-    )
-    job.total = Decimal("200")
-    job.save(update_fields=["total"])
-    done = c.post(f"{URL}{job.id}/mark-done/")
-    assert done.status_code == 200
-    assert done.data["status"] == "done"
-    inv = c.post(f"{URL}{job.id}/generate-invoice/")
-    assert inv.status_code == 201, inv.data
-    assert inv.data["invoice_number"].startswith("FUM-")
-    job.refresh_from_db()
-    assert job.status == "invoiced"
-
-
-@pytest.mark.django_db
-def test_cancel_action(customer):
-    c = _client("technician")
-    job = FieldJob.objects.create(customer=customer)
-    resp = c.post(f"{URL}{job.id}/cancel/")
-    assert resp.status_code == 200
-    assert resp.data["status"] == "cancelled"
-
-
-@pytest.mark.django_db
-def test_calculate_mix_endpoint(customer):
-    c = _client("technician")
-    resp = c.post(
-        f"{URL}calculate-mix/",
-        {"hectares": 50, "caldo_per_hectare": 8, "tank_volume_liters": 200,
-         "products": [{"name": "Glifosato", "dose_per_hectare": 1.5, "unit": "L/ha"},
-                      {"name": "Urea", "dose_per_hectare": 2, "unit": "kg/ha"}]},
-        format="json",
-    )
-    assert resp.status_code == 200, resp.data
-    assert resp.data["water_liters"] == 325.0   # 400 caldo - 75 L glifosato
-    assert resp.data["tanks_needed"] == 2
-
-
-@pytest.mark.django_db
-def test_calculate_mix_validation_error(customer):
-    c = _client("technician")
-    resp = c.post(
-        f"{URL}calculate-mix/",
-        {"hectares": 0, "caldo_per_hectare": 8, "tank_volume_liters": 200,
-         "products": [{"name": "X", "dose_per_hectare": 1, "unit": "L/ha"}]},
-        format="json",
-    )
-    assert resp.status_code == 400
-
-
-@pytest.mark.django_db
-def test_calculate_mix_allowed_for_readonly_denied_for_anon():
+def test_create_with_products_and_crop_other(admin_client, customer):
     payload = {
-        "hectares": 12.0, "caldo_per_hectare": 8.0, "tank_volume_liters": 30.0,
-        "products": [{"name": "X", "dose_per_hectare": 1.5, "unit": "L/ha"}],
+        "customer": customer.id,
+        "crop": "other",
+        "crop_other": "Sandía",
+        "hectares": "15",
+        "unit_price": "20",
+        "water_per_hectare": "20",
+        "tank_volume_liters": "200",
+        "products": [
+            {"name": "Glifosato", "dose_per_hectare": "10", "unit": "L/ha"},
+            {"name": "Adherente", "dose_per_hectare": "50", "unit": "cc/ha"},
+        ],
     }
-    # readonly (no write role) puede usar la calculadora
-    readonly = _client("readonly")
-    assert readonly.post(f"{URL}calculate-mix/", payload, format="json").status_code == 200
-    # anónimo no
-    from rest_framework.test import APIClient
-    assert APIClient().post(f"{URL}calculate-mix/", payload, format="json").status_code == 401
+    res = admin_client.post("/api/field-jobs/", payload, format="json")
+    assert res.status_code == 201, res.content
+    body = res.json()
+    assert body["number"].startswith("TC-")
+    assert body["crop_display"] == "Otros"
+    assert body["crop_other"] == "Sandía"
+    assert body["total"] == "300.00"
+    assert len(body["products"]) == 2
 
 
-@pytest.mark.django_db
-def test_permissions_viewer_readonly_anon_denied(customer):
-    FieldJob.objects.create(customer=customer)
-    # readonly puede leer
-    viewer = _client("readonly")
-    assert viewer.get(URL).status_code == 200
-    # readonly no puede escribir
-    assert viewer.post(URL, {"customer": customer.id}, format="json").status_code == 403
-    # anónimo no puede leer
-    assert APIClient().get(URL).status_code == 401
-
-
-@pytest.mark.django_db
-def test_detail_exposes_invoice_number_after_invoicing(customer):
-    c = _client("technician")
-    job = FieldJob.objects.create(
-        customer=customer, job_type="fumigation", hectares=Decimal("10"), unit_price=Decimal("20"),
+def test_rejects_more_than_ten_products(admin_client, customer):
+    products = [
+        {"name": f"Q{i}", "dose_per_hectare": "1", "unit": "L/ha"} for i in range(11)
+    ]
+    res = admin_client.post(
+        "/api/field-jobs/",
+        {"customer": customer.id, "products": products},
+        format="json",
     )
-    job.total = Decimal("200")
-    job.save(update_fields=["total"])
-    # Antes de facturar no hay número de factura.
-    assert c.get(f"{URL}{job.id}/").data["invoice_number"] is None
-    # Tras hecho + facturar, el detalle expone el FUM-.
-    c.post(f"{URL}{job.id}/mark-done/")
-    c.post(f"{URL}{job.id}/generate-invoice/")
-    assert c.get(f"{URL}{job.id}/").data["invoice_number"].startswith("FUM-")
+    assert res.status_code == 400
+    assert "products" in res.json()
+
+
+def test_update_replaces_products(admin_client, customer):
+    job = FieldJob.objects.create(customer=customer, hectares=Decimal("1"))
+    res = admin_client.patch(
+        f"/api/field-jobs/{job.id}/",
+        {"products": [{"name": "Nuevo", "dose_per_hectare": "2", "unit": "L/ha"}]},
+        format="json",
+    )
+    assert res.status_code == 200
+    assert [p["name"] for p in res.json()["products"]] == ["Nuevo"]

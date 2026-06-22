@@ -40,7 +40,7 @@ class FieldJobViewSet(viewsets.ModelViewSet):
     serializer_class = FieldJobSerializer
     permission_classes = [FieldJobWrite]
     filter_backends = [filters.SearchFilter]
-    search_fields = ["number", "location", "crop", "customer__name", "applied_product"]
+    search_fields = ["number", "location", "crop", "customer__name"]
 
     def get_queryset(self):
         qs = FieldJob.objects.select_related(
