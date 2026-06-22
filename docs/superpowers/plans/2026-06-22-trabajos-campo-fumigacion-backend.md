@@ -482,7 +482,7 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def admin_client():
     user = User.objects.create_user(
-        email="a@test.com", password="x", role="admin", first_name="A", last_name="B"
+        email="a@test.com", password="x", role="general_admin", full_name="A B"
     )
     client = APIClient()
     client.force_authenticate(user=user)
@@ -530,17 +530,18 @@ Expected: FAIL — `generate-invoice` revienta porque `create_invoice_from_field
 
 En `backend/apps/field_jobs/views.py`, reemplazar la línea de `search_fields` y la del permiso de escritura:
 
-`search_fields` (quitar `applied_product`):
+`search_fields` (quitar `applied_product` — puede que ya esté quitado de una tarea previa; dejarlo así):
 ```python
     search_fields = ["number", "location", "crop", "customer__name"]
 ```
 
-Permiso de escritura (admin/technician/sales) — reemplazar la línea
-`FieldJobWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)` por:
+Permiso de escritura: el spec pide admin/technician/sales. **Importante:** en este código NO existe el
+rol literal `"admin"`; los administradores son el grupo `roles.ADMINS = (super_admin, general_admin)`.
+Reemplazar la línea `FieldJobWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)` por:
 ```python
-FieldJobWrite = RoleWriteOrReadOnly("admin", "technician", "sales")
+FieldJobWrite = RoleWriteOrReadOnly(*roles.ADMINS, roles.TECHNICIAN, roles.SALES)
 ```
-(Quitar el import `from apps.core import roles` si queda sin uso.)
+(Mantener el import `from apps.core import roles`.)
 
 - [ ] **Step 4: Fix de `create_invoice_from_field_job` (sin `quintals`)**
 
