@@ -41,6 +41,8 @@ export function SprayMixModal({
   const [rows, setRows] = useState<ProductRow[]>([emptyRow()]);
   const [result, setResult] = useState<SprayMixResult | null>(null);
 
+  // Sincroniza los inputs desde el prefill al abrir (el modal queda montado).
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (opened) {
       setHectares(prefill?.hectares ?? 0);
@@ -56,6 +58,7 @@ export function SprayMixModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const setRow = (i: number, patch: Partial<ProductRow>) =>
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
