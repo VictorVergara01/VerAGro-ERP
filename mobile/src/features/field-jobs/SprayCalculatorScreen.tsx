@@ -6,13 +6,15 @@ import { AddRowButton, LineCard, Segmented } from "../../components/ui/form";
 import { Button, Card, LabeledInput, SectionTitle } from "../../components/ui";
 import { useTheme, useThemedStyles, type ThemeColors } from "../../theme";
 import type { SprayCalculatorRoute } from "../../navigation/types";
-import { useCalculateMix, type SprayMixResult } from "./api";
+import { PRODUCT_UNIT_OPTIONS, useCalculateMix, type SprayMixResult } from "./api";
 
 interface Row {
   name: string;
-  dose_per_liter: string;
-  dose_unit: string;
+  dose_per_hectare: string;
+  unit: string;
 }
+
+const emptyRow = (): Row => ({ name: "", dose_per_hectare: "", unit: "L/ha" });
 
 export function SprayCalculatorScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -22,14 +24,18 @@ export function SprayCalculatorScreen() {
   const calc = useCalculateMix();
 
   const [hectares, setHectares] = useState(prefill?.hectares != null ? String(prefill.hectares) : "");
-  const [water, setWater] = useState(prefill?.water_per_hectare != null ? String(prefill.water_per_hectare) : "");
-  const [tank, setTank] = useState(prefill?.tank_volume_liters != null ? String(prefill.tank_volume_liters) : "");
-  const [rows, setRows] = useState<Row[]>([{ name: "", dose_per_liter: "", dose_unit: "mL/L" }]);
+  const [caldo, setCaldo] = useState(prefill?.caldo_per_hectare != null ? String(prefill.caldo_per_hectare) : "");
+  const [tank, setTank] = useState(prefill?.tank_volume_liters != null ? String(prefill.tank_volume_liters) : "200");
+  const [rows, setRows] = useState<Row[]>(
+    prefill?.products && prefill.products.length > 0
+      ? prefill.products.map((p) => ({ name: p.name, dose_per_hectare: String(p.dose_per_hectare), unit: p.unit }))
+      : [emptyRow()],
+  );
   const [result, setResult] = useState<SprayMixResult | null>(null);
 
   const setRow = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
-  const addRow = () => setRows((rs) => [...rs, { name: "", dose_per_liter: "", dose_unit: "mL/L" }]);
+  const addRow = () => setRows((rs) => [...rs, emptyRow()]);
   const removeRow = (i: number) => setRows((rs) => rs.filter((_, idx) => idx !== i));
 
   const run = () => {
@@ -37,13 +43,11 @@ export function SprayCalculatorScreen() {
     calc.mutate(
       {
         hectares: Number(hectares),
-        water_per_hectare: Number(water),
+        caldo_per_hectare: Number(caldo),
         tank_volume_liters: Number(tank),
-        products: rows.map((r) => ({
-          name: r.name,
-          dose_per_liter: Number(r.dose_per_liter),
-          dose_unit: r.dose_unit,
-        })),
+        products: rows
+          .filter((r) => r.name.trim())
+          .map((r) => ({ name: r.name.trim(), dose_per_hectare: Number(r.dose_per_hectare), unit: r.unit })),
       },
       {
         onSuccess: setResult,
@@ -56,25 +60,25 @@ export function SprayCalculatorScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Card>
         <LabeledInput label="Hectáreas" value={hectares} onChangeText={setHectares} keyboardType="decimal-pad" />
-        <LabeledInput label="Agua/ha (L)" value={water} onChangeText={setWater} keyboardType="decimal-pad" />
+        <LabeledInput label="Tasa de aplicación (L/ha)" value={caldo} onChangeText={setCaldo} keyboardType="decimal-pad" />
         <LabeledInput label="Tanque (L)" value={tank} onChangeText={setTank} keyboardType="decimal-pad" />
       </Card>
 
-      <SectionTitle>Productos</SectionTitle>
+      <SectionTitle>Productos (dosis por hectárea)</SectionTitle>
       {rows.map((r, i) => (
         <LineCard key={i} title={`Producto ${i + 1}`} onRemove={() => removeRow(i)}>
           <LabeledInput label="Nombre" value={r.name} onChangeText={(v) => setRow(i, { name: v })} />
           <LabeledInput
-            label="Dosis por litro"
-            value={r.dose_per_liter}
-            onChangeText={(v) => setRow(i, { dose_per_liter: v })}
+            label="Dosis por hectárea"
+            value={r.dose_per_hectare}
+            onChangeText={(v) => setRow(i, { dose_per_hectare: v })}
             keyboardType="decimal-pad"
           />
           <Segmented
             label="Unidad"
-            value={r.dose_unit}
-            options={[{ value: "mL/L", label: "mL/L" }, { value: "cc/L", label: "cc/L" }]}
-            onChange={(v) => setRow(i, { dose_unit: v })}
+            value={r.unit}
+            options={PRODUCT_UNIT_OPTIONS}
+            onChange={(v) => setRow(i, { unit: v })}
           />
         </LineCard>
       ))}
@@ -85,24 +89,41 @@ export function SprayCalculatorScreen() {
       {result && (
         <Card>
           <Text style={[styles.total, { color: colors.primary }]}>
-            Total: {result.total_volume_liters} L en {result.fills_needed} llenados
+            Caldo total: {result.total_caldo_liters} L · {result.tanks_needed} tanque(s)
           </Text>
-          <Text style={styles.heading}>Por tanque completo ({tank} L)</Text>
-          {result.per_full_fill.map((p, i) => (
-            <View key={p.name + i} style={styles.resultRow}>
-              <Text style={styles.resultName}>{p.name}</Text>
-              <Text style={styles.resultQty}>{p.quantity} {p.unit}</Text>
-            </View>
-          ))}
-          {result.last_fill.length > 0 && (
+          <Text style={styles.sub}>
+            Químico líquido {result.liquid_chemical_liters} L · agua {result.water_liters} L
+          </Text>
+
+          {result.full_tanks > 0 && (
             <>
-              <Text style={styles.heading}>Último llenado ({result.last_fill_liters} L)</Text>
-              {result.last_fill.map((p, i) => (
+              <Text style={styles.heading}>Por tanque lleno ({tank} L)</Text>
+              {result.per_full_tank.map((p, i) => (
                 <View key={p.name + i} style={styles.resultRow}>
                   <Text style={styles.resultName}>{p.name}</Text>
                   <Text style={styles.resultQty}>{p.quantity} {p.unit}</Text>
                 </View>
               ))}
+              <View style={styles.resultRow}>
+                <Text style={styles.resultName}>Agua</Text>
+                <Text style={styles.resultQty}>{result.water_per_full_tank} L</Text>
+              </View>
+            </>
+          )}
+
+          {result.last_tank_liters > 0 && (
+            <>
+              <Text style={styles.heading}>Último tanque ({result.last_tank_liters} L)</Text>
+              {result.last_tank.map((p, i) => (
+                <View key={p.name + i} style={styles.resultRow}>
+                  <Text style={styles.resultName}>{p.name}</Text>
+                  <Text style={styles.resultQty}>{p.quantity} {p.unit}</Text>
+                </View>
+              ))}
+              <View style={styles.resultRow}>
+                <Text style={styles.resultName}>Agua</Text>
+                <Text style={styles.resultQty}>{result.water_last_tank} L</Text>
+              </View>
             </>
           )}
         </Card>
@@ -115,7 +136,8 @@ const makeStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, gap: 12, paddingBottom: 32 },
-    total: { fontSize: 16, fontWeight: "700", marginBottom: 8 },
+    total: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
+    sub: { fontSize: 13, color: colors.dimmed, marginBottom: 4 },
     heading: { fontSize: 13, fontWeight: "700", color: colors.dimmed, marginTop: 8 },
     resultRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 },
     resultName: { color: colors.text, fontSize: 14 },
