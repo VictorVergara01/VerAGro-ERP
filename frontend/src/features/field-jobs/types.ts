@@ -26,11 +26,17 @@ export const FJ_STATUS_COLOR: Record<string, string> = {
   cancelled: "red",
 };
 
+export const CROP_OPTIONS = [
+  { value: "rice", label: "Arroz" },
+  { value: "corn", label: "Maíz" },
+  { value: "pasture", label: "Pasto" },
+  { value: "other", label: "Otros" },
+];
+
+// Solo líquidos para fumigación (el backend conserva kg/ha y g/ha para sólidos).
 export const PRODUCT_UNIT_OPTIONS = [
   { value: "L/ha", label: "L/ha" },
   { value: "cc/ha", label: "cc/ha" },
-  { value: "kg/ha", label: "kg/ha" },
-  { value: "g/ha", label: "g/ha" },
 ];
 
 export interface SprayMixProduct {
