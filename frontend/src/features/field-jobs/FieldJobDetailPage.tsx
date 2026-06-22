@@ -86,7 +86,6 @@ export function FieldJobDetailPage() {
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Tipo" value={JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Finca" value={job.location || "—"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cultivo" value={job.crop || "—"} /></Grid.Col>
-          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Producto" value={job.applied_product || "—"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Programado" value={formatDate(job.scheduled_date)} /></Grid.Col>
           {job.done_date && (
             <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Hecho" value={formatDate(job.done_date)} /></Grid.Col>
@@ -113,12 +112,25 @@ export function FieldJobDetailPage() {
         </Card>
       </Group>
 
-      {(job.application_rate != null || job.tank_volume_liters != null) && (
+      {job.products && job.products.length > 0 ? (
+        <Card>
+          <Text fw={600} mb="xs">Productos aplicados</Text>
+          {job.products.map((p) => (
+            <Group key={p.id} justify="space-between">
+              <Text>{p.name}</Text>
+              <Text c="dimmed">{p.dose_per_hectare} {p.unit}</Text>
+            </Group>
+          ))}
+        </Card>
+      ) : job.applied_product ? (
+        <Card><Field label="Producto" value={job.applied_product} /></Card>
+      ) : null}
+
+      {(job.water_per_hectare != null || job.tank_volume_liters != null) && (
         <Card><Text fw={600} mb="xs">Aplicación</Text>
           <Grid>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Tasa" value={`${job.application_rate ?? "—"} ${job.application_rate_unit_display ?? ""}`} /></Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Tanque (L)" value={job.tank_volume_liters ?? "—"} /></Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Agua/ha (L)" value={job.water_per_hectare ?? "—"} /></Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}><Field label="Tasa de aplicación (L/ha)" value={job.water_per_hectare ?? "—"} /></Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}><Field label="Tanque (L)" value={job.tank_volume_liters ?? "—"} /></Grid.Col>
           </Grid>
         </Card>
       )}
