@@ -3,7 +3,6 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,7 +17,6 @@ import { FieldJobFormModal } from "./FieldJobFormModal";
 import {
   FJ_STATUS_COLOR,
   FJ_STATUS_LABEL,
-  JOB_TYPE_LABEL,
   useFieldJob,
   useFieldJobAction,
 } from "./api";
@@ -59,7 +57,6 @@ export function FieldJobDetailScreen() {
   }
 
   const status = job.status ?? "scheduled";
-  const isFumigation = job.job_type === "fumigation";
 
   const run = (a: "mark-done" | "cancel" | "generate-invoice", confirm: string, ok: string) =>
     Alert.alert("Confirmar", confirm, [
@@ -75,7 +72,7 @@ export function FieldJobDetailScreen() {
       },
     ]);
 
-  const hasGps = job.latitude != null && job.longitude != null;
+  const cropLabel = job.crop === "other" ? (job.crop_other || "Otros") : (job.crop_display || "—");
   const hasApp =
     job.water_per_hectare != null ||
     job.tank_volume_liters != null ||
@@ -94,16 +91,15 @@ export function FieldJobDetailScreen() {
         <Row label="Cliente" value={job.customer_name ?? ""} />
         <Row label="Dron" value={job.equipment_name || "Sin asignar"} />
         <Row label="Piloto" value={job.technician_name || "Sin asignar"} />
-        <Row label="Tipo" value={JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} />
         <Row label="Finca" value={job.location ?? ""} />
-        <Row label="Cultivo" value={job.crop ?? ""} />
+        <Row label="Cultivo" value={cropLabel} />
         <Row label="Programado" value={formatDate(job.scheduled_date)} />
         {job.done_date ? <Row label="Hecho" value={formatDate(job.done_date)} /> : null}
       </View>
 
       <View style={styles.card}>
-        <Row label={isFumigation ? "Hectáreas" : "Quintales"} value={isFumigation ? String(job.hectares) : String(job.quintals)} />
-        <Row label={isFumigation ? "Precio/ha" : "Precio/qq"} value={formatCurrency(job.unit_price)} />
+        <Row label="Hectáreas" value={String(job.hectares)} />
+        <Row label="Precio/ha" value={formatCurrency(job.unit_price)} />
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>{formatCurrency(job.total)}</Text>
@@ -112,7 +108,7 @@ export function FieldJobDetailScreen() {
 
       {job.products && job.products.length > 0 ? (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Productos aplicados</Text>
+          <Text style={styles.sectionTitle}>Químicos aplicados</Text>
           {job.products.map((p) => (
             <View key={p.id} style={styles.row}>
               <Text style={styles.rowLabel}>{p.name}</Text>
@@ -141,15 +137,6 @@ export function FieldJobDetailScreen() {
           }
         >
           <Text style={styles.linkText}>Calculadora de mezcla ›</Text>
-        </TouchableOpacity>
-      ) : null}
-
-      {hasGps ? (
-        <TouchableOpacity
-          style={styles.linkBtn}
-          onPress={() => void Linking.openURL(`https://www.google.com/maps?q=${job.latitude},${job.longitude}`)}
-        >
-          <Text style={styles.linkText}>Abrir ubicación en Maps ›</Text>
         </TouchableOpacity>
       ) : null}
 
