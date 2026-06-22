@@ -1749,14 +1749,6 @@ export interface components {
          * @enum {string}
          */
         AllocationMethodEnum: "proportional_by_value" | "manual";
-        /**
-         * @description * `L/ha` - L/ha
-         *     * `mL/ha` - mL/ha
-         *     * `kg/ha` - kg/ha
-         *     * `cc/ha` - cc/ha
-         * @enum {string}
-         */
-        ApplicationRateUnitEnum: "L/ha" | "mL/ha" | "kg/ha" | "cc/ha";
         /** @enum {unknown} */
         BlankEnum: "";
         ChangePassword: {
@@ -1812,6 +1804,14 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description * `rice` - Arroz
+         *     * `corn` - Maíz
+         *     * `pasture` - Pasto
+         *     * `other` - Otros
+         * @enum {string}
+         */
+        CropEnum: "rice" | "corn" | "pasture" | "other";
         Customer: {
             readonly id: number;
             /** Format: date-time */
@@ -1897,38 +1897,21 @@ export interface components {
             /** Format: date */
             readonly done_date: string | null;
             location?: string;
-            crop?: string;
-            applied_product?: string;
+            crop?: components["schemas"]["CropEnum"];
+            readonly crop_display: string;
+            crop_other?: string;
             products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
             /** Format: decimal */
-            quintals?: string;
-            /** Format: decimal */
             unit_price?: string;
             /** Format: decimal */
             readonly total: string;
-            notes?: string;
-            /** Format: decimal */
-            application_rate?: string | null;
-            application_rate_unit?: components["schemas"]["ApplicationRateUnitEnum"] | components["schemas"]["BlankEnum"];
-            /** @default  */
-            readonly application_rate_unit_display: string;
             /** Format: decimal */
             tank_volume_liters?: string | null;
             /** Format: decimal */
             water_per_hectare?: string | null;
-            /** Format: decimal */
-            latitude?: string | null;
-            /** Format: decimal */
-            longitude?: string | null;
-            /** Format: decimal */
-            wind_speed_kmh?: string | null;
-            /** Format: decimal */
-            temperature_celsius?: string | null;
-            /** Format: decimal */
-            humidity_percentage?: string | null;
-            weather_notes?: string;
+            notes?: string;
             readonly invoice_number: string;
             readonly created_by: number | null;
             /** Format: date-time */
@@ -2520,38 +2503,21 @@ export interface components {
             /** Format: date */
             readonly done_date?: string | null;
             location?: string;
-            crop?: string;
-            applied_product?: string;
+            crop?: components["schemas"]["CropEnum"];
+            readonly crop_display?: string;
+            crop_other?: string;
             products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
             /** Format: decimal */
-            quintals?: string;
-            /** Format: decimal */
             unit_price?: string;
             /** Format: decimal */
             readonly total?: string;
-            notes?: string;
-            /** Format: decimal */
-            application_rate?: string | null;
-            application_rate_unit?: components["schemas"]["ApplicationRateUnitEnum"] | components["schemas"]["BlankEnum"];
-            /** @default  */
-            readonly application_rate_unit_display: string;
             /** Format: decimal */
             tank_volume_liters?: string | null;
             /** Format: decimal */
             water_per_hectare?: string | null;
-            /** Format: decimal */
-            latitude?: string | null;
-            /** Format: decimal */
-            longitude?: string | null;
-            /** Format: decimal */
-            wind_speed_kmh?: string | null;
-            /** Format: decimal */
-            temperature_celsius?: string | null;
-            /** Format: decimal */
-            humidity_percentage?: string | null;
-            weather_notes?: string;
+            notes?: string;
             readonly invoice_number?: string;
             readonly created_by?: number | null;
             /** Format: date-time */
