@@ -16,8 +16,6 @@ import {
   FJ_STATUS_COLOR,
   FJ_STATUS_LABEL,
   FJ_STATUS_OPTIONS,
-  JOB_TYPE_LABEL,
-  JOB_TYPE_OPTIONS,
   type FieldJob,
 } from "./types";
 
@@ -25,7 +23,6 @@ export function FieldJobsPage() {
   const [search, setSearch] = useState("");
   const [debounced] = useDebouncedValue(search, 300);
   const [status, setStatus] = useState<string | null>(null);
-  const [jobType, setJobType] = useState<string | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
@@ -36,7 +33,6 @@ export function FieldJobsPage() {
   const { data, isLoading, error } = useFieldJobs({
     search: debounced,
     status: status || undefined,
-    job_type: jobType || undefined,
     from: from || undefined,
     to: to || undefined,
     page,
@@ -44,15 +40,10 @@ export function FieldJobsPage() {
 
   const columns: Column<FieldJob>[] = [
     { header: "N.º", render: (j) => j.number },
-    { header: "Tipo", render: (j) => <Badge variant="light">{JOB_TYPE_LABEL[j.job_type ?? "fumigation"]}</Badge> },
     { header: "Cliente", render: (j) => j.customer_name ?? "—" },
     { header: "Finca", render: (j) => j.location || "—" },
     { header: "Programado", render: (j) => formatDate(j.scheduled_date) },
-    {
-      header: "Ha/Qq",
-      align: "right",
-      render: (j) => (j.job_type === "spreading" ? `${j.quintals} qq` : `${j.hectares} ha`),
-    },
+    { header: "Ha", align: "right", render: (j) => `${j.hectares} ha` },
     { header: "Total", align: "right", render: (j) => formatCurrency(j.total) },
     {
       header: "Estado",
@@ -71,7 +62,7 @@ export function FieldJobsPage() {
     <Stack>
       <PageHeader
         title="Trabajos de campo"
-        subtitle="Fumigación y esparcido con drones."
+        subtitle="Fumigación con drones."
         action={
           canWriteService(user?.role) ? (
             <Button leftSection={<IconPlus size={18} />} onClick={open}>Nuevo trabajo</Button>
@@ -98,8 +89,6 @@ export function FieldJobsPage() {
                 onChange={(e) => { setSearch(e.currentTarget.value); resetPage(); }}
                 w={300}
               />
-              <Select placeholder="Tipo" data={JOB_TYPE_OPTIONS} value={jobType}
-                onChange={(v) => { setJobType(v); resetPage(); }} clearable w={170} />
               <Select placeholder="Estado" data={FJ_STATUS_OPTIONS} value={status}
                 onChange={(v) => { setStatus(v); resetPage(); }} clearable w={160} />
               <TextInput type="date" aria-label="Desde" value={from}

@@ -31,7 +31,7 @@ describe("FieldJobsPage", () => {
         results: [{
           id: 1, number: "TC-000001", job_type: "fumigation", job_type_display: "Fumigación",
           status: "scheduled", status_display: "Programado", customer_name: "Finca La Esperanza",
-          location: "Lote 3", scheduled_date: "2026-06-18", hectares: "12.5000", quintals: "0.0000",
+          location: "Lote 3", scheduled_date: "2026-06-18", hectares: "12.5000",
           total: "250.00",
         }],
       },
