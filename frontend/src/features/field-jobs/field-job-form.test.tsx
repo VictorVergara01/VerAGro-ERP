@@ -43,4 +43,10 @@ describe("FieldJobFormModal", () => {
     fireEvent.click(screen.getByText("Esparcido / abono"));
     expect((screen.getByLabelText(/precio/i) as HTMLInputElement).value).toBe("10");
   });
+
+  it("permite agregar un producto a la lista", () => {
+    renderForm();
+    fireEvent.click(screen.getByRole("button", { name: /agregar producto/i }));
+    expect(screen.getByPlaceholderText(/producto \/ medicamento/i)).toBeInTheDocument();
+  });
 });

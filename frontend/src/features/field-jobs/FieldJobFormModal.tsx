@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Button,
   Collapse,
   Grid,
@@ -14,6 +15,7 @@ import {
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect } from "react";
 
 import { formatCurrency } from "../../utils/format";
@@ -23,7 +25,7 @@ import { useTechnicians } from "../service-orders/api";
 import { useCompany } from "../settings/api";
 import { useSaveFieldJob } from "./api";
 import { SprayMixModal } from "./SprayMixModal";
-import { JOB_TYPE_OPTIONS, RATE_UNIT_OPTIONS, type FieldJob } from "./types";
+import { JOB_TYPE_OPTIONS, PRODUCT_UNIT_OPTIONS, type FieldJob } from "./types";
 
 interface FormValues {
   job_type: string;
@@ -33,13 +35,11 @@ interface FormValues {
   scheduled_date: string;
   location: string;
   crop: string;
-  applied_product: string;
+  products: { name: string; dose_per_hectare: number | string; unit: string }[];
   hectares: number | string;
   quintals: number | string;
   unit_price: number | string;
   notes: string;
-  application_rate: number | string;
-  application_rate_unit: string;
   tank_volume_liters: number | string;
   water_per_hectare: number | string;
   latitude: number | string;
@@ -58,13 +58,11 @@ const EMPTY: FormValues = {
   scheduled_date: "",
   location: "",
   crop: "",
-  applied_product: "",
+  products: [],
   hectares: 0,
   quintals: 0,
   unit_price: 0,
   notes: "",
-  application_rate: "",
-  application_rate_unit: "",
   tank_volume_liters: "",
   water_per_hectare: "",
   latitude: "",
@@ -121,6 +119,11 @@ export function FieldJobFormModal({
               equipment: job.equipment ? String(job.equipment) : null,
               technician: job.technician ? String(job.technician) : null,
               scheduled_date: job.scheduled_date ?? "",
+              products: (job.products ?? []).map((p) => ({
+                name: p.name,
+                dose_per_hectare: p.dose_per_hectare ?? "",
+                unit: p.unit,
+              })),
             }
           : {}),
       } as FormValues);
@@ -144,13 +147,13 @@ export function FieldJobFormModal({
       scheduled_date: values.scheduled_date || undefined,
       location: values.location,
       crop: values.crop,
-      applied_product: values.applied_product,
+      products: values.products
+        .filter((p) => p.name.trim())
+        .map((p) => ({ name: p.name.trim(), dose_per_hectare: String(p.dose_per_hectare || 0), unit: p.unit })),
       hectares: String(values.hectares || 0),
       quintals: String(values.quintals || 0),
       unit_price: String(values.unit_price || 0),
       notes: values.notes,
-      application_rate: numOrNull(values.application_rate),
-      application_rate_unit: values.application_rate_unit || "",
       tank_volume_liters: numOrNull(values.tank_volume_liters),
       water_per_hectare: numOrNull(values.water_per_hectare),
       latitude: numOrNull(values.latitude),
@@ -229,9 +232,6 @@ export function FieldJobFormModal({
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <TextInput label="Cultivo" {...form.getInputProps("crop")} />
           </Grid.Col>
-          <Grid.Col span={{ base: 6, sm: 3 }}>
-            <TextInput label="Producto aplicado" {...form.getInputProps("applied_product")} />
-          </Grid.Col>
 
           {isFumigation ? (
             <Grid.Col span={{ base: 6, sm: 4 }}>
@@ -255,26 +255,64 @@ export function FieldJobFormModal({
           </Grid.Col>
         </Grid>
 
+        <Text fw={600} size="sm" mt="sm">Productos a aplicar</Text>
+        {form.values.products.map((p, i) => (
+          <Group key={i} wrap="nowrap" mt={4}>
+            <TextInput
+              placeholder="Producto / medicamento"
+              value={p.name}
+              onChange={(e) => form.setFieldValue(`products.${i}.name`, e.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <NumberInput
+              placeholder="Dosis/ha"
+              min={0}
+              decimalScale={4}
+              value={p.dose_per_hectare}
+              onChange={(v) => form.setFieldValue(`products.${i}.dose_per_hectare`, v as number | string)}
+              w={120}
+            />
+            <Select
+              data={PRODUCT_UNIT_OPTIONS}
+              value={p.unit}
+              onChange={(v) => form.setFieldValue(`products.${i}.unit`, v ?? "L/ha")}
+              allowDeselect={false}
+              w={100}
+            />
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              aria-label="Quitar producto"
+              onClick={() => form.removeListItem("products", i)}
+            >
+              <IconTrash size={18} />
+            </ActionIcon>
+          </Group>
+        ))}
+        <Button
+          variant="light"
+          size="xs"
+          mt={4}
+          leftSection={<IconPlus size={16} />}
+          onClick={() => form.insertListItem("products", { name: "", dose_per_hectare: 0, unit: "L/ha" })}
+        >
+          Agregar producto
+        </Button>
+
         {/* Sección colapsable: aplicación */}
         <Button variant="subtle" size="xs" mt="sm" onClick={app.toggle}>
           {appOpen ? "− " : "+ "}Detalles de aplicación
         </Button>
         <Collapse expanded={appOpen}>
           <Grid>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Tasa de aplicación" min={0} decimalScale={4} {...form.getInputProps("application_rate")} />
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <NumberInput label="Tasa de aplicación (L/ha)" min={0} decimalScale={2} {...form.getInputProps("water_per_hectare")} />
             </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <Select label="Unidad" data={RATE_UNIT_OPTIONS} clearable {...form.getInputProps("application_rate_unit")} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
               <NumberInput label="Tanque (L)" min={0} decimalScale={2} {...form.getInputProps("tank_volume_liters")} />
             </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Agua/ha (L)" min={0} decimalScale={2} {...form.getInputProps("water_per_hectare")} />
-            </Grid.Col>
-            <Grid.Col span={12}>
-              <Button variant="light" size="xs" onClick={mix.open}>Calcular mezcla</Button>
+            <Grid.Col span={{ base: 12, sm: 4 }}>
+              <Button variant="light" size="xs" mt={28} onClick={mix.open}>Calcular mezcla</Button>
             </Grid.Col>
           </Grid>
         </Collapse>
@@ -328,8 +366,11 @@ export function FieldJobFormModal({
         onClose={mix.close}
         prefill={{
           hectares: Number(form.values.hectares) || undefined,
-          water_per_hectare: Number(form.values.water_per_hectare) || undefined,
+          caldo_per_hectare: Number(form.values.water_per_hectare) || undefined,
           tank_volume_liters: Number(form.values.tank_volume_liters) || undefined,
+          products: form.values.products
+            .filter((p) => p.name.trim())
+            .map((p) => ({ name: p.name.trim(), dose_per_hectare: Number(p.dose_per_hectare), unit: p.unit })),
         }}
       />
     </Modal>
