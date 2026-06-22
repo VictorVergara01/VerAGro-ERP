@@ -12,11 +12,6 @@ interface Paginated<T> {
   results: T[];
 }
 
-export const JOB_TYPE_LABEL: Record<string, string> = {
-  fumigation: "Fumigación",
-  spreading: "Esparcido / abono",
-};
-
 export const FJ_STATUS_LABEL: Record<string, string> = {
   scheduled: "Programado",
   done: "Hecho",
