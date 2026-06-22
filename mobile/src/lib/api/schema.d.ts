@@ -1899,6 +1899,7 @@ export interface components {
             location?: string;
             crop?: string;
             applied_product?: string;
+            products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
             /** Format: decimal */
@@ -1934,6 +1935,13 @@ export interface components {
             readonly created_at: string;
             /** Format: date-time */
             readonly updated_at: string;
+        };
+        FieldJobProduct: {
+            readonly id: number;
+            name: string;
+            /** Format: decimal */
+            dose_per_hectare?: string;
+            unit?: components["schemas"]["UnitEnum"];
         };
         /**
          * @description * `scheduled` - Programado
@@ -2514,6 +2522,7 @@ export interface components {
             location?: string;
             crop?: string;
             applied_product?: string;
+            products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
             /** Format: decimal */
@@ -3350,6 +3359,14 @@ export interface components {
             readonly access: string;
             refresh: string;
         };
+        /**
+         * @description * `L/ha` - L/ha
+         *     * `cc/ha` - cc/ha
+         *     * `kg/ha` - kg/ha
+         *     * `g/ha` - g/ha
+         * @enum {string}
+         */
+        UnitEnum: "L/ha" | "cc/ha" | "kg/ha" | "g/ha";
         User: {
             readonly id: number;
             /** Format: email */

@@ -20,7 +20,14 @@ export type InventoryStackParamList = {
 export type FieldJobsStackParamList = {
   FieldJobsList: undefined;
   FieldJobDetail: { id: number; title: string };
-  SprayCalculator: { prefill?: { hectares?: number; water_per_hectare?: number; tank_volume_liters?: number } };
+  SprayCalculator: {
+    prefill?: {
+      hectares?: number;
+      caldo_per_hectare?: number;
+      tank_volume_liters?: number;
+      products?: { name: string; dose_per_hectare: number; unit: string }[];
+    };
+  };
 };
 
 export type MoreStackParamList = {
