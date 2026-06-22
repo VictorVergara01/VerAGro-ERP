@@ -19,7 +19,6 @@ import type { FieldJobsNav } from "../../navigation/types";
 import {
   FJ_STATUS_COLOR,
   FJ_STATUS_LABEL,
-  JOB_TYPE_LABEL,
   useFieldJobs,
   type FieldJob,
 } from "./api";
@@ -28,7 +27,7 @@ import { FieldJobFormModal } from "./FieldJobFormModal";
 function JobCard({ job, onPress }: { job: FieldJob; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const status = job.status ?? "scheduled";
-  const qty = job.job_type === "spreading" ? `${job.quintals} qq` : `${job.hectares} ha`;
+  const qty = `${job.hectares} ha`;
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardHeader}>
@@ -39,7 +38,7 @@ function JobCard({ job, onPress }: { job: FieldJob; onPress: () => void }) {
       </View>
       <Text style={styles.cardCustomer}>{job.customer_name}</Text>
       <Text style={styles.cardMeta}>
-        {JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} · {job.location || "Sin finca"} · {qty} ·{" "}
+        {job.location || "Sin finca"} · {qty} ·{" "}
         {formatCurrency(job.total)}
       </Text>
       <Text style={styles.cardDate}>{formatDate(job.scheduled_date)}</Text>
