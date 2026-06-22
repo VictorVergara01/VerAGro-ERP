@@ -1,4 +1,4 @@
-import { Alert, Anchor, Badge, Button, Card, Grid, Group, Loader, Stack, Text } from "@mantine/core";
+import { Alert, Badge, Button, Card, Grid, Group, Loader, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -10,7 +10,7 @@ import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useFieldJob, useFieldJobAction } from "./api";
 import { FieldJobFormModal } from "./FieldJobFormModal";
-import { FJ_STATUS_COLOR, FJ_STATUS_LABEL, JOB_TYPE_LABEL } from "./types";
+import { FJ_STATUS_COLOR, FJ_STATUS_LABEL } from "./types";
 
 export function FieldJobDetailPage() {
   const { id } = useParams();
@@ -23,7 +23,7 @@ export function FieldJobDetailPage() {
   if (error || !job) return <Alert color="red">No se pudo cargar el trabajo.</Alert>;
 
   const status = job.status ?? "scheduled";
-  const isFumigation = job.job_type === "fumigation";
+  const cropLabel = job.crop === "other" ? (job.crop_other || "Otros") : (job.crop_display || "—");
 
   const act = async (a: "mark-done" | "cancel" | "generate-invoice", ok: string) => {
     try {
@@ -45,8 +45,6 @@ export function FieldJobDetailPage() {
       confirmProps: { color: "red" },
       onConfirm: () => act("cancel", "Trabajo cancelado."),
     });
-
-  const hasGps = job.latitude != null && job.longitude != null;
 
   return (
     <Stack>
@@ -83,9 +81,8 @@ export function FieldJobDetailPage() {
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cliente" value={job.customer_name} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Dron" value={job.equipment_name || "—"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Piloto" value={job.technician_name || "Sin asignar"} /></Grid.Col>
-          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Tipo" value={JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} /></Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cultivo" value={cropLabel} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Finca" value={job.location || "—"} /></Grid.Col>
-          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cultivo" value={job.crop || "—"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Programado" value={formatDate(job.scheduled_date)} /></Grid.Col>
           {job.done_date && (
             <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Hecho" value={formatDate(job.done_date)} /></Grid.Col>
@@ -97,11 +94,11 @@ export function FieldJobDetailPage() {
         <Card withBorder radius="md" w={320}>
           <Stack gap={4}>
             <Group justify="space-between">
-              <Text c="dimmed">{isFumigation ? "Hectáreas" : "Quintales"}</Text>
-              <Text>{isFumigation ? job.hectares : job.quintals}</Text>
+              <Text c="dimmed">Hectáreas</Text>
+              <Text>{job.hectares}</Text>
             </Group>
             <Group justify="space-between">
-              <Text c="dimmed">Precio/{isFumigation ? "ha" : "qq"}</Text>
+              <Text c="dimmed">Precio/ha</Text>
               <Text>{formatCurrency(job.unit_price)}</Text>
             </Group>
             <Group justify="space-between">
@@ -112,9 +109,9 @@ export function FieldJobDetailPage() {
         </Card>
       </Group>
 
-      {job.products && job.products.length > 0 ? (
+      {job.products && job.products.length > 0 && (
         <Card>
-          <Text fw={600} mb="xs">Productos aplicados</Text>
+          <Text fw={600} mb="xs">Químicos aplicados</Text>
           {job.products.map((p) => (
             <Group key={p.id} justify="space-between">
               <Text>{p.name}</Text>
@@ -122,9 +119,7 @@ export function FieldJobDetailPage() {
             </Group>
           ))}
         </Card>
-      ) : job.applied_product ? (
-        <Card><Field label="Producto" value={job.applied_product} /></Card>
-      ) : null}
+      )}
 
       {(job.water_per_hectare != null || job.tank_volume_liters != null) && (
         <Card><Text fw={600} mb="xs">Aplicación</Text>
@@ -132,25 +127,6 @@ export function FieldJobDetailPage() {
             <Grid.Col span={{ base: 6, sm: 4 }}><Field label="Tasa de aplicación (L/ha)" value={job.water_per_hectare ?? "—"} /></Grid.Col>
             <Grid.Col span={{ base: 6, sm: 4 }}><Field label="Tanque (L)" value={job.tank_volume_liters ?? "—"} /></Grid.Col>
           </Grid>
-        </Card>
-      )}
-
-      {(job.wind_speed_kmh != null || job.weather_notes) && (
-        <Card><Text fw={600} mb="xs">Clima</Text>
-          <Grid>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Viento (km/h)" value={job.wind_speed_kmh ?? "—"} /></Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Temp (°C)" value={job.temperature_celsius ?? "—"} /></Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Humedad (%)" value={job.humidity_percentage ?? "—"} /></Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Condiciones" value={job.weather_notes || "—"} /></Grid.Col>
-          </Grid>
-        </Card>
-      )}
-
-      {hasGps && (
-        <Card><Text fw={600} mb="xs">Coordenadas</Text>
-          <Anchor href={`https://www.google.com/maps?q=${job.latitude},${job.longitude}`} target="_blank" rel="noopener noreferrer">
-            {job.latitude}, {job.longitude} — abrir en Google Maps
-          </Anchor>
         </Card>
       )}
 

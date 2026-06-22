@@ -8,8 +8,8 @@ import { FieldJobDetailPage } from "./FieldJobDetailPage";
 const job = {
   id: 1, number: "TC-000001", job_type: "fumigation", job_type_display: "Fumigación",
   status: "scheduled", status_display: "Programado", customer_name: "Finca La Esperanza",
-  location: "Lote 3", crop: "Arroz", scheduled_date: "2026-06-18",
-  hectares: "12.5000", quintals: "0.0000", unit_price: "20.00", total: "250.00",
+  location: "Lote 3", crop: "rice", crop_display: "Arroz", crop_other: "",
+  scheduled_date: "2026-06-18", hectares: "12.5000", unit_price: "20.00", total: "250.00",
 };
 vi.mock("./api", () => ({
   useFieldJob: () => ({ data: job, isLoading: false, error: null }),
