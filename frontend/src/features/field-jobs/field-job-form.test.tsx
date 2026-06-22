@@ -45,4 +45,12 @@ describe("FieldJobFormModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /agregar químico/i }));
     expect(screen.getByPlaceholderText(/nombre del químico/i)).toBeInTheDocument();
   });
+
+  it("deshabilita el botón al llegar a 10 químicos", () => {
+    renderForm();
+    const addBtn = screen.getByRole("button", { name: /agregar químico/i });
+    for (let i = 0; i < 10; i++) fireEvent.click(addBtn);
+    expect(addBtn).toBeDisabled();
+    expect(screen.getByText(/máximo 10 químicos/i)).toBeInTheDocument();
+  });
 });

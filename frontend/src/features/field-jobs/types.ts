@@ -2,14 +2,6 @@ import type { Schemas } from "../../lib/api/types";
 
 export type FieldJob = Schemas["FieldJob"];
 
-export const JOB_TYPE_OPTIONS = [
-  { value: "fumigation", label: "Fumigación" },
-  { value: "spreading", label: "Esparcido / abono" },
-];
-export const JOB_TYPE_LABEL: Record<string, string> = Object.fromEntries(
-  JOB_TYPE_OPTIONS.map((o) => [o.value, o.label]),
-);
-
 export const FJ_STATUS_OPTIONS = [
   { value: "scheduled", label: "Programado" },
   { value: "done", label: "Hecho" },
