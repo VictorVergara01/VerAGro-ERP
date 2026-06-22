@@ -56,8 +56,9 @@ def test_invoice_spreading_raises_not_implemented():
         unit_price=Decimal("10"),
         location="Finca Los Naranjos",
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         create_invoice_from_field_job(job=job)
+    assert "job_type" in excinfo.value.detail
 
 
 @pytest.mark.django_db
