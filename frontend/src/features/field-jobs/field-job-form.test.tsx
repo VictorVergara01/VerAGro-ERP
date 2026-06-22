@@ -13,8 +13,8 @@ vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results:
 vi.mock("../service-orders/api", () => ({ useTechnicians: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({
   useCompany: () => ({
-    data: { fumigation_price_per_hectare: "20", spreading_price_per_quintal: "10",
-      drone_tank_volume_liters: "30", default_water_per_hectare: "8" },
+    data: { fumigation_price_per_hectare: "20", drone_tank_volume_liters: "200",
+      default_water_per_hectare: "8" },
   }),
 }));
 
@@ -27,26 +27,22 @@ function renderForm() {
 }
 
 describe("FieldJobFormModal", () => {
-  it("muestra Hectáreas para fumigación y Quintales al cambiar a esparcido", () => {
+  it("muestra Hectáreas (fumigación) y NO muestra Quintales", () => {
     renderForm();
     expect(screen.getByLabelText(/hectáreas/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Esparcido / abono"));
-    expect(screen.getByLabelText(/quintales/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/quintales/i)).not.toBeInTheDocument();
   });
 
-  it("actualiza el precio al precio por defecto del nuevo tipo al cambiar job_type", () => {
+  it("revela el texto de cultivo al elegir Otros", () => {
     renderForm();
-    // Initially fumigation type — price should be 20
-    const priceInput = screen.getByLabelText(/precio/i) as HTMLInputElement;
-    expect(priceInput.value).toBe("20");
-    // Switch to spreading
-    fireEvent.click(screen.getByText("Esparcido / abono"));
-    expect((screen.getByLabelText(/precio/i) as HTMLInputElement).value).toBe("10");
+    expect(screen.queryByLabelText(/especifica el cultivo/i)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/^cultivo$/i), { target: { value: "other" } });
+    expect(screen.getByLabelText(/especifica el cultivo/i)).toBeInTheDocument();
   });
 
-  it("permite agregar un producto a la lista", () => {
+  it("permite agregar un químico a la lista", () => {
     renderForm();
-    fireEvent.click(screen.getByRole("button", { name: /agregar producto/i }));
-    expect(screen.getByPlaceholderText(/producto \/ medicamento/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /agregar químico/i }));
+    expect(screen.getByPlaceholderText(/nombre del químico/i)).toBeInTheDocument();
   });
 });

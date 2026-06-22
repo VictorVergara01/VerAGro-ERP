@@ -5,8 +5,8 @@ import {
   Grid,
   Group,
   Modal,
+  NativeSelect,
   NumberInput,
-  SegmentedControl,
   Select,
   Text,
   Textarea,
@@ -25,52 +25,40 @@ import { useTechnicians } from "../service-orders/api";
 import { useCompany } from "../settings/api";
 import { useSaveFieldJob } from "./api";
 import { SprayMixModal } from "./SprayMixModal";
-import { JOB_TYPE_OPTIONS, PRODUCT_UNIT_OPTIONS, type FieldJob } from "./types";
+import { CROP_OPTIONS, PRODUCT_UNIT_OPTIONS, type FieldJob } from "./types";
+
+const MAX_PRODUCTS = 10;
 
 interface FormValues {
-  job_type: string;
   customer: string | null;
   equipment: string | null;
   technician: string | null;
   scheduled_date: string;
   location: string;
   crop: string;
+  crop_other: string;
   products: { name: string; dose_per_hectare: number | string; unit: string }[];
   hectares: number | string;
-  quintals: number | string;
   unit_price: number | string;
   notes: string;
   tank_volume_liters: number | string;
   water_per_hectare: number | string;
-  latitude: number | string;
-  longitude: number | string;
-  wind_speed_kmh: number | string;
-  temperature_celsius: number | string;
-  humidity_percentage: number | string;
-  weather_notes: string;
 }
 
 const EMPTY: FormValues = {
-  job_type: "fumigation",
   customer: null,
   equipment: null,
   technician: null,
   scheduled_date: "",
   location: "",
-  crop: "",
+  crop: "rice",
+  crop_other: "",
   products: [],
-  hectares: 0,
-  quintals: 0,
+  hectares: 1,
   unit_price: 0,
   notes: "",
   tank_volume_liters: "",
   water_per_hectare: "",
-  latitude: "",
-  longitude: "",
-  wind_speed_kmh: "",
-  temperature_celsius: "",
-  humidity_percentage: "",
-  weather_notes: "",
 };
 
 const numOrNull = (v: number | string) => (v === "" || v == null ? null : String(v));
@@ -91,8 +79,6 @@ export function FieldJobFormModal({
   const company = useCompany();
   const editing = Boolean(job?.id);
   const [appOpen, app] = useDisclosure(false);
-  const [weatherOpen, weather] = useDisclosure(false);
-  const [gpsOpen, gps] = useDisclosure(false);
   const [mixOpen, mix] = useDisclosure(false);
 
   const form = useForm<FormValues>({
@@ -103,22 +89,25 @@ export function FieldJobFormModal({
   useEffect(() => {
     if (opened) {
       const c = company.data as Record<string, string> | undefined;
-      const defaultPrice =
-        (job?.job_type ?? "fumigation") === "spreading"
-          ? c?.spreading_price_per_quintal ?? "10"
-          : c?.fumigation_price_per_hectare ?? "20";
       form.setValues({
         ...EMPTY,
-        unit_price: job?.unit_price ?? defaultPrice,
+        unit_price: job?.unit_price ?? c?.fumigation_price_per_hectare ?? "20",
         tank_volume_liters: c?.drone_tank_volume_liters ?? "",
         water_per_hectare: c?.default_water_per_hectare ?? "",
         ...(job
           ? {
-              ...(job as unknown as Partial<FormValues>),
               customer: job.customer ? String(job.customer) : null,
               equipment: job.equipment ? String(job.equipment) : null,
               technician: job.technician ? String(job.technician) : null,
               scheduled_date: job.scheduled_date ?? "",
+              location: job.location ?? "",
+              crop: job.crop ?? "rice",
+              crop_other: job.crop_other ?? "",
+              hectares: job.hectares ?? 1,
+              unit_price: job.unit_price ?? "20",
+              notes: job.notes ?? "",
+              tank_volume_liters: job.tank_volume_liters ?? "",
+              water_per_hectare: job.water_per_hectare ?? "",
               products: (job.products ?? []).map((p) => ({
                 name: p.name,
                 dose_per_hectare: p.dose_per_hectare ?? "",
@@ -132,36 +121,28 @@ export function FieldJobFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, job]);
 
-  const isFumigation = form.values.job_type === "fumigation";
   const liveTotal =
-    (Number(isFumigation ? form.values.hectares : form.values.quintals) || 0) *
-    (Number(form.values.unit_price) || 0);
+    (Number(form.values.hectares) || 0) * (Number(form.values.unit_price) || 0);
 
   const submit = form.onSubmit(async (values) => {
     const payload = {
       id: job?.id,
-      job_type: values.job_type,
+      job_type: "fumigation",
       customer: Number(values.customer),
       equipment: values.equipment ? Number(values.equipment) : null,
       technician: values.technician ? Number(values.technician) : null,
       scheduled_date: values.scheduled_date || undefined,
       location: values.location,
       crop: values.crop,
+      crop_other: values.crop === "other" ? values.crop_other : "",
       products: values.products
         .filter((p) => p.name.trim())
         .map((p) => ({ name: p.name.trim(), dose_per_hectare: String(p.dose_per_hectare || 0), unit: p.unit })),
       hectares: String(values.hectares || 0),
-      quintals: String(values.quintals || 0),
       unit_price: String(values.unit_price || 0),
       notes: values.notes,
       tank_volume_liters: numOrNull(values.tank_volume_liters),
       water_per_hectare: numOrNull(values.water_per_hectare),
-      latitude: numOrNull(values.latitude),
-      longitude: numOrNull(values.longitude),
-      wind_speed_kmh: numOrNull(values.wind_speed_kmh),
-      temperature_celsius: numOrNull(values.temperature_celsius),
-      humidity_percentage: numOrNull(values.humidity_percentage),
-      weather_notes: values.weather_notes,
     };
     try {
       await save.mutateAsync(payload as unknown as Partial<FieldJob> & { id?: number });
@@ -176,24 +157,6 @@ export function FieldJobFormModal({
     <Modal opened={opened} onClose={onClose} title={editing ? "Editar trabajo" : "Nuevo trabajo de campo"} size="lg">
       <form onSubmit={submit}>
         <Grid>
-          <Grid.Col span={12}>
-            <SegmentedControl
-              fullWidth
-              data={JOB_TYPE_OPTIONS}
-              value={form.values.job_type}
-              onChange={(v) => {
-                if (!v) return;
-                const c = company.data as Record<string, string> | undefined;
-                const defaultFor = (t: string) =>
-                  t === "spreading" ? (c?.spreading_price_per_quintal ?? "10") : (c?.fumigation_price_per_hectare ?? "20");
-                const prevDefault = defaultFor(form.values.job_type);
-                form.setFieldValue("job_type", v);
-                if (!editing && String(form.values.unit_price) === String(prevDefault)) {
-                  form.setFieldValue("unit_price", defaultFor(v));
-                }
-              }}
-            />
-          </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
               label="Cliente"
@@ -230,36 +193,30 @@ export function FieldJobFormModal({
             <TextInput label="Finca / Ubicación" {...form.getInputProps("location")} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <TextInput label="Cultivo" {...form.getInputProps("crop")} />
+            <NativeSelect label="Cultivo" data={CROP_OPTIONS} {...form.getInputProps("crop")} />
           </Grid.Col>
-
-          {isFumigation ? (
-            <Grid.Col span={{ base: 6, sm: 4 }}>
-              <NumberInput label="Hectáreas" min={0} decimalScale={4} {...form.getInputProps("hectares")} />
-            </Grid.Col>
-          ) : (
-            <Grid.Col span={{ base: 6, sm: 4 }}>
-              <NumberInput label="Quintales" min={0} decimalScale={4} {...form.getInputProps("quintals")} />
+          {form.values.crop === "other" && (
+            <Grid.Col span={{ base: 6, sm: 3 }}>
+              <TextInput label="Especifica el cultivo" {...form.getInputProps("crop_other")} />
             </Grid.Col>
           )}
+
           <Grid.Col span={{ base: 6, sm: 4 }}>
-            <NumberInput
-              label={isFumigation ? "Precio/ha ($)" : "Precio/qq ($)"}
-              min={0}
-              decimalScale={2}
-              {...form.getInputProps("unit_price")}
-            />
+            <NumberInput label="Hectáreas" min={0} decimalScale={4} {...form.getInputProps("hectares")} />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 4 }}>
+            <NumberInput label="Precio/ha ($)" min={0} decimalScale={2} {...form.getInputProps("unit_price")} />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 4 }}>
             <Text size="sm" c="dimmed" mt={28}>Total estimado: <b>{formatCurrency(liveTotal)}</b></Text>
           </Grid.Col>
         </Grid>
 
-        <Text fw={600} size="sm" mt="sm">Productos a aplicar</Text>
+        <Text fw={600} size="sm" mt="sm">Químicos a aplicar</Text>
         {form.values.products.map((p, i) => (
           <Group key={i} wrap="nowrap" mt={4}>
             <TextInput
-              placeholder="Producto / medicamento"
+              placeholder="Nombre del químico"
               value={p.name}
               onChange={(e) => form.setFieldValue(`products.${i}.name`, e.currentTarget.value)}
               style={{ flex: 1 }}
@@ -282,7 +239,7 @@ export function FieldJobFormModal({
             <ActionIcon
               variant="subtle"
               color="red"
-              aria-label="Quitar producto"
+              aria-label="Quitar químico"
               onClick={() => form.removeListItem("products", i)}
             >
               <IconTrash size={18} />
@@ -294,10 +251,14 @@ export function FieldJobFormModal({
           size="xs"
           mt={4}
           leftSection={<IconPlus size={16} />}
+          disabled={form.values.products.length >= MAX_PRODUCTS}
           onClick={() => form.insertListItem("products", { name: "", dose_per_hectare: 0, unit: "L/ha" })}
         >
-          Agregar producto
+          Agregar químico
         </Button>
+        {form.values.products.length >= MAX_PRODUCTS && (
+          <Text size="xs" c="dimmed" mt={4}>Máximo {MAX_PRODUCTS} químicos por trabajo.</Text>
+        )}
 
         {/* Sección colapsable: aplicación */}
         <Button variant="subtle" size="xs" mt="sm" onClick={app.toggle}>
@@ -313,42 +274,6 @@ export function FieldJobFormModal({
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 4 }}>
               <Button variant="light" size="xs" mt={28} onClick={mix.open}>Calcular mezcla</Button>
-            </Grid.Col>
-          </Grid>
-        </Collapse>
-
-        {/* Sección colapsable: clima */}
-        <Button variant="subtle" size="xs" mt="xs" onClick={weather.toggle}>
-          {weatherOpen ? "− " : "+ "}Condiciones climáticas
-        </Button>
-        <Collapse expanded={weatherOpen}>
-          <Grid>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Viento (km/h)" min={0} decimalScale={1} {...form.getInputProps("wind_speed_kmh")} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Temp (°C)" decimalScale={1} {...form.getInputProps("temperature_celsius")} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Humedad (%)" min={0} decimalScale={1} {...form.getInputProps("humidity_percentage")} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <TextInput label="Condiciones" {...form.getInputProps("weather_notes")} />
-            </Grid.Col>
-          </Grid>
-        </Collapse>
-
-        {/* Sección colapsable: GPS */}
-        <Button variant="subtle" size="xs" mt="xs" onClick={gps.toggle}>
-          {gpsOpen ? "− " : "+ "}Coordenadas GPS
-        </Button>
-        <Collapse expanded={gpsOpen}>
-          <Grid>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Latitud" decimalScale={6} {...form.getInputProps("latitude")} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 6, sm: 3 }}>
-              <NumberInput label="Longitud" decimalScale={6} {...form.getInputProps("longitude")} />
             </Grid.Col>
           </Grid>
         </Collapse>
