@@ -9,7 +9,7 @@ from apps.core.models import TimeStampedModel
 class FieldJob(TimeStampedModel):
     class JobType(models.TextChoices):
         FUMIGATION = "fumigation", "Fumigación"
-        SPREADING = "spreading", "Esparcido / abono"
+        SPREADING = "spreading", "Esparcido / abono"  # reservado para sólidos
 
     class Status(models.TextChoices):
         SCHEDULED = "scheduled", "Programado"
@@ -17,11 +17,11 @@ class FieldJob(TimeStampedModel):
         INVOICED = "invoiced", "Facturado"
         CANCELLED = "cancelled", "Cancelado"
 
-    class RateUnit(models.TextChoices):
-        L_HA = "L/ha", "L/ha"
-        ML_HA = "mL/ha", "mL/ha"
-        KG_HA = "kg/ha", "kg/ha"
-        CC_HA = "cc/ha", "cc/ha"
+    class Crop(models.TextChoices):
+        RICE = "rice", "Arroz"
+        CORN = "corn", "Maíz"
+        PASTURE = "pasture", "Pasto"
+        OTHER = "other", "Otros"
 
     number = models.CharField(max_length=30, unique=True, blank=True)
     job_type = models.CharField(
@@ -50,46 +50,21 @@ class FieldJob(TimeStampedModel):
     scheduled_date = models.DateField(default=timezone.localdate)
     done_date = models.DateField(null=True, blank=True)
     location = models.CharField(max_length=255, blank=True)
-    crop = models.CharField(max_length=100, blank=True)
-    applied_product = models.CharField(max_length=255, blank=True)
-    hectares = models.DecimalField(max_digits=10, decimal_places=4, default=0)
-    quintals = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    crop = models.CharField(max_length=20, choices=Crop.choices, default=Crop.RICE)
+    crop_other = models.CharField(max_length=100, blank=True)
+    hectares = models.DecimalField(max_digits=10, decimal_places=4, default=1)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    notes = models.TextField(blank=True)
-    created_by = models.ForeignKey(
-        "users.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
-    )
-
-    # --- Registro de aplicación (inspirado en nuWay AgTrack); todos opcionales ---
-    application_rate = models.DecimalField(
-        max_digits=10, decimal_places=4, null=True, blank=True
-    )
-    application_rate_unit = models.CharField(
-        max_length=10, choices=RateUnit.choices, blank=True
-    )
     tank_volume_liters = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
     water_per_hectare = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
-    latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        "users.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
-    longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True
-    )
-    wind_speed_kmh = models.DecimalField(
-        max_digits=5, decimal_places=1, null=True, blank=True
-    )
-    temperature_celsius = models.DecimalField(
-        max_digits=5, decimal_places=1, null=True, blank=True
-    )
-    humidity_percentage = models.DecimalField(
-        max_digits=5, decimal_places=1, null=True, blank=True
-    )
-    weather_notes = models.CharField(max_length=100, blank=True)
 
     class Meta:
         ordering = ("-scheduled_date", "-created_at")
@@ -98,11 +73,8 @@ class FieldJob(TimeStampedModel):
         return self.number or f"TC sin número (#{self.pk})"
 
     def recalculate_total(self):
-        if self.job_type == self.JobType.FUMIGATION:
-            base = (self.hectares or Decimal("0")) * (self.unit_price or Decimal("0"))
-        else:
-            base = (self.quintals or Decimal("0")) * (self.unit_price or Decimal("0"))
-        self.total = base
+        # Solo fumigación por ahora; el módulo de sólidos ajustará esto.
+        self.total = (self.hectares or Decimal("0")) * (self.unit_price or Decimal("0"))
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -115,8 +87,8 @@ class FieldJobProduct(TimeStampedModel):
     class Unit(models.TextChoices):
         L_HA = "L/ha", "L/ha"
         CC_HA = "cc/ha", "cc/ha"
-        KG_HA = "kg/ha", "kg/ha"
-        G_HA = "g/ha", "g/ha"
+        KG_HA = "kg/ha", "kg/ha"  # reservado para sólidos
+        G_HA = "g/ha", "g/ha"  # reservado para sólidos
 
     field_job = models.ForeignKey(
         FieldJob, on_delete=models.CASCADE, related_name="products"

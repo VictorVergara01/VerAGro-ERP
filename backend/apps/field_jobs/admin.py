@@ -12,9 +12,8 @@ class FieldJobAdmin(admin.ModelAdmin):
         "customer",
         "scheduled_date",
         "hectares",
-        "quintals",
         "total",
     )
-    list_filter = ("job_type", "status", "scheduled_date")
-    search_fields = ("number", "location", "crop", "customer__name", "applied_product")
+    list_filter = ("job_type", "status", "scheduled_date", "crop")
+    search_fields = ("number", "location", "crop", "customer__name")
     readonly_fields = ("number", "total", "created_at", "updated_at")
