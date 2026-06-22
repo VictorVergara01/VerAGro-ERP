@@ -76,7 +76,10 @@ export function FieldJobDetailScreen() {
     ]);
 
   const hasGps = job.latitude != null && job.longitude != null;
-  const hasApp = job.application_rate != null || job.tank_volume_liters != null;
+  const hasApp =
+    job.water_per_hectare != null ||
+    job.tank_volume_liters != null ||
+    (job.products != null && job.products.length > 0);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -94,7 +97,6 @@ export function FieldJobDetailScreen() {
         <Row label="Tipo" value={JOB_TYPE_LABEL[job.job_type ?? "fumigation"]} />
         <Row label="Finca" value={job.location ?? ""} />
         <Row label="Cultivo" value={job.crop ?? ""} />
-        <Row label="Producto" value={job.applied_product ?? ""} />
         <Row label="Programado" value={formatDate(job.scheduled_date)} />
         {job.done_date ? <Row label="Hecho" value={formatDate(job.done_date)} /> : null}
       </View>
@@ -108,6 +110,18 @@ export function FieldJobDetailScreen() {
         </View>
       </View>
 
+      {job.products && job.products.length > 0 ? (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Productos aplicados</Text>
+          {job.products.map((p) => (
+            <View key={p.id} style={styles.row}>
+              <Text style={styles.rowLabel}>{p.name}</Text>
+              <Text style={styles.rowValue}>{p.dose_per_hectare} {p.unit}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       {hasApp ? (
         <TouchableOpacity
           style={styles.linkBtn}
@@ -115,8 +129,13 @@ export function FieldJobDetailScreen() {
             navigation.navigate("SprayCalculator", {
               prefill: {
                 hectares: Number(job.hectares) || undefined,
-                water_per_hectare: job.water_per_hectare != null ? Number(job.water_per_hectare) : undefined,
+                caldo_per_hectare: job.water_per_hectare != null ? Number(job.water_per_hectare) : undefined,
                 tank_volume_liters: job.tank_volume_liters != null ? Number(job.tank_volume_liters) : undefined,
+                products: (job.products ?? []).map((p) => ({
+                  name: p.name,
+                  dose_per_hectare: Number(p.dose_per_hectare),
+                  unit: p.unit ?? "L/ha",
+                })),
               },
             })
           }
