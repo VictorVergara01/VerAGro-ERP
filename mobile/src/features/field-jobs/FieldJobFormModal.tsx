@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Alert, Text } from "react-native";
 import * as Location from "expo-location";
 
-import { FormModal, Picker, Segmented } from "../../components/ui/form";
-import { Button, LabeledInput } from "../../components/ui";
+import { AddRowButton, FormModal, LineCard, Picker, Segmented } from "../../components/ui/form";
+import { Button, LabeledInput, SectionTitle } from "../../components/ui";
 import { formatCurrency } from "../../utils/format";
 import { useCustomers } from "../customers/api";
 import { useEquipmentList } from "../equipment/api";
 import { useAuth } from "../auth/useAuth";
 import {
+  PRODUCT_UNIT_OPTIONS,
   useCompany,
   useSaveFieldJob,
   type FieldJob,
@@ -19,6 +20,12 @@ const JOB_TYPES = [
   { value: "fumigation", label: "Fumigación" },
   { value: "spreading", label: "Esparcido" },
 ];
+
+interface ProductRow {
+  name: string;
+  dose_per_hectare: string;
+  unit: string;
+}
 
 export function FieldJobFormModal({
   visible,
@@ -41,7 +48,7 @@ export function FieldJobFormModal({
   const [equipment, setEquipment] = useState<number | null>(null);
   const [location, setLocation] = useState("");
   const [crop, setCrop] = useState("");
-  const [appliedProduct, setAppliedProduct] = useState("");
+  const [products, setProducts] = useState<ProductRow[]>([]);
   const [hectares, setHectares] = useState("");
   const [quintals, setQuintals] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
@@ -65,7 +72,13 @@ export function FieldJobFormModal({
       setEquipment(job?.equipment ?? null);
       setLocation(job?.location ?? "");
       setCrop(job?.crop ?? "");
-      setAppliedProduct(job?.applied_product ?? "");
+      setProducts(
+        (job?.products ?? []).map((p) => ({
+          name: p.name,
+          dose_per_hectare: String(p.dose_per_hectare ?? ""),
+          unit: p.unit ?? "L/ha",
+        })),
+      );
       setHectares(job?.hectares ?? "");
       setQuintals(job?.quintals ?? "");
       setUnitPrice(job?.unit_price ?? priceFor(t));
@@ -83,6 +96,11 @@ export function FieldJobFormModal({
     if (!editing && unitPrice === priceFor(jobType)) setUnitPrice(priceFor(t));
     setJobType(t);
   };
+
+  const setProductRow = (i: number, patch: Partial<ProductRow>) =>
+    setProducts((ps) => ps.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  const addProduct = () => setProducts((ps) => [...ps, { name: "", dose_per_hectare: "", unit: "L/ha" }]);
+  const removeProduct = (i: number) => setProducts((ps) => ps.filter((_, idx) => idx !== i));
 
   const useMyLocation = async () => {
     setLocating(true);
@@ -112,7 +130,9 @@ export function FieldJobFormModal({
       technician: job?.technician ?? user?.id ?? null,
       location,
       crop,
-      applied_product: appliedProduct,
+      products: products
+        .filter((p) => p.name.trim())
+        .map((p) => ({ name: p.name.trim(), dose_per_hectare: String(Number(p.dose_per_hectare) || 0), unit: p.unit })),
       hectares: String(hectares || 0),
       quintals: String(quintals || 0),
       unit_price: String(unitPrice || 0),
@@ -152,7 +172,27 @@ export function FieldJobFormModal({
       />
       <LabeledInput label="Finca / Ubicación" value={location} onChangeText={setLocation} />
       <LabeledInput label="Cultivo" value={crop} onChangeText={setCrop} />
-      <LabeledInput label="Producto aplicado" value={appliedProduct} onChangeText={setAppliedProduct} />
+
+      <SectionTitle>Productos (dosis por hectárea)</SectionTitle>
+      {products.map((p, i) => (
+        <LineCard key={i} title={`Producto ${i + 1}`} onRemove={() => removeProduct(i)}>
+          <LabeledInput label="Nombre" value={p.name} onChangeText={(v) => setProductRow(i, { name: v })} />
+          <LabeledInput
+            label="Dosis por hectárea"
+            value={p.dose_per_hectare}
+            onChangeText={(v) => setProductRow(i, { dose_per_hectare: v })}
+            keyboardType="decimal-pad"
+          />
+          <Segmented
+            label="Unidad"
+            value={p.unit}
+            options={PRODUCT_UNIT_OPTIONS}
+            onChange={(v) => setProductRow(i, { unit: v })}
+          />
+        </LineCard>
+      ))}
+      <AddRowButton label="Agregar producto" onPress={addProduct} />
+
       {isFumigation ? (
         <LabeledInput label="Hectáreas" value={hectares} onChangeText={setHectares} keyboardType="decimal-pad" />
       ) : (
