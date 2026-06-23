@@ -24,7 +24,13 @@ import {
 } from "../../theme";
 import { formatCurrency, formatDate } from "../../utils/format";
 import type { MoreStackParamList } from "../../navigation/types";
-import { INVOICE_TYPE_LABEL, useInvoice, useInvoiceAction } from "./api";
+import {
+  INVOICE_TYPE_LABEL,
+  invoiceFiscal,
+  useEmitFiscal,
+  useInvoice,
+  useInvoiceAction,
+} from "./api";
 import { InvoiceFormModal } from "./InvoiceFormModal";
 import { PaymentModal } from "./PaymentModal";
 import { shareDocumentPdf } from "./pdf";
@@ -43,6 +49,7 @@ export function InvoiceDetailScreen() {
   const { params } = useRoute<RouteProp<MoreStackParamList, "InvoiceDetail">>();
   const { data: inv, isLoading, error } = useInvoice(params.id);
   const action = useInvoiceAction(params.id);
+  const emitFiscal = useEmitFiscal(params.id);
   const [payOpen, setPayOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const { colors } = useTheme();
@@ -56,6 +63,22 @@ export function InvoiceDetailScreen() {
   const canEdit = st === "draft";
   const canPay = st === "issued" || st === "partially_paid";
   const canCancel = st !== "paid" && st !== "cancelled";
+
+  // Factura electrónica (FEL demo): disponible cuando la factura está emitida.
+  const isIssued = st === "issued" || st === "partially_paid" || st === "paid";
+  const fiscal = invoiceFiscal(inv);
+
+  const emitFel = () =>
+    Alert.alert("Factura electrónica", "¿Emitir la factura electrónica (demo)?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sí",
+        onPress: () =>
+          emitFiscal.mutate(undefined, {
+            onError: (e) => Alert.alert("Error", (e as Error).message),
+          }),
+      },
+    ]);
 
   const run = (a: "issue" | "cancel", confirm: string) =>
     Alert.alert("Confirmar", confirm, [
@@ -126,6 +149,45 @@ export function InvoiceDetailScreen() {
         <DetailRow label="Saldo" value={formatCurrency(inv.balance_due)} strong />
       </Card>
 
+      {isIssued && (
+        <Card>
+          <View style={styles.felHeader}>
+            <SectionTitle>Factura Electrónica</SectionTitle>
+            <Badge label="DEMO" color={colors.warning} />
+          </View>
+          {fiscal ? (
+            <>
+              <Badge label="Autorizada (demo)" color={colors.primary} />
+              <Field label="CUFE" value={fiscal.cufe} />
+              <Field label="Protocolo" value={fiscal.protocol || "—"} />
+              <Field label="Fecha de emisión" value={formatDate(fiscal.issued_at)} />
+              <Button
+                title="Compartir CAFE"
+                icon="document-text"
+                variant="subtle"
+                onPress={() =>
+                  void shareDocumentPdf({
+                    path: `/api/invoices/${inv.id}/cafe/`,
+                    filename: `CAFE-${inv.invoice_number ?? "factura"}.pdf`,
+                  })
+                }
+              />
+            </>
+          ) : (
+            <>
+              <Text style={styles.felEmpty}>
+                Esta factura aún no tiene documento fiscal electrónico.
+              </Text>
+              <Button
+                title="Emitir Factura Electrónica (demo)"
+                icon="document-text"
+                onPress={emitFel}
+              />
+            </>
+          )}
+        </Card>
+      )}
+
       {(inv.payments ?? []).length > 0 && (
         <Card>
           <SectionTitle>Pagos</SectionTitle>
@@ -163,4 +225,10 @@ const makeStyles = (colors: ThemeColors) =>
     lineMeta: { fontSize: font.sm, color: colors.dimmed },
     lineTotal: { fontSize: font.md, fontWeight: "600", color: colors.text },
     divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.sm },
+    felHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    felEmpty: { fontSize: font.sm, color: colors.dimmed, marginBottom: spacing.sm },
   });
