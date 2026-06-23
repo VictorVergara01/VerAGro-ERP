@@ -256,6 +256,21 @@ export function useInvoiceAction(id: number | undefined) {
   });
 }
 
+export function useEmitFiscal(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST("/api/invoices/{id}/emit-fiscal/", {
+        params: { path: { id: id as number } },
+        body: {} as unknown as Invoice,
+      });
+      if (error) throw new Error("No se pudo emitir la factura electrónica.");
+      return data as Invoice;
+    },
+    onSuccess: () => invalidateInvoice(qc, id),
+  });
+}
+
 export interface PaymentInput {
   amount: string;
   method: string;

@@ -20,6 +20,7 @@ import {
   IconChevronDown,
   IconDownload,
   IconEdit,
+  IconFileInvoice,
   IconPrinter,
   IconSend,
   IconX,
@@ -31,11 +32,12 @@ import { formatCurrency, formatDate } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
 import { canRegisterPayments, canWriteBilling } from "../auth/roles";
 import {
+  downloadCafePdf,
   downloadInvoicePdf,
   printInvoicePdf,
   whatsappInvoiceUrl,
 } from "./documents";
-import { useInvoice, useInvoiceAction } from "./api";
+import { useEmitFiscal, useInvoice, useInvoiceAction } from "./api";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { PaymentModal } from "./PaymentModal";
 import {
@@ -43,6 +45,7 @@ import {
   INVOICE_STATUS_LABEL,
   INVOICE_TYPE_LABEL,
   PAYMENT_METHOD_LABEL,
+  invoiceFiscal,
 } from "./types";
 
 export function InvoiceDetailPage() {
@@ -51,6 +54,7 @@ export function InvoiceDetailPage() {
   const invoiceId = id ? Number(id) : undefined;
   const { data: invoice, isLoading, error } = useInvoice(invoiceId);
   const action = useInvoiceAction(invoiceId);
+  const emitFiscal = useEmitFiscal(invoiceId);
   const [payOpen, { open, close }] = useDisclosure(false);
   const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
 
@@ -62,6 +66,11 @@ export function InvoiceDetailPage() {
   const canIssue = status === "draft";
   const canPay = status === "issued" || status === "partially_paid";
   const canCancel = status !== "paid" && status !== "cancelled";
+
+  // Factura electrónica (FEL demo): disponible cuando la factura está emitida.
+  const isIssued =
+    status === "issued" || status === "partially_paid" || status === "paid";
+  const fiscal = invoiceFiscal(invoice);
 
   const run = async (a: "issue" | "cancel", ok: string) => {
     try {
@@ -92,6 +101,23 @@ export function InvoiceDetailPage() {
   const handlePrint = async () => {
     try {
       await printInvoicePdf(invoice);
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
+
+  const handleEmitFiscal = async () => {
+    try {
+      await emitFiscal.mutateAsync();
+      notifications.show({ color: "green", message: "Factura electrónica emitida (demo)." });
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
+
+  const handleDownloadCafe = async () => {
+    try {
+      await downloadCafePdf(invoice);
     } catch (e) {
       notifications.show({ color: "red", message: (e as Error).message });
     }
@@ -228,6 +254,73 @@ export function InvoiceDetailPage() {
           </Table.Tbody>
         </Table>
       </Card>
+
+      {isIssued && (
+        <Card>
+          <Group justify="space-between" mb="sm">
+            <Group gap="xs">
+              <IconFileInvoice size={20} />
+              <Text fw={600}>Factura Electrónica</Text>
+              <Badge color="orange" variant="light">
+                DEMO
+              </Badge>
+            </Group>
+            {!fiscal && canWriteBilling(user?.role) && (
+              <Button
+                leftSection={<IconFileInvoice size={18} />}
+                onClick={handleEmitFiscal}
+                loading={emitFiscal.isPending}
+              >
+                Emitir Factura Electrónica (demo)
+              </Button>
+            )}
+            {fiscal && (
+              <Button
+                variant="light"
+                leftSection={<IconDownload size={18} />}
+                onClick={handleDownloadCafe}
+              >
+                Descargar CAFE
+              </Button>
+            )}
+          </Group>
+          {fiscal ? (
+            <Stack gap={6}>
+              <Group gap="xs">
+                <Badge color="green" variant="light">
+                  Autorizada (demo)
+                </Badge>
+              </Group>
+              <div>
+                <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                  CUFE
+                </Text>
+                <Text size="sm" style={{ wordBreak: "break-all" }}>
+                  {fiscal.cufe}
+                </Text>
+              </div>
+              <Group gap="xl">
+                <div>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                    Protocolo
+                  </Text>
+                  <Text size="sm">{fiscal.protocol || "—"}</Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                    Fecha de emisión
+                  </Text>
+                  <Text size="sm">{formatDate(fiscal.issued_at)}</Text>
+                </div>
+              </Group>
+            </Stack>
+          ) : (
+            <Text c="dimmed" size="sm">
+              Esta factura aún no tiene documento fiscal electrónico.
+            </Text>
+          )}
+        </Card>
+      )}
 
       <Grid>
         <Grid.Col span={{ base: 12, sm: 7 }}>

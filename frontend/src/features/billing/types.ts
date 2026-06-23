@@ -6,6 +6,23 @@ export type Invoice = Schemas["Invoice"];
 export type InvoiceLine = Schemas["InvoiceLine"];
 export type Payment = Schemas["Payment"];
 
+/** Datos del documento fiscal (CUFE/CAFE) anidados en la factura. El backend lo
+ * expone como un SerializerMethodField, así que el schema lo tipa como `string`;
+ * lo leemos casteando con `invoiceFiscal`. */
+export interface FiscalInfo {
+  cufe: string;
+  status: string;
+  status_display: string;
+  protocol: string;
+  environment: string;
+  issued_at: string;
+}
+
+/** Devuelve los datos fiscales de la factura, o null si aún no se emitió la FEL. */
+export function invoiceFiscal(invoice: Invoice): FiscalInfo | null {
+  return (invoice.fiscal as unknown as FiscalInfo | null) ?? null;
+}
+
 export const QUOTE_STATUS_OPTIONS = [
   { value: "draft", label: "Borrador" },
   { value: "sent", label: "Enviada" },
