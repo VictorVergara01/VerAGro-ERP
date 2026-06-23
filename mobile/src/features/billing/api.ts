@@ -11,6 +11,23 @@ interface Paginated<T> {
   results: T[];
 }
 
+/** Datos del documento fiscal (CUFE/CAFE) anidados en la factura. El backend lo
+ * expone como SerializerMethodField, así que el schema lo tipa `string`; se lee
+ * casteando con `invoiceFiscal`. */
+export interface FiscalInfo {
+  cufe: string;
+  status: string;
+  status_display: string;
+  protocol: string;
+  environment: string;
+  issued_at: string;
+}
+
+/** Datos fiscales de la factura, o null si aún no se emitió la FEL. */
+export function invoiceFiscal(invoice: Invoice): FiscalInfo | null {
+  return (invoice.fiscal as unknown as FiscalInfo | null) ?? null;
+}
+
 export const INVOICE_TYPE_LABEL: Record<string, string> = {
   service_invoice: "Servicio",
   final_invoice: "Final",
@@ -83,6 +100,23 @@ export function useInvoiceAction(id: number | undefined) {
           ? await api.POST("/api/invoices/{id}/issue/", { params, body: empty })
           : await api.POST("/api/invoices/{id}/cancel/", { params, body: empty });
       if (error) throw new Error("No se pudo ejecutar la acción.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["invoice", id] });
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useEmitFiscal(id: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await api.POST("/api/invoices/{id}/emit-fiscal/", {
+        params: { path: { id: id as number } },
+        body: {} as unknown as Invoice,
+      });
+      if (error) throw new Error("No se pudo emitir la factura electrónica.");
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["invoice", id] });

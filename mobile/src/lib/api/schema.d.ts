@@ -708,6 +708,22 @@ export interface paths {
         patch: operations["invoices_partial_update"];
         trace?: never;
     };
+    "/api/invoices/{id}/cafe/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["invoices_cafe_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/invoices/{id}/cancel/": {
         parameters: {
             query?: never;
@@ -718,6 +734,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["invoices_cancel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/invoices/{id}/emit-fiscal/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invoices_emit_fiscal_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1977,6 +2009,7 @@ export interface components {
             readonly created_by: number | null;
             lines?: components["schemas"]["InvoiceLine"][];
             readonly payments: components["schemas"]["Payment"][];
+            readonly fiscal: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -2560,6 +2593,7 @@ export interface components {
             readonly created_by?: number | null;
             lines?: components["schemas"]["InvoiceLine"][];
             readonly payments?: components["schemas"]["Payment"][];
+            readonly fiscal?: string;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -5361,7 +5395,57 @@ export interface operations {
             };
         };
     };
+    invoices_cafe_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this invoice. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invoice"];
+                };
+            };
+        };
+    };
     invoices_cancel_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this invoice. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Invoice"];
+                "application/x-www-form-urlencoded": components["schemas"]["Invoice"];
+                "multipart/form-data": components["schemas"]["Invoice"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invoice"];
+                };
+            };
+        };
+    };
+    invoices_emit_fiscal_create: {
         parameters: {
             query?: never;
             header?: never;
