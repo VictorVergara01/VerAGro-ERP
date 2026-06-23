@@ -232,6 +232,49 @@ def convert_quote_to_invoice(*, quote, user=None):
 
 
 @transaction.atomic
+def create_invoice_from_field_job(*, job, user=None):
+    from apps.field_jobs.models import FieldJob
+
+    if job.status != FieldJob.Status.DONE:
+        raise ValidationError(
+            {"status": "Solo se factura un trabajo de campo hecho (done)."}
+        )
+    if job.invoices.exclude(status=Invoice.Status.CANCELLED).exists():
+        raise ValidationError({"detail": "El trabajo ya tiene una factura."})
+
+    if job.job_type != FieldJob.JobType.FUMIGATION:
+        raise ValidationError(
+            {"job_type": "La facturación de esparcido aún no está implementada."}
+        )
+    quantity = job.hectares
+    unit_word = "ha"
+    type_word = "Fumigación"
+    description = (
+        f"{type_word} {quantity:.2f} {unit_word} @ ${job.unit_price:.2f}/{unit_word}"
+    )
+    if job.location:
+        description += f" — {job.location}"
+
+    invoice = Invoice.objects.create(
+        invoice_type=Invoice.InvoiceType.FIELD_JOB,
+        customer=job.customer,
+        field_job=job,
+        created_by=user,
+    )
+    InvoiceLine.objects.create(
+        invoice=invoice,
+        description=description,
+        quantity=quantity,
+        unit_price=job.unit_price,
+        line_type=LineType.SERVICE,
+    )
+    recalculate_invoice(invoice)
+    job.status = FieldJob.Status.INVOICED
+    job.save(update_fields=["status", "updated_at"])
+    return invoice
+
+
+@transaction.atomic
 def issue_invoice(*, invoice, user=None):
     if invoice.status != Invoice.Status.DRAFT:
         raise ValidationError({"status": "Solo se emite una factura en borrador."})

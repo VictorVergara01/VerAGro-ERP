@@ -30,6 +30,21 @@ class CompanyProfile(models.Model):
         blank=True,
         help_text="Texto al pie de la factura (términos, datos de pago, Yappy…).",
     )
+
+    # --- Trabajos de campo (precios base configurables) ---
+    fumigation_price_per_hectare = models.DecimalField(
+        max_digits=10, decimal_places=2, default=20
+    )
+    spreading_price_per_quintal = models.DecimalField(
+        max_digits=10, decimal_places=2, default=10
+    )
+    drone_tank_volume_liters = models.DecimalField(
+        max_digits=8, decimal_places=2, default=200
+    )
+    default_water_per_hectare = models.DecimalField(
+        max_digits=8, decimal_places=2, default=8
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

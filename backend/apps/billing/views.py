@@ -187,6 +187,10 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             raise ValidationError({"status": "No se puede cancelar una factura pagada o cancelada."})
         invoice.status = Invoice.Status.CANCELLED
         invoice.save(update_fields=["status", "updated_at"])
+
+        from apps.fiscal.services import void_fiscal_document
+
+        void_fiscal_document(invoice=invoice)
         return Response(self.get_serializer(invoice).data)
 
     @action(detail=True, methods=["get", "post"])
@@ -216,6 +220,25 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         invoice = self.get_object()
         download = request.query_params.get("download") in ("1", "true", "yes")
         return render_invoice_pdf(invoice, download=download)
+
+    @action(detail=True, methods=["post"], url_path="emit-fiscal")
+    def emit_fiscal(self, request, pk=None):
+        from apps.fiscal.services import emit_fiscal_document
+
+        invoice = self.get_object()
+        emit_fiscal_document(invoice=invoice, user=request.user)
+        invoice.refresh_from_db()
+        return Response(self.get_serializer(invoice).data)
+
+    @action(detail=True, methods=["get"])
+    def cafe(self, request, pk=None):
+        from apps.fiscal.cafe import render_cafe
+
+        invoice = self.get_object()
+        if getattr(invoice, "fiscal", None) is None:
+            raise ValidationError({"detail": "La factura no tiene documento fiscal."})
+        download = request.query_params.get("download") in ("1", "true", "yes")
+        return render_cafe(invoice, download=download)
 
 
 class InvoiceLineViewSet(viewsets.ModelViewSet):

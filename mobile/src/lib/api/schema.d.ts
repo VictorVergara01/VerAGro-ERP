@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/auth/change-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_change_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login/": {
         parameters: {
             query?: never;
@@ -32,12 +48,12 @@ export interface paths {
             cookie?: never;
         };
         get: operations["auth_me_retrieve"];
-        put?: never;
+        put: operations["auth_me_update"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["auth_me_partial_update"];
         trace?: never;
     };
     "/api/auth/refresh/": {
@@ -347,6 +363,102 @@ export interface paths {
          *     Sin paginación: el listado alimenta selectores. Soft-delete vía is_active.
          */
         patch: operations["equipment_types_partial_update"];
+        trace?: never;
+    };
+    "/api/field-jobs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_jobs_list"];
+        put?: never;
+        post: operations["field_jobs_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-jobs/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_jobs_retrieve"];
+        put: operations["field_jobs_update"];
+        post?: never;
+        delete: operations["field_jobs_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["field_jobs_partial_update"];
+        trace?: never;
+    };
+    "/api/field-jobs/{id}/cancel/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_jobs_cancel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-jobs/{id}/generate-invoice/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_jobs_generate_invoice_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-jobs/{id}/mark-done/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_jobs_mark_done_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-jobs/calculate-mix/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_jobs_calculate_mix_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/inventory/adjustments/": {
@@ -815,6 +927,38 @@ export interface paths {
         put?: never;
         post: operations["purchase_orders_send_create"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/register/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["push_register_create"];
+        delete: operations["push_register_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/unregister/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["push_unregister_create"];
+        delete: operations["push_unregister_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1523,6 +1667,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-management/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Gestión de usuarios desde Configuración (admins). Soft delete. */
+        get: operations["user_management_list"];
+        put?: never;
+        /** @description Gestión de usuarios desde Configuración (admins). Soft delete. */
+        post: operations["user_management_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-management/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Gestión de usuarios desde Configuración (admins). Soft delete. */
+        get: operations["user_management_retrieve"];
+        /** @description Gestión de usuarios desde Configuración (admins). Soft delete. */
+        put: operations["user_management_update"];
+        post?: never;
+        /** @description Gestión de usuarios desde Configuración (admins). Soft delete. */
+        delete: operations["user_management_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Gestión de usuarios desde Configuración (admins). Soft delete. */
+        patch: operations["user_management_partial_update"];
+        trace?: never;
+    };
     "/api/users/": {
         parameters: {
             query?: never;
@@ -1569,6 +1751,10 @@ export interface components {
         AllocationMethodEnum: "proportional_by_value" | "manual";
         /** @enum {unknown} */
         BlankEnum: "";
+        ChangePassword: {
+            current_password: string;
+            new_password: string;
+        };
         ChecklistTemplate: {
             readonly id: number;
             name: string;
@@ -1607,9 +1793,25 @@ export interface components {
             logo?: string | null;
             /** @description Texto al pie de la factura (términos, datos de pago, Yappy…). */
             invoice_footer?: string;
+            /** Format: decimal */
+            fumigation_price_per_hectare?: string;
+            /** Format: decimal */
+            spreading_price_per_quintal?: string;
+            /** Format: decimal */
+            drone_tank_volume_liters?: string;
+            /** Format: decimal */
+            default_water_per_hectare?: string;
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description * `rice` - Arroz
+         *     * `corn` - Maíz
+         *     * `pasture` - Pasto
+         *     * `other` - Otros
+         * @enum {string}
+         */
+        CropEnum: "rice" | "corn" | "pasture" | "other";
         Customer: {
             readonly id: number;
             /** Format: date-time */
@@ -1675,6 +1877,63 @@ export interface components {
             name: string;
             is_active?: boolean;
         };
+        FieldJob: {
+            readonly id: number;
+            readonly number: string;
+            job_type?: components["schemas"]["JobTypeEnum"];
+            readonly job_type_display: string;
+            readonly status: components["schemas"]["FieldJobStatusEnum"];
+            readonly status_display: string;
+            customer: number;
+            readonly customer_name: string;
+            equipment?: number | null;
+            /** @default  */
+            readonly equipment_name: string;
+            technician?: number | null;
+            /** @default  */
+            readonly technician_name: string;
+            /** Format: date */
+            scheduled_date?: string;
+            /** Format: date */
+            readonly done_date: string | null;
+            location?: string;
+            crop?: components["schemas"]["CropEnum"];
+            readonly crop_display: string;
+            crop_other?: string;
+            products?: components["schemas"]["FieldJobProduct"][];
+            /** Format: decimal */
+            hectares?: string;
+            /** Format: decimal */
+            unit_price?: string;
+            /** Format: decimal */
+            readonly total: string;
+            /** Format: decimal */
+            tank_volume_liters?: string | null;
+            /** Format: decimal */
+            water_per_hectare?: string | null;
+            notes?: string;
+            readonly invoice_number: string;
+            readonly created_by: number | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        FieldJobProduct: {
+            readonly id: number;
+            name: string;
+            /** Format: decimal */
+            dose_per_hectare?: string;
+            unit?: components["schemas"]["UnitEnum"];
+        };
+        /**
+         * @description * `scheduled` - Programado
+         *     * `done` - Hecho
+         *     * `invoiced` - Facturado
+         *     * `cancelled` - Cancelado
+         * @enum {string}
+         */
+        FieldJobStatusEnum: "scheduled" | "done" | "invoiced" | "cancelled";
         /**
          * @description * `cedula` - Cédula
          *     * `ruc` - RUC
@@ -1762,9 +2021,16 @@ export interface components {
          * @description * `service_invoice` - Factura de servicio
          *     * `final_invoice` - Factura final
          *     * `product_sale` - Venta de producto
+         *     * `field_job` - Factura de fumigación
          * @enum {string}
          */
-        InvoiceTypeEnum: "service_invoice" | "final_invoice" | "product_sale";
+        InvoiceTypeEnum: "service_invoice" | "final_invoice" | "product_sale" | "field_job";
+        /**
+         * @description * `fumigation` - Fumigación
+         *     * `spreading` - Esparcido / abono
+         * @enum {string}
+         */
+        JobTypeEnum: "fumigation" | "spreading";
         /**
          * @description * `product` - Producto
          *     * `service` - Servicio
@@ -1862,6 +2128,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Equipment"][];
+        };
+        PaginatedFieldJobList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["FieldJob"][];
         };
         PaginatedInvoiceLineList: {
             /** @example 123 */
@@ -2088,6 +2369,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["SupplierProduct"][];
         };
+        PaginatedUserManagementList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["UserManagement"][];
+        };
         PatchedChecklistTemplate: {
             readonly id?: number;
             name?: string;
@@ -2126,6 +2422,14 @@ export interface components {
             logo?: string | null;
             /** @description Texto al pie de la factura (términos, datos de pago, Yappy…). */
             invoice_footer?: string;
+            /** Format: decimal */
+            fumigation_price_per_hectare?: string;
+            /** Format: decimal */
+            spreading_price_per_quintal?: string;
+            /** Format: decimal */
+            drone_tank_volume_liters?: string;
+            /** Format: decimal */
+            default_water_per_hectare?: string;
             /** Format: date-time */
             readonly updated_at?: string;
         };
@@ -2178,6 +2482,48 @@ export interface components {
             readonly id?: number;
             name?: string;
             is_active?: boolean;
+        };
+        PatchedFieldJob: {
+            readonly id?: number;
+            readonly number?: string;
+            job_type?: components["schemas"]["JobTypeEnum"];
+            readonly job_type_display?: string;
+            readonly status?: components["schemas"]["FieldJobStatusEnum"];
+            readonly status_display?: string;
+            customer?: number;
+            readonly customer_name?: string;
+            equipment?: number | null;
+            /** @default  */
+            readonly equipment_name: string;
+            technician?: number | null;
+            /** @default  */
+            readonly technician_name: string;
+            /** Format: date */
+            scheduled_date?: string;
+            /** Format: date */
+            readonly done_date?: string | null;
+            location?: string;
+            crop?: components["schemas"]["CropEnum"];
+            readonly crop_display?: string;
+            crop_other?: string;
+            products?: components["schemas"]["FieldJobProduct"][];
+            /** Format: decimal */
+            hectares?: string;
+            /** Format: decimal */
+            unit_price?: string;
+            /** Format: decimal */
+            readonly total?: string;
+            /** Format: decimal */
+            tank_volume_liters?: string | null;
+            /** Format: decimal */
+            water_per_hectare?: string | null;
+            notes?: string;
+            readonly invoice_number?: string;
+            readonly created_by?: number | null;
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
         };
         PatchedInvoice: {
             readonly id?: number;
@@ -2249,11 +2595,11 @@ export interface components {
             readonly id?: number;
             /** Format: decimal */
             readonly available_quantity?: string;
+            sku?: string;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
             readonly updated_at?: string;
-            sku?: string;
             name?: string;
             description?: string;
             barcode?: string;
@@ -2284,6 +2630,7 @@ export interface components {
         PatchedProductCategory: {
             readonly id?: number;
             name?: string;
+            description?: string;
             is_active?: boolean;
             /** Format: decimal */
             default_margin_percentage?: string;
@@ -2545,6 +2892,23 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        PatchedUser: {
+            readonly id?: number;
+            /** Format: email */
+            readonly email?: string;
+            full_name?: string;
+            readonly role?: components["schemas"]["RoleEnum"];
+            readonly is_active?: boolean;
+        };
+        PatchedUserManagement: {
+            readonly id?: number;
+            /** Format: email */
+            email?: string;
+            full_name?: string;
+            role?: components["schemas"]["RoleEnum"];
+            is_active?: boolean;
+            password?: string;
+        };
         Payment: {
             readonly id: number;
             readonly invoice: number;
@@ -2571,11 +2935,11 @@ export interface components {
             readonly id: number;
             /** Format: decimal */
             readonly available_quantity: string;
+            sku?: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
             readonly updated_at: string;
-            sku: string;
             name: string;
             description?: string;
             barcode?: string;
@@ -2606,6 +2970,7 @@ export interface components {
         ProductCategory: {
             readonly id: number;
             name: string;
+            description?: string;
             is_active?: boolean;
             /** Format: decimal */
             default_margin_percentage?: string;
@@ -2960,6 +3325,14 @@ export interface components {
             readonly access: string;
             refresh: string;
         };
+        /**
+         * @description * `L/ha` - L/ha
+         *     * `cc/ha` - cc/ha
+         *     * `kg/ha` - kg/ha
+         *     * `g/ha` - g/ha
+         * @enum {string}
+         */
+        UnitEnum: "L/ha" | "cc/ha" | "kg/ha" | "g/ha";
         User: {
             readonly id: number;
             /** Format: email */
@@ -2967,6 +3340,15 @@ export interface components {
             full_name?: string;
             readonly role: components["schemas"]["RoleEnum"];
             readonly is_active: boolean;
+        };
+        UserManagement: {
+            readonly id: number;
+            /** Format: email */
+            email: string;
+            full_name?: string;
+            role?: components["schemas"]["RoleEnum"];
+            is_active?: boolean;
+            password?: string;
         };
     };
     responses: never;
@@ -2977,6 +3359,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_change_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePassword"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangePassword"];
+                "multipart/form-data": components["schemas"]["ChangePassword"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     auth_login_create: {
         parameters: {
             query?: never;
@@ -3021,6 +3430,56 @@ export interface operations {
             };
         };
     };
+    auth_me_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["User"];
+                "application/x-www-form-urlencoded": components["schemas"]["User"];
+                "multipart/form-data": components["schemas"]["User"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    auth_me_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUser"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUser"];
+                "multipart/form-data": components["schemas"]["PatchedUser"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
     auth_refresh_create: {
         parameters: {
             query?: never;
@@ -3051,6 +3510,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -3197,6 +3658,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -3414,6 +3877,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -3628,6 +4093,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -3936,6 +4403,265 @@ export interface operations {
             };
         };
     };
+    field_jobs_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description A search term. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFieldJobList"];
+                };
+            };
+        };
+    };
+    field_jobs_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
+                "multipart/form-data": components["schemas"]["FieldJob"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
+                "multipart/form-data": components["schemas"]["FieldJob"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    field_jobs_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFieldJob"];
+                "multipart/form-data": components["schemas"]["PatchedFieldJob"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_cancel_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
+                "multipart/form-data": components["schemas"]["FieldJob"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_generate_invoice_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
+                "multipart/form-data": components["schemas"]["FieldJob"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_mark_done_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
+                "multipart/form-data": components["schemas"]["FieldJob"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_jobs_calculate_mix_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldJob"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
+                "multipart/form-data": components["schemas"]["FieldJob"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
     inventory_adjustments_create: {
         parameters: {
             query?: never;
@@ -4128,6 +4854,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -4340,6 +5068,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -4486,6 +5216,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -4762,6 +5494,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -4908,6 +5642,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -5054,6 +5790,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -5309,11 +6047,85 @@ export interface operations {
             };
         };
     };
+    push_register_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_register_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_unregister_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_unregister_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     quote_lines_list: {
         parameters: {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -5460,6 +6272,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -5840,6 +6654,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -5940,6 +6756,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -6096,6 +6914,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -6242,6 +7062,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -6309,6 +7131,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -6787,6 +7611,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -6933,6 +7759,8 @@ export interface operations {
             query?: {
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
                 /** @description A search term. */
                 search?: string;
             };
@@ -7144,6 +7972,156 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Supplier"];
+                };
+            };
+        };
+    };
+    user_management_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description A search term. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedUserManagementList"];
+                };
+            };
+        };
+    };
+    user_management_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserManagement"];
+                "application/x-www-form-urlencoded": components["schemas"]["UserManagement"];
+                "multipart/form-data": components["schemas"]["UserManagement"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserManagement"];
+                };
+            };
+        };
+    };
+    user_management_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this user. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserManagement"];
+                };
+            };
+        };
+    };
+    user_management_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this user. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserManagement"];
+                "application/x-www-form-urlencoded": components["schemas"]["UserManagement"];
+                "multipart/form-data": components["schemas"]["UserManagement"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserManagement"];
+                };
+            };
+        };
+    };
+    user_management_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this user. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    user_management_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this user. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUserManagement"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUserManagement"];
+                "multipart/form-data": components["schemas"]["PatchedUserManagement"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserManagement"];
                 };
             };
         };

@@ -65,7 +65,7 @@ export function PurchaseOrderCreateModal({
 }) {
   const create = useCreatePurchaseOrder();
   const suppliers = useSupplierOptions();
-  const products = useProducts({});
+  const products = useProducts({ pageSize: 10000 });
   const categories = useCategories();
   const navigate = useNavigate();
 

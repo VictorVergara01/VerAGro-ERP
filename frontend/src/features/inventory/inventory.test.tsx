@@ -13,6 +13,7 @@ vi.mock("./api", () => ({
   useLowStock: () => ({ data: [], isLoading: false, error: null }),
   useCategories: () => ({ data: [{ id: 1, name: "Repuestos" }] }),
   useDeleteProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteManyProducts: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSaveProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSupplierOptions: () => ({ data: [] }),
   useAdjustStock: () => ({ mutateAsync: vi.fn(), isPending: false }),

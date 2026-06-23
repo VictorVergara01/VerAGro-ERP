@@ -198,6 +198,10 @@ export interface CompanyInput {
   whatsapp?: string;
   invoice_footer?: string;
   logo?: File | null;
+  fumigation_price_per_hectare?: string;
+  spreading_price_per_quintal?: string;
+  drone_tank_volume_liters?: string;
+  default_water_per_hectare?: string;
 }
 
 export function useSaveCompany() {
@@ -229,6 +233,84 @@ export function useSaveCompany() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["settings", "company"] });
+    },
+  });
+}
+
+// ---------- Usuarios (gestión) ----------
+
+export type UserAccount = Schemas["UserManagement"];
+
+export interface UserInput {
+  id?: number;
+  email: string;
+  full_name?: string;
+  role: string;
+  is_active: boolean;
+  password?: string;
+}
+
+function userErrorMessage(error: unknown, fallback: string): string {
+  const body = error as Record<string, unknown> | undefined;
+  if (body && typeof body === "object") {
+    if (typeof body.detail === "string") return body.detail;
+    const first = Object.values(body)[0];
+    if (Array.isArray(first) && typeof first[0] === "string") return first[0];
+    if (typeof first === "string") return first;
+  }
+  return fallback;
+}
+
+export function useUsers(params: { search?: string; includeInactive?: boolean }) {
+  return useQuery({
+    queryKey: ["settings", "users", params.search ?? "", params.includeInactive ?? false],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/user-management/", {
+        params: { query: { search: params.search || undefined } },
+      });
+      if (error || !data) throw new Error("No se pudieron cargar los usuarios.");
+      const results = (data as unknown as Paginated<UserAccount>).results;
+      return params.includeInactive ? results : results.filter((u) => u.is_active);
+    },
+  });
+}
+
+export function useSaveUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UserInput) => {
+      const { id, password, ...rest } = input;
+      const body = { ...rest, ...(password ? { password } : {}) } as never;
+      if (id) {
+        const { error } = await api.PATCH("/api/user-management/{id}/", {
+          params: { path: { id } },
+          body,
+        });
+        if (error) throw new Error(userErrorMessage(error, "No se pudo guardar el usuario."));
+      } else {
+        const { error } = await api.POST("/api/user-management/", { body });
+        if (error) throw new Error(userErrorMessage(error, "No se pudo crear el usuario."));
+      }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["settings", "users"] });
+      void qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/user-management/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error(userErrorMessage(error, "No se pudo desactivar el usuario."));
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["settings", "users"] });
+      void qc.invalidateQueries({ queryKey: ["users"] });
     },
   });
 }

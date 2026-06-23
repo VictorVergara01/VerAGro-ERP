@@ -17,8 +17,22 @@ export type InventoryStackParamList = {
   InventoryList: undefined;
 };
 
+export type FieldJobsStackParamList = {
+  FieldJobsList: undefined;
+  FieldJobDetail: { id: number; title: string };
+  SprayCalculator: {
+    prefill?: {
+      hectares?: number;
+      caldo_per_hectare?: number;
+      tank_volume_liters?: number;
+      products?: { name: string; dose_per_hectare: number; unit: string }[];
+    };
+  };
+};
+
 export type MoreStackParamList = {
   Menu: undefined;
+  Profile: undefined;
   Customers: undefined;
   CustomerDetail: { id: number; title: string };
   Equipment: undefined;
@@ -43,6 +57,7 @@ export type AuthStackParamList = {
 
 export type RootTabParamList = {
   InicioTab: undefined;
+  FieldJobsTab: undefined;
   OrdersTab: undefined;
   InventoryTab: undefined;
   MoreTab: undefined;
@@ -52,3 +67,7 @@ export type RootTabParamList = {
 export type AppNav = NativeStackNavigationProp<OrdersStackParamList>;
 export type OrderDetailRoute = RouteProp<OrdersStackParamList, "OrderDetail">;
 export type OrderChecklistRoute = RouteProp<OrdersStackParamList, "OrderChecklist">;
+
+export type FieldJobsNav = NativeStackNavigationProp<FieldJobsStackParamList>;
+export type FieldJobDetailRoute = RouteProp<FieldJobsStackParamList, "FieldJobDetail">;
+export type SprayCalculatorRoute = RouteProp<FieldJobsStackParamList, "SprayCalculator">;

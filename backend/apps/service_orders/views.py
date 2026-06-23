@@ -96,10 +96,19 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         order = serializer.save(created_by=self.request.user)
         # Calcula totales (descuento/impuesto derivados de los porcentajes) al crear.
         recalculate_totals(order)
+        if order.technician_id:
+            from apps.notifications.services import notify_assignment
+
+            notify_assignment(order, order.technician)
 
     def perform_update(self, serializer):
+        previous_tech_id = serializer.instance.technician_id
         order = serializer.save()
         recalculate_totals(order)
+        if order.technician_id and order.technician_id != previous_tech_id:
+            from apps.notifications.services import notify_assignment
+
+            notify_assignment(order, order.technician)
 
     def update(self, request, *args, **kwargs):
         _assert_not_terminal(self.get_object())

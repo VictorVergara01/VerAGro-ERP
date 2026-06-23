@@ -44,6 +44,27 @@ export async function printInvoicePdf(invoice: Invoice): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
+/** Descarga el CAFE (PDF fiscal demo con CUFE + QR) de la factura. */
+export async function downloadCafePdf(invoice: Invoice): Promise<void> {
+  const token = getAccess();
+  const res = await fetch(
+    `${API_BASE_URL}/api/invoices/${invoice.id}/cafe/?download=1`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+  );
+  if (!res.ok) {
+    throw new Error("No se pudo generar el CAFE.");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `CAFE-${invoice.invoice_number ?? "factura"}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
 /** Normaliza un número a formato internacional sin signos para wa.me.
  * Panamá: si es local (≤8 dígitos) antepone el código de país 507. */
 export function normalizePhone(raw: string | null | undefined): string {

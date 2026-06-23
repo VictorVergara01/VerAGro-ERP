@@ -28,3 +28,4 @@ SERVICE_WRITE = (*ADMINS, TECHNICIAN)
 BILLING_WRITE = (*ADMINS, SALES)                # cotizaciones/facturas (crear/editar/emitir/anular)
 PAYMENTS_WRITE = (*ADMINS, ACCOUNTING)          # registrar pago
 FINANCIAL_READ = (*ADMINS, SALES, ACCOUNTING)   # reportes financieros
+USERS_WRITE = ADMINS                            # gestión de usuarios (alta/edición/baja)

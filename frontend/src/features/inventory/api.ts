@@ -9,6 +9,7 @@ export interface ProductListParams {
   category?: number;
   includeInactive?: boolean;
   page?: number;
+  pageSize?: number;
 }
 
 export function useProducts(params: ProductListParams) {
@@ -22,6 +23,7 @@ export function useProducts(params: ProductListParams) {
             category: params.category,
             include_inactive: params.includeInactive ? "true" : undefined,
             page: params.page,
+            page_size: params.pageSize,
           },
         },
       });
@@ -133,6 +135,24 @@ export function useDeleteProduct() {
         params: { path: { id } },
       });
       if (error) throw new Error("No se pudo eliminar el producto.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useDeleteManyProducts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      await Promise.all(
+        ids.map((id) =>
+          api.DELETE("/api/inventory/products/{id}/", {
+            params: { path: { id } },
+          }),
+        ),
+      );
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["products"] });

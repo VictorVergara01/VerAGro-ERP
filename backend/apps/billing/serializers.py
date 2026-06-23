@@ -156,6 +156,20 @@ class InvoiceSerializer(serializers.ModelSerializer):
     customer_whatsapp = serializers.CharField(
         source="customer.whatsapp", read_only=True
     )
+    fiscal = serializers.SerializerMethodField()
+
+    def get_fiscal(self, obj):
+        doc = getattr(obj, "fiscal", None)
+        if not doc:
+            return None
+        return {
+            "cufe": doc.cufe,
+            "status": doc.fiscal_status,
+            "status_display": doc.get_fiscal_status_display(),
+            "protocol": doc.protocol,
+            "environment": doc.environment,
+            "issued_at": doc.issued_at,
+        }
 
     class Meta:
         model = Invoice
@@ -184,6 +198,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "created_by",
             "lines",
             "payments",
+            "fiscal",
             "created_at",
             "updated_at",
         )

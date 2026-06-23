@@ -10,6 +10,7 @@ import {
 import { api, onAuthExpired } from "../../lib/api/client";
 import { API_BASE_URL } from "../../lib/api/baseUrl";
 import { clearTokens, getAccess, setTokens } from "../../lib/auth/tokens";
+import { registerForPush, unregisterPush } from "../notifications/push";
 
 export interface AuthUser {
   id: number;
@@ -26,6 +27,7 @@ export interface AuthContextValue {
   status: AuthStatus;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -43,9 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(data as AuthUser);
     setStatus("authenticated");
+    void registerForPush();
   }, []);
 
   const logout = useCallback(async () => {
+    await unregisterPush();
     await clearTokens();
     setUser(null);
     setStatus("anonymous");
@@ -93,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => onAuthExpired(() => void logout()), [logout]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, logout }),
-    [user, status, login, logout],
+    () => ({ user, status, login, logout, refreshUser: loadMe }),
+    [user, status, login, logout, loadMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

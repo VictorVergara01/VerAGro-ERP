@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import * as Notifications from "expo-notifications";
 import {
   DarkTheme,
   DefaultTheme,
@@ -12,6 +13,15 @@ import { AuthProvider } from "./src/features/auth/AuthContext";
 import { queryClient } from "./src/lib/api/queryClient";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { ThemeProvider, useTheme } from "./src/theme";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function ThemedApp() {
   const { colors, scheme } = useTheme();

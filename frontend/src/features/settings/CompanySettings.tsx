@@ -37,6 +37,10 @@ export function CompanySettings() {
       email: "",
       whatsapp: "",
       invoice_footer: "",
+      fumigation_price_per_hectare: "",
+      spreading_price_per_quintal: "",
+      drone_tank_volume_liters: "",
+      default_water_per_hectare: "",
     },
     validate: {
       name: (v) => (v.trim() ? null : "El nombre es obligatorio."),
@@ -55,6 +59,10 @@ export function CompanySettings() {
         email: data.email ?? "",
         whatsapp: data.whatsapp ?? "",
         invoice_footer: data.invoice_footer ?? "",
+        fumigation_price_per_hectare: data.fumigation_price_per_hectare ?? "20",
+        spreading_price_per_quintal: data.spreading_price_per_quintal ?? "10",
+        drone_tank_volume_liters: data.drone_tank_volume_liters ?? "30",
+        default_water_per_hectare: data.default_water_per_hectare ?? "8",
       });
       form.resetDirty();
     }
@@ -141,6 +149,16 @@ export function CompanySettings() {
           disabled={!isAdmin}
           clearable
         />
+
+        <Text fw={600} mt="md">Trabajos de campo</Text>
+        <Group grow>
+          <TextInput label="Precio fumigación ($/ha)" disabled={!isAdmin} {...form.getInputProps("fumigation_price_per_hectare")} />
+          <TextInput label="Precio esparcido ($/qq)" disabled={!isAdmin} {...form.getInputProps("spreading_price_per_quintal")} />
+        </Group>
+        <Group grow>
+          <TextInput label="Tanque del dron (L)" disabled={!isAdmin} {...form.getInputProps("drone_tank_volume_liters")} />
+          <TextInput label="Agua de carga (L/ha)" disabled={!isAdmin} {...form.getInputProps("default_water_per_hectare")} />
+        </Group>
 
         {isAdmin && (
           <Group justify="flex-end">
