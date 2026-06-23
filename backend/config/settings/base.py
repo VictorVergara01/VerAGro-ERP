@@ -39,6 +39,7 @@ LOCAL_APPS = [
     "apps.service_orders",
     "apps.checklists",
     "apps.billing",
+    "apps.fiscal",
     "apps.field_jobs",
     "apps.reports",
     "apps.notifications",
@@ -138,3 +139,6 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
+
+# Proveedor de factura electrónica: "demo" (simulado) o "hka" (real, futuro).
+FISCAL_PROVIDER = "demo"
