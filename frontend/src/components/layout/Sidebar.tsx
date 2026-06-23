@@ -105,7 +105,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <Box>
         <Text c="dimmed" size="xs" ta="center">
-          Veragro ERP · v0.1
+          Veragro ERP · v2.0
         </Text>
       </Box>
     </Stack>
