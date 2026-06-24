@@ -233,26 +233,28 @@ export function InvoiceDetailPage() {
         <Text fw={600} mb="sm">
           Conceptos
         </Text>
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Concepto</Table.Th>
-              <Table.Th ta="right">Cant.</Table.Th>
-              <Table.Th ta="right">Precio</Table.Th>
-              <Table.Th ta="right">Total</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {(invoice.lines ?? []).map((l) => (
-              <Table.Tr key={l.id}>
-                <Table.Td>{l.description || l.product_sku}</Table.Td>
-                <Table.Td ta="right">{l.quantity}</Table.Td>
-                <Table.Td ta="right">{formatCurrency(l.unit_price)}</Table.Td>
-                <Table.Td ta="right">{formatCurrency(l.total)}</Table.Td>
+        <Table.ScrollContainer minWidth={420}>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Concepto</Table.Th>
+                <Table.Th ta="right">Cant.</Table.Th>
+                <Table.Th ta="right">Precio</Table.Th>
+                <Table.Th ta="right">Total</Table.Th>
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+            </Table.Thead>
+            <Table.Tbody>
+              {(invoice.lines ?? []).map((l) => (
+                <Table.Tr key={l.id}>
+                  <Table.Td>{l.description || l.product_sku}</Table.Td>
+                  <Table.Td ta="right">{l.quantity}</Table.Td>
+                  <Table.Td ta="right">{formatCurrency(l.unit_price)}</Table.Td>
+                  <Table.Td ta="right">{formatCurrency(l.total)}</Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
       </Card>
 
       {isIssued && (
@@ -323,7 +325,7 @@ export function InvoiceDetailPage() {
       )}
 
       <Grid>
-        <Grid.Col span={{ base: 12, sm: 7 }}>
+        <Grid.Col span={{ base: 12, md: 7 }}>
           <Card>
             <Text fw={600} mb="sm">
               Pagos
@@ -333,53 +335,55 @@ export function InvoiceDetailPage() {
                 Sin pagos registrados.
               </Text>
             ) : (
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Fecha</Table.Th>
-                    <Table.Th>Método</Table.Th>
-                    <Table.Th>Ref.</Table.Th>
-                    <Table.Th ta="right">Monto</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {(invoice.payments ?? []).map((p) => (
-                    <Table.Tr key={p.id}>
-                      <Table.Td>{formatDate(p.payment_date)}</Table.Td>
-                      <Table.Td>{PAYMENT_METHOD_LABEL[p.method ?? "cash"]}</Table.Td>
-                      <Table.Td>{p.reference_number || "—"}</Table.Td>
-                      <Table.Td ta="right">{formatCurrency(p.amount)}</Table.Td>
+              <Table.ScrollContainer minWidth={380}>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Fecha</Table.Th>
+                      <Table.Th>Método</Table.Th>
+                      <Table.Th>Ref.</Table.Th>
+                      <Table.Th ta="right">Monto</Table.Th>
                     </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {(invoice.payments ?? []).map((p) => (
+                      <Table.Tr key={p.id}>
+                        <Table.Td>{formatDate(p.payment_date)}</Table.Td>
+                        <Table.Td>{PAYMENT_METHOD_LABEL[p.method ?? "cash"]}</Table.Td>
+                        <Table.Td>{p.reference_number || "—"}</Table.Td>
+                        <Table.Td ta="right">{formatCurrency(p.amount)}</Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </Table.ScrollContainer>
             )}
           </Card>
         </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 5 }}>
+        <Grid.Col span={{ base: 12, md: 5 }}>
           <Card>
             <Stack gap={4}>
-              <Group justify="space-between">
+              <Group justify="space-between" wrap="nowrap">
                 <Text c="dimmed">Subtotal</Text>
                 <Text>{formatCurrency(invoice.subtotal)}</Text>
               </Group>
-              <Group justify="space-between">
+              <Group justify="space-between" wrap="nowrap">
                 <Text c="dimmed">Descuento ({Number(invoice.discount_percentage)}%)</Text>
                 <Text>−{formatCurrency(invoice.discount_amount)}</Text>
               </Group>
-              <Group justify="space-between">
+              <Group justify="space-between" wrap="nowrap">
                 <Text c="dimmed">Impuesto ({Number(invoice.tax_percentage)}%)</Text>
                 <Text>{formatCurrency(invoice.tax_amount)}</Text>
               </Group>
-              <Group justify="space-between">
+              <Group justify="space-between" wrap="nowrap">
                 <Text fw={700}>Total</Text>
                 <Text fw={700}>{formatCurrency(invoice.total)}</Text>
               </Group>
-              <Group justify="space-between">
+              <Group justify="space-between" wrap="nowrap">
                 <Text c="dimmed">Pagado</Text>
                 <Text c="green">{formatCurrency(invoice.paid_amount)}</Text>
               </Group>
-              <Group justify="space-between">
+              <Group justify="space-between" wrap="nowrap">
                 <Text fw={700}>Saldo</Text>
                 <Text fw={700}>{formatCurrency(invoice.balance_due)}</Text>
               </Group>

@@ -89,6 +89,7 @@ export function InvoicesPage() {
           rows={data?.results ?? []}
           loading={isLoading}
           rowKey={(i) => i.id}
+          minWidth={820}
           emptyText="No hay facturas."
           onRowClick={(i) => navigate(`/invoices/${i.id}`)}
           toolbar={

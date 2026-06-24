@@ -219,6 +219,7 @@ export function InvoiceCreateModal({
             </Group>
           }
         />
+        <Table.ScrollContainer minWidth={720}>
         <Table>
           <Table.Thead>
             <Table.Tr>
@@ -272,6 +273,7 @@ export function InvoiceCreateModal({
             ))}
           </Table.Tbody>
         </Table>
+        </Table.ScrollContainer>
 
         <Group justify="flex-end" mt="md">
           <Button variant="default" onClick={onClose}>

@@ -11,8 +11,8 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <Group justify="space-between" align="flex-end" mb="lg" wrap="nowrap">
-      <Stack gap={2}>
+    <Group justify="space-between" align="flex-end" mb="lg" gap="sm">
+      <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
         <Title order={2}>{title}</Title>
         {subtitle && (
           <Text c="dimmed" size="sm">
@@ -20,7 +20,7 @@ export function PageHeader({
           </Text>
         )}
       </Stack>
-      {action}
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
     </Group>
   );
 }
