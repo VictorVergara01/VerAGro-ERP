@@ -139,6 +139,7 @@ export function SprayMixModal({
               Caldo total: {result.total_caldo_liters} L · {result.tanks_needed} tanque(s) ·
               químico líquido {result.liquid_chemical_liters} L · agua {result.water_liters} L
             </Text>
+            <Table.ScrollContainer minWidth={480}>
             <Table withTableBorder>
               <Table.Thead>
                 <Table.Tr>
@@ -169,6 +170,7 @@ export function SprayMixModal({
                 </Table.Tr>
               </Table.Tbody>
             </Table>
+            </Table.ScrollContainer>
             {result.full_tanks > 0 && (
               <Text size="sm" c="dimmed">
                 {result.full_tanks} tanque(s) lleno(s) de {tank} L

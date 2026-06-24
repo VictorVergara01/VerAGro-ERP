@@ -126,26 +126,28 @@ export function QuoteDetailPage() {
       </Card>
 
       <Card>
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Concepto</Table.Th>
-              <Table.Th ta="right">Cant.</Table.Th>
-              <Table.Th ta="right">Precio</Table.Th>
-              <Table.Th ta="right">Total</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {(quote.lines ?? []).map((l) => (
-              <Table.Tr key={l.id}>
-                <Table.Td>{l.description || l.product_sku}</Table.Td>
-                <Table.Td ta="right">{l.quantity}</Table.Td>
-                <Table.Td ta="right">{formatCurrency(l.unit_price)}</Table.Td>
-                <Table.Td ta="right">{formatCurrency(l.total)}</Table.Td>
+        <Table.ScrollContainer minWidth={420}>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Concepto</Table.Th>
+                <Table.Th ta="right">Cant.</Table.Th>
+                <Table.Th ta="right">Precio</Table.Th>
+                <Table.Th ta="right">Total</Table.Th>
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+            </Table.Thead>
+            <Table.Tbody>
+              {(quote.lines ?? []).map((l) => (
+                <Table.Tr key={l.id}>
+                  <Table.Td>{l.description || l.product_sku}</Table.Td>
+                  <Table.Td ta="right">{l.quantity}</Table.Td>
+                  <Table.Td ta="right">{formatCurrency(l.unit_price)}</Table.Td>
+                  <Table.Td ta="right">{formatCurrency(l.total)}</Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
         <Group justify="flex-end" mt="md">
           <Stack gap={2} w={260}>
             <Group justify="space-between">

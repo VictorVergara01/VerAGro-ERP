@@ -190,6 +190,7 @@ export function QuoteCreateModal({
             </Group>
           }
         />
+        <Table.ScrollContainer minWidth={560}>
         <Table>
           <Table.Thead>
             <Table.Tr>
@@ -228,6 +229,7 @@ export function QuoteCreateModal({
             ))}
           </Table.Tbody>
         </Table>
+        </Table.ScrollContainer>
 
         <Textarea label="Notas" mt="md" autosize minRows={2} {...form.getInputProps("notes")} />
         <Textarea label="Términos" mt="sm" autosize minRows={2} {...form.getInputProps("terms")} />

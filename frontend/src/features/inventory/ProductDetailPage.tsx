@@ -115,6 +115,7 @@ export function ProductDetailPage() {
           rows={movements.data ?? []}
           loading={movements.isLoading}
           rowKey={(m) => m.id as number}
+          minWidth={760}
           emptyText="Sin movimientos."
         />
       </div>
