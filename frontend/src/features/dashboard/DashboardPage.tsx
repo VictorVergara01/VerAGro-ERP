@@ -1,7 +1,7 @@
+import { Suspense, lazy } from "react";
 import {
   Alert,
   Card,
-  Grid,
   Group,
   SimpleGrid,
   Skeleton,
@@ -10,7 +10,6 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { BarChart, DonutChart } from "@mantine/charts";
 import {
   IconAlertTriangle,
   IconBox,
@@ -30,6 +29,9 @@ import { SO_STATUS_LABEL } from "../service-orders/types";
 import { formatCurrency } from "../../utils/format";
 import { StatCard } from "./StatCard";
 import { OPEN_STATUSES, sumStatuses, useDashboard } from "./useDashboard";
+
+// Los gráficos (recharts) se cargan bajo demanda para no pesar el arranque.
+const DashboardCharts = lazy(() => import("./DashboardCharts"));
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -137,64 +139,13 @@ function FinancialDashboard() {
         />
       </SimpleGrid>
 
-      <Grid>
-        <Grid.Col span={{ base: 12, lg: 8 }}>
-          <Card>
-            <Text fw={600} mb="md">
-              Órdenes por estado
-            </Text>
-            {ordersByStatus.length ? (
-              <BarChart
-                h={300}
-                data={ordersByStatus}
-                dataKey="estado"
-                series={[{ name: "Órdenes", color: "green.6" }]}
-                tickLine="y"
-                gridAxis="y"
-                barProps={{ radius: 6 }}
-              />
-            ) : (
-              <Text c="dimmed" size="sm">
-                Sin órdenes registradas.
-              </Text>
-            )}
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 4 }}>
-          <Card h="100%">
-            <Text fw={600} mb="md">
-              Facturación del mes
-            </Text>
-            {billing.length ? (
-              <Stack align="center" gap="xs">
-                <DonutChart
-                  data={billing}
-                  h={200}
-                  thickness={26}
-                  chartLabel={formatCurrency(sales + pending)}
-                  withTooltip
-                />
-                <Group gap="lg">
-                  {billing.map((b) => (
-                    <Group key={b.name} gap={6}>
-                      <ThemeIcon size={12} radius="xl" color={b.color}>
-                        <span />
-                      </ThemeIcon>
-                      <Text size="sm" c="dimmed">
-                        {b.name}
-                      </Text>
-                    </Group>
-                  ))}
-                </Group>
-              </Stack>
-            ) : (
-              <Text c="dimmed" size="sm">
-                Sin facturación este mes.
-              </Text>
-            )}
-          </Card>
-        </Grid.Col>
-      </Grid>
+      <Suspense fallback={<Skeleton height={320} radius="lg" />}>
+        <DashboardCharts
+          ordersByStatus={ordersByStatus}
+          billing={billing}
+          total={sales + pending}
+        />
+      </Suspense>
 
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
         <StatCard
