@@ -18,7 +18,7 @@ export function DetailHeader({
 }) {
   return (
     <Group justify="space-between" align="center" wrap="wrap" gap="sm" mb="xs">
-      <Group gap="sm" wrap="nowrap">
+      <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
         <Tooltip label={backLabel} withArrow>
           <ActionIcon
             component={Link}
@@ -27,14 +27,23 @@ export function DetailHeader({
             size="lg"
             radius="md"
             aria-label={backLabel}
+            style={{ flexShrink: 0 }}
           >
             <IconArrowLeft size={18} />
           </ActionIcon>
         </Tooltip>
-        <Title order={2} lineClamp={1}>
+        <Title
+          order={2}
+          style={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
           {title}
         </Title>
-        {badge}
+        {badge && <div style={{ flexShrink: 0 }}>{badge}</div>}
       </Group>
       {actions && (
         <Group gap="sm" wrap="wrap">

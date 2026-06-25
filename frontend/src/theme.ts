@@ -1,4 +1,5 @@
 import {
+  Badge,
   Card,
   Modal,
   Paper,
@@ -31,6 +32,11 @@ export const theme = createTheme({
   fontFamilyMonospace: "ui-monospace, SFMono-Regular, Menlo, monospace",
   headings: { fontFamily: FONT, fontWeight: "700" },
   components: {
+    Badge: Badge.extend({
+      // Evita que los estados se trunquen ("Pagada" → "P…") cuando la celda
+      // de una tabla los comprime: el label conserva su ancho natural.
+      styles: { label: { overflow: "visible" } },
+    }),
     Card: Card.extend({
       defaultProps: { radius: "lg", withBorder: true, shadow: "sm", padding: "lg" },
     }),

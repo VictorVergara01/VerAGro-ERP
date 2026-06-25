@@ -1,29 +1,76 @@
+import { lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "../components/layout/AppLayout";
 import { LoginPage } from "../features/auth/LoginPage";
-import { InvoiceDetailPage } from "../features/billing/InvoiceDetailPage";
-import { InvoicesPage } from "../features/billing/InvoicesPage";
-import { QuoteDetailPage } from "../features/billing/QuoteDetailPage";
-import { QuotesPage } from "../features/billing/QuotesPage";
-import { CustomerDetailPage } from "../features/customers/CustomerDetailPage";
-import { CustomersPage } from "../features/customers/CustomersPage";
-import { DashboardPage } from "../features/dashboard/DashboardPage";
-import { EquipmentDetailPage } from "../features/equipment/EquipmentDetailPage";
-import { EquipmentPage } from "../features/equipment/EquipmentPage";
-import { InventoryPage } from "../features/inventory/InventoryPage";
-import { ProductDetailPage } from "../features/inventory/ProductDetailPage";
-import { PurchaseOrderDetailPage } from "../features/purchasing/PurchaseOrderDetailPage";
-import { PurchasingPage } from "../features/purchasing/PurchasingPage";
-import { ReportsPage } from "../features/reports/ReportsPage";
-import { SettingsPage } from "../features/settings/SettingsPage";
-import { FieldJobDetailPage } from "../features/field-jobs/FieldJobDetailPage";
-import { FieldJobsPage } from "../features/field-jobs/FieldJobsPage";
-import { ServiceOrderDetailPage } from "../features/service-orders/ServiceOrderDetailPage";
-import { ServiceOrdersPage } from "../features/service-orders/ServiceOrdersPage";
-import { SupplierDetailPage } from "../features/suppliers/SupplierDetailPage";
-import { SuppliersPage } from "../features/suppliers/SuppliersPage";
 import { ProtectedRoute } from "./ProtectedRoute";
+
+// Las páginas de cada módulo se cargan bajo demanda (code-splitting por ruta).
+// Login y el shell (AppLayout/ProtectedRoute) se mantienen eager para que el
+// arranque sea inmediato.
+const DashboardPage = lazy(() =>
+  import("../features/dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage })),
+);
+const CustomersPage = lazy(() =>
+  import("../features/customers/CustomersPage").then((m) => ({ default: m.CustomersPage })),
+);
+const CustomerDetailPage = lazy(() =>
+  import("../features/customers/CustomerDetailPage").then((m) => ({ default: m.CustomerDetailPage })),
+);
+const EquipmentPage = lazy(() =>
+  import("../features/equipment/EquipmentPage").then((m) => ({ default: m.EquipmentPage })),
+);
+const EquipmentDetailPage = lazy(() =>
+  import("../features/equipment/EquipmentDetailPage").then((m) => ({ default: m.EquipmentDetailPage })),
+);
+const InventoryPage = lazy(() =>
+  import("../features/inventory/InventoryPage").then((m) => ({ default: m.InventoryPage })),
+);
+const ProductDetailPage = lazy(() =>
+  import("../features/inventory/ProductDetailPage").then((m) => ({ default: m.ProductDetailPage })),
+);
+const SuppliersPage = lazy(() =>
+  import("../features/suppliers/SuppliersPage").then((m) => ({ default: m.SuppliersPage })),
+);
+const SupplierDetailPage = lazy(() =>
+  import("../features/suppliers/SupplierDetailPage").then((m) => ({ default: m.SupplierDetailPage })),
+);
+const PurchasingPage = lazy(() =>
+  import("../features/purchasing/PurchasingPage").then((m) => ({ default: m.PurchasingPage })),
+);
+const PurchaseOrderDetailPage = lazy(() =>
+  import("../features/purchasing/PurchaseOrderDetailPage").then((m) => ({ default: m.PurchaseOrderDetailPage })),
+);
+const ServiceOrdersPage = lazy(() =>
+  import("../features/service-orders/ServiceOrdersPage").then((m) => ({ default: m.ServiceOrdersPage })),
+);
+const ServiceOrderDetailPage = lazy(() =>
+  import("../features/service-orders/ServiceOrderDetailPage").then((m) => ({ default: m.ServiceOrderDetailPage })),
+);
+const FieldJobsPage = lazy(() =>
+  import("../features/field-jobs/FieldJobsPage").then((m) => ({ default: m.FieldJobsPage })),
+);
+const FieldJobDetailPage = lazy(() =>
+  import("../features/field-jobs/FieldJobDetailPage").then((m) => ({ default: m.FieldJobDetailPage })),
+);
+const QuotesPage = lazy(() =>
+  import("../features/billing/QuotesPage").then((m) => ({ default: m.QuotesPage })),
+);
+const QuoteDetailPage = lazy(() =>
+  import("../features/billing/QuoteDetailPage").then((m) => ({ default: m.QuoteDetailPage })),
+);
+const InvoicesPage = lazy(() =>
+  import("../features/billing/InvoicesPage").then((m) => ({ default: m.InvoicesPage })),
+);
+const InvoiceDetailPage = lazy(() =>
+  import("../features/billing/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })),
+);
+const ReportsPage = lazy(() =>
+  import("../features/reports/ReportsPage").then((m) => ({ default: m.ReportsPage })),
+);
+const SettingsPage = lazy(() =>
+  import("../features/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
 
 export function AppRoutes() {
   return (

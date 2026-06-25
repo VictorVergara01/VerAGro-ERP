@@ -1,4 +1,5 @@
-import { AppShell, ScrollArea } from "@mantine/core";
+import { Suspense } from "react";
+import { AppShell, Center, Loader, ScrollArea } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Outlet } from "react-router-dom";
 
@@ -27,7 +28,15 @@ export function AppLayout() {
       </AppShell.Navbar>
       <AppShell.Main bg="light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8))">
         <AppSpotlight />
-        <Outlet />
+        <Suspense
+          fallback={
+            <Center py="xl" mih={240}>
+              <Loader />
+            </Center>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </AppShell.Main>
     </AppShell>
   );

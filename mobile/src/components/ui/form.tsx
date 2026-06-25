@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -144,9 +145,10 @@ export function FormModal({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.formHeader}>
+      <View style={[styles.formHeader, { paddingTop: spacing.md + insets.top }]}>
         <TouchableOpacity onPress={onClose} hitSlop={10}>
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>

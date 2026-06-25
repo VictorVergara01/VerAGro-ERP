@@ -1,4 +1,4 @@
-import { Group, Stack, Text, Title } from "@mantine/core";
+import { Box, Group, Stack, Text, Title } from "@mantine/core";
 import type { ReactNode } from "react";
 
 export function PageHeader({
@@ -11,8 +11,8 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <Group justify="space-between" align="flex-end" mb="lg" wrap="nowrap">
-      <Stack gap={2}>
+    <Group justify="space-between" align="flex-end" mb="lg" gap="sm" wrap="wrap">
+      <Stack gap={2} style={{ flex: "1 0 220px", minWidth: 0 }}>
         <Title order={2}>{title}</Title>
         {subtitle && (
           <Text c="dimmed" size="sm">
@@ -20,7 +20,7 @@ export function PageHeader({
           </Text>
         )}
       </Stack>
-      {action}
+      {action && <Box style={{ flexShrink: 0, maxWidth: "100%" }}>{action}</Box>}
     </Group>
   );
 }

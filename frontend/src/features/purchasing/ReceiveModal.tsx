@@ -72,6 +72,7 @@ export function ReceiveModal({
         <Text size="sm" c="dimmed">
           Ajusta las cantidades a recibir o usa “Recibir todo”.
         </Text>
+        <Table.ScrollContainer minWidth={460}>
         <Table>
           <Table.Thead>
             <Table.Tr>
@@ -109,6 +110,7 @@ export function ReceiveModal({
             })}
           </Table.Tbody>
         </Table>
+        </Table.ScrollContainer>
         <Group justify="space-between">
           <Button
             variant="light"
