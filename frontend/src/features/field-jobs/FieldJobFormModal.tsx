@@ -21,7 +21,7 @@ import { useEffect } from "react";
 import { formatCurrency } from "../../utils/format";
 import { useCustomers } from "../customers/api";
 import { useEquipmentList } from "../equipment/api";
-import { useTechnicians } from "../service-orders/api";
+import { usePilots } from "../service-orders/api";
 import { useCompany } from "../settings/api";
 import { useSaveFieldJob } from "./api";
 import { SprayMixModal } from "./SprayMixModal";
@@ -75,7 +75,7 @@ export function FieldJobFormModal({
   const save = useSaveFieldJob();
   const customers = useCustomers({});
   const equipment = useEquipmentList({});
-  const technicians = useTechnicians();
+  const pilots = usePilots();
   const company = useCompany();
   const editing = Boolean(job?.id);
   const [appOpen, app] = useDisclosure(false);
@@ -180,7 +180,7 @@ export function FieldJobFormModal({
             <Select
               label="Piloto"
               placeholder="Sin asignar"
-              data={(technicians.data ?? []).map((t) => ({ value: String(t.id), label: t.full_name }))}
+              data={(pilots.data ?? []).map((t) => ({ value: String(t.id), label: t.full_name }))}
               searchable
               clearable
               {...form.getInputProps("technician")}

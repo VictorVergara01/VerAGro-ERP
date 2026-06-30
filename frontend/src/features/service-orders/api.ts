@@ -32,6 +32,21 @@ export function useTechnicians() {
   });
 }
 
+export function usePilots() {
+  return useQuery({
+    queryKey: ["users", "piloto"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/users/", {
+        // El OpenAPI no declara ?role= (la vista lo lee a mano).
+        params: { query: { role: "piloto" } as unknown as never },
+      });
+      if (error || !data) return [] as UserOption[];
+      return data as unknown as UserOption[];
+    },
+  });
+}
+
 export function useServiceOrders(params: SOListParams) {
   return useQuery({
     queryKey: ["service-orders", params],

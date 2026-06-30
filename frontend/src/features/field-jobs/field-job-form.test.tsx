@@ -10,7 +10,7 @@ vi.mock("./api", () => ({
 }));
 vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
 vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results: [] } }) }));
-vi.mock("../service-orders/api", () => ({ useTechnicians: () => ({ data: [] }) }));
+vi.mock("../service-orders/api", () => ({ usePilots: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({
   useCompany: () => ({
     data: { fumigation_price_per_hectare: "20", drone_tank_volume_liters: "200",

@@ -9,7 +9,7 @@ const mockList = vi.fn();
 vi.mock("./api", () => ({ useFieldJobs: () => mockList(), useSaveFieldJob: () => ({ mutateAsync: vi.fn(), isPending: false }) }));
 vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
 vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results: [] } }) }));
-vi.mock("../service-orders/api", () => ({ useTechnicians: () => ({ data: [] }) }));
+vi.mock("../service-orders/api", () => ({ useTechnicians: () => ({ data: [] }), usePilots: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({ useCompany: () => ({ data: {} }) }));
 vi.mock("../auth/useAuth", () => ({ useAuth: () => ({ user: { role: "super_admin" } }) }));
 
