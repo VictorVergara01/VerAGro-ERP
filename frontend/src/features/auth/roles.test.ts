@@ -23,13 +23,32 @@ describe("rol piloto", () => {
     expect(canWriteCustomers("piloto")).toBe(true);
   });
 
+  it("canWriteCustomers sigue concediendo acceso a roles preexistentes", () => {
+    expect(canWriteCustomers("sales")).toBe(true);
+    expect(canWriteCustomers("technician")).toBe(true);
+    expect(canWriteCustomers("inventory")).toBe(true);
+    expect(canWriteCustomers("general_admin")).toBe(true);
+  });
+
+  it("canWriteFieldJobs cubre roles no-piloto que también pueden escribir", () => {
+    expect(canWriteFieldJobs("technician")).toBe(true);
+    expect(canWriteFieldJobs("sales")).toBe(true);
+    expect(canWriteFieldJobs("general_admin")).toBe(true);
+    expect(canWriteFieldJobs("readonly")).toBe(false);
+  });
+
   it("solo ve Dashboard, Trabajos de campo y Clientes en la navegación", () => {
     expect(canSeeNav("piloto", "/")).toBe(true);
     expect(canSeeNav("piloto", "/field-jobs")).toBe(true);
     expect(canSeeNav("piloto", "/customers")).toBe(true);
     expect(canSeeNav("piloto", "/service-orders")).toBe(false);
+    expect(canSeeNav("piloto", "/equipment")).toBe(false);
     expect(canSeeNav("piloto", "/inventory")).toBe(false);
+    expect(canSeeNav("piloto", "/suppliers")).toBe(false);
+    expect(canSeeNav("piloto", "/purchasing")).toBe(false);
+    expect(canSeeNav("piloto", "/quotes")).toBe(false);
     expect(canSeeNav("piloto", "/invoices")).toBe(false);
+    expect(canSeeNav("piloto", "/reports")).toBe(false);
     expect(canSeeNav("piloto", "/settings")).toBe(false);
   });
 
