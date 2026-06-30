@@ -43,7 +43,7 @@ export function useFieldJob(id: number | undefined) {
     enabled: id != null,
     queryFn: async () => {
       const { data, error } = await api.GET("/api/field-jobs/{id}/", {
-        params: { path: { id: String(id as number) } },
+        params: { path: { id: id as number } },
       });
       if (error || !data) throw new Error("No se pudo cargar el trabajo.");
       return data as FieldJob;
@@ -58,7 +58,7 @@ export function useSaveFieldJob() {
       const { id, ...body } = payload;
       if (id) {
         const { data, error } = await api.PATCH("/api/field-jobs/{id}/", {
-          params: { path: { id: String(id) } },
+          params: { path: { id } },
           body: body as FieldJob,
         });
         if (error) throw new Error("No se pudo guardar el trabajo.");
@@ -81,7 +81,7 @@ export function useDeleteFieldJob() {
   return useMutation({
     mutationFn: async (id: number) => {
       const { error } = await api.DELETE("/api/field-jobs/{id}/", {
-        params: { path: { id: String(id) } },
+        params: { path: { id } },
       });
       if (error) throw new Error("No se pudo eliminar el trabajo.");
     },
@@ -95,7 +95,7 @@ export function useFieldJobAction(id: number | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (action: FJAction) => {
-      const params = { path: { id: String(id as number) } };
+      const params = { path: { id: id as number } };
       const empty = {} as unknown as FieldJob;
       const calls: Record<FJAction, () => ReturnType<typeof api.POST>> = {
         "mark-done": () =>

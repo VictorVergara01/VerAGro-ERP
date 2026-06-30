@@ -3152,13 +3152,12 @@ export interface components {
          *     * `general_admin` - Administrador General
          *     * `sales` - Facturación / Ventas
          *     * `technician` - Técnico
-         *     * `piloto` - Piloto
          *     * `inventory` - Inventario
          *     * `accounting` - Contabilidad
          *     * `readonly` - Consulta
          * @enum {string}
          */
-        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "piloto" | "inventory" | "accounting" | "readonly";
+        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "inventory" | "accounting" | "readonly";
         ServiceChecklist: {
             readonly id: number;
             readonly service_order: number;
@@ -4494,7 +4493,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4515,7 +4515,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4542,7 +4543,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4562,7 +4564,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4589,7 +4592,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4616,7 +4620,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4643,7 +4648,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this field job. */
+                id: number;
             };
             cookie?: never;
         };
