@@ -17,6 +17,7 @@ import {
   IconCircleCheck,
   IconClockPause,
   IconDeviceDesktop,
+  IconDrone,
   IconReceipt,
   IconTool,
   IconUsers,
@@ -186,6 +187,13 @@ interface QuickLink {
 }
 
 const QUICK_LINKS: QuickLink[] = [
+  {
+    label: "Trabajos de campo",
+    description: "Programa, registra químicos y calcula la mezcla.",
+    to: "/field-jobs",
+    icon: IconDrone,
+    color: "lime",
+  },
   {
     label: "Órdenes de servicio",
     description: "Diagnostica, reserva piezas, finaliza y entrega.",

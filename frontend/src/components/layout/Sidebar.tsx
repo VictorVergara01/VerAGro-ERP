@@ -12,6 +12,8 @@ import { Link, useLocation } from "react-router-dom";
 
 import { Logo } from "../ui/Logo";
 import { NAV_GROUPS } from "./navItems";
+import { useAuth } from "../../features/auth/useAuth";
+import { canSeeNav } from "../../features/auth/roles";
 
 function isActive(pathname: string, to: string) {
   return to === "/" ? pathname === "/" : pathname.startsWith(to);
@@ -19,6 +21,11 @@ function isActive(pathname: string, to: string) {
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => canSeeNav(user?.role, item.to)),
+  })).filter((group) => group.items.length > 0);
   // APK servido junto al web (frontend/public/downloads/veragro.apk → /downloads/veragro.apk).
   // Se puede sobreescribir con VITE_APK_URL (p. ej. un link de EAS Build).
   const apkUrl =
@@ -31,7 +38,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </Group>
 
       <Stack gap="lg" style={{ flex: 1 }}>
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.title}>
             <Text
               size="xs"
