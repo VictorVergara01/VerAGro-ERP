@@ -76,4 +76,17 @@ describe("DashboardPage", () => {
     // No debe mostrar tarjetas financieras.
     expect(screen.queryByText("Ventas del mes")).not.toBeInTheDocument();
   });
+
+  it("piloto solo ve 'Trabajos de campo' y 'Clientes' en los accesos rápidos", () => {
+    mockUser.mockReturnValue({ id: 3, email: "p@p.com", full_name: "Piloto", role: "piloto", is_active: true });
+    mockUseDashboard.mockReturnValue({ data: undefined, isLoading: false, error: null });
+    renderPage();
+    // Accesos que SÍ debe ver el piloto
+    expect(screen.getByText("Trabajos de campo")).toBeInTheDocument();
+    expect(screen.getByText("Clientes")).toBeInTheDocument();
+    // Accesos que NO debe ver el piloto
+    expect(screen.queryByText("Órdenes de servicio")).not.toBeInTheDocument();
+    expect(screen.queryByText("Inventario")).not.toBeInTheDocument();
+    expect(screen.queryByText("Equipos")).not.toBeInTheDocument();
+  });
 });

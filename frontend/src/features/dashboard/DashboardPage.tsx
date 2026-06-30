@@ -25,7 +25,7 @@ import {
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../auth/useAuth";
-import { FINANCIAL_ROLES } from "../auth/roles";
+import { canSeeNav, FINANCIAL_ROLES } from "../auth/roles";
 import { SO_STATUS_LABEL } from "../service-orders/types";
 import { formatCurrency } from "../../utils/format";
 import { StatCard } from "./StatCard";
@@ -225,11 +225,13 @@ const QUICK_LINKS: QuickLink[] = [
 ];
 
 function OperationalDashboard() {
+  const { user } = useAuth();
+  const visibleLinks = QUICK_LINKS.filter((l) => canSeeNav(user?.role, l.to));
   return (
     <Stack gap="lg">
       <PageTitle subtitle="Accesos rápidos a tu trabajo del día." />
       <SimpleGrid cols={{ base: 1, sm: 2 }}>
-        {QUICK_LINKS.map((link) => {
+        {visibleLinks.map((link) => {
           const Icon = link.icon;
           return (
             <Card key={link.to} component={Link} to={link.to} padding="lg">
