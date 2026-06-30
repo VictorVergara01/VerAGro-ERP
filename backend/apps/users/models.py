@@ -33,6 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         GENERAL_ADMIN = "general_admin", "Administrador General"
         SALES = "sales", "Facturación / Ventas"
         TECHNICIAN = "technician", "Técnico"
+        PILOTO = "piloto", "Piloto"
         INVENTORY = "inventory", "Inventario"
         ACCOUNTING = "accounting", "Contabilidad"
         READONLY = "readonly", "Consulta"
