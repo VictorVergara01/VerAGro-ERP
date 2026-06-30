@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
+from apps.core import roles
 from apps.customers.models import Customer
 from apps.field_jobs.models import FieldJob
 from apps.users.models import User
@@ -17,7 +18,7 @@ def customer():
 
 def _piloto(email="piloto@test.com"):
     return User.objects.create_user(
-        email=email, password="x", role="piloto", full_name="Pil Oto"
+        email=email, password="x", role=roles.PILOTO, full_name="Pil Oto"
     )
 
 
@@ -65,3 +66,20 @@ def test_piloto_cannot_generate_invoice(customer):
     job = FieldJob.objects.create(customer=customer, technician=piloto)
     res = _client(piloto).post(f"{URL}{job.id}/generate-invoice/", {}, format="json")
     assert res.status_code == 403, res.content
+
+
+def test_piloto_create_with_explicit_technician_ignores_it(customer):
+    """Un piloto que pasa technician=<otro_id> explícito debe quedar
+    auto-asignado a SÍ MISMO, ignorando el technician del body."""
+    piloto = _piloto("piloto_a@test.com")
+    otro = _piloto("piloto_b@test.com")
+    res = _client(piloto).post(
+        URL,
+        {"customer": customer.id, "technician": otro.id},
+        format="json",
+    )
+    assert res.status_code == 201, res.content
+    assert res.json()["technician"] == piloto.id, (
+        f"Se esperaba technician={piloto.id} (el piloto creador), "
+        f"pero se obtuvo {res.json()['technician']}"
+    )

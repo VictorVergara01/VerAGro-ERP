@@ -73,7 +73,7 @@ class FieldJobViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         extra = {"created_by": self.request.user}
         user = self.request.user
-        if user.role == roles.PILOTO and not serializer.validated_data.get("technician"):
+        if user.role == roles.PILOTO:
             extra["technician"] = user
         job = serializer.save(**extra)
         job.recalculate_total()
