@@ -11,7 +11,7 @@ from .models import FieldJob
 from .serializers import FieldJobSerializer
 from .services import calculate_mix, cancel_job, mark_done
 
-FieldJobWrite = RoleWriteOrReadOnly(*roles.ADMINS, roles.TECHNICIAN, roles.SALES)
+FieldJobWrite = RoleWriteOrReadOnly(*roles.FIELD_JOBS_WRITE)
 
 
 def _int_param(params, key):
@@ -46,6 +46,9 @@ class FieldJobViewSet(viewsets.ModelViewSet):
         qs = FieldJob.objects.select_related(
             "customer", "equipment", "technician"
         ).prefetch_related("invoices", "products")
+        user = self.request.user
+        if user.role == roles.PILOTO:
+            qs = qs.filter(technician_id=user.id)
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),
@@ -68,7 +71,11 @@ class FieldJobViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        job = serializer.save(created_by=self.request.user)
+        extra = {"created_by": self.request.user}
+        user = self.request.user
+        if user.role == roles.PILOTO and not serializer.validated_data.get("technician"):
+            extra["technician"] = user
+        job = serializer.save(**extra)
         job.recalculate_total()
         job.save(update_fields=["total", "updated_at"])
         if job.technician_id:
@@ -100,7 +107,12 @@ class FieldJobViewSet(viewsets.ModelViewSet):
         job.refresh_from_db()
         return Response(self.get_serializer(job).data)
 
-    @action(detail=True, methods=["post"], url_path="generate-invoice")
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="generate-invoice",
+        permission_classes=[RoleWriteOrReadOnly(*roles.BILLING_WRITE)],
+    )
     def generate_invoice(self, request, pk=None):
         from apps.billing.serializers import InvoiceSerializer
         from apps.billing.services import create_invoice_from_field_job
