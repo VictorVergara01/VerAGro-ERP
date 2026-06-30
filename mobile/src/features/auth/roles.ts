@@ -3,12 +3,14 @@ export const ROLE_LABELS: Record<string, string> = {
   general_admin: "Administrador General",
   sales: "Facturación / Ventas",
   technician: "Técnico",
+  piloto: "Piloto",
   inventory: "Inventario",
   accounting: "Contabilidad",
   readonly: "Consulta",
 };
 
 export const isSuperAdmin = (r?: string) => r === "super_admin";
+export const isPiloto = (r?: string) => r === "piloto";
 export const isAdmin = (r?: string) => r === "super_admin" || r === "general_admin";
 export const canWriteBilling = (r?: string) => isAdmin(r) || r === "sales";
 export const canRegisterPayments = (r?: string) => isAdmin(r) || r === "accounting";
