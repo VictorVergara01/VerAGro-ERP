@@ -83,3 +83,21 @@ def test_piloto_create_with_explicit_technician_ignores_it(customer):
         f"Se esperaba technician={piloto.id} (el piloto creador), "
         f"pero se obtuvo {res.json()['technician']}"
     )
+
+
+def test_piloto_update_cannot_reassign_technician(customer):
+    """Un piloto que hace PATCH enviando technician=<otro_id> no puede
+    reasignar el trabajo: el technician debe seguir siendo él mismo."""
+    piloto = _piloto("piloto_update@test.com")
+    otro = _piloto("otro_piloto@test.com")
+    job = FieldJob.objects.create(customer=customer, technician=piloto)
+    res = _client(piloto).patch(
+        f"{URL}{job.id}/",
+        {"technician": otro.id},
+        format="json",
+    )
+    assert res.status_code == 200, res.content
+    assert res.json()["technician"] == piloto.id, (
+        f"El piloto no debería poder reasignar el trabajo: "
+        f"technician={res.json()['technician']!r}, esperado={piloto.id}"
+    )

@@ -6,7 +6,9 @@ declarada en apps.field_jobs.views.FieldJobWrite.
 import pytest
 from rest_framework.test import APIClient
 
+from apps.core import roles
 from apps.customers.models import Customer
+from apps.field_jobs.models import FieldJob
 from apps.users.models import User
 
 pytestmark = pytest.mark.django_db
@@ -88,4 +90,27 @@ def test_inventory_cannot_post(customer):
     """Un usuario inventory recibe 403 al intentar POST (no está en write_roles)."""
     client = _client_for_role("inventory")
     res = client.post(FIELD_JOBS_URL, {"customer": customer.id}, format="json")
+    assert res.status_code == 403, res.content
+
+
+# ---------------------------------------------------------------------------
+# 6. generate-invoice — solo BILLING_WRITE (admins + ventas); el técnico no
+# ---------------------------------------------------------------------------
+
+def test_technician_cannot_generate_invoice(customer):
+    """Un técnico recibe 403 al intentar POST /api/field-jobs/{id}/generate-invoice/.
+    La acción está gateada a BILLING_WRITE; el rol technician no pertenece a ese grupo
+    (decisión de diseño confirmada: el técnico no factura campo directamente).
+    """
+    # Creamos el trabajo directamente con el ORM para no depender de permisos de creación.
+    tech_user = User.objects.create_user(
+        email="tech_invoice@test.com",
+        password="x",
+        role=roles.TECHNICIAN,
+        full_name="Tecnico Factura",
+    )
+    job = FieldJob.objects.create(customer=customer)
+    client = APIClient()
+    client.force_authenticate(user=tech_user)
+    res = client.post(f"{FIELD_JOBS_URL}{job.id}/generate-invoice/", {}, format="json")
     assert res.status_code == 403, res.content

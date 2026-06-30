@@ -85,7 +85,11 @@ class FieldJobViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         previous_tech_id = serializer.instance.technician_id
-        job = serializer.save()
+        extra = {}
+        user = self.request.user
+        if user.is_authenticated and user.role == roles.PILOTO:
+            extra["technician"] = user
+        job = serializer.save(**extra)
         job.recalculate_total()
         job.save(update_fields=["total", "updated_at"])
         if job.technician_id and job.technician_id != previous_tech_id:
