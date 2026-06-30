@@ -17,7 +17,7 @@ import {
 } from "../../theme";
 import { formatCurrency } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
-import { FINANCIAL_ROLES } from "../auth/roles";
+import { FINANCIAL_ROLES, isPiloto } from "../auth/roles";
 import { DashboardData, OPEN_STATUSES, sumStatuses, useDashboard } from "./api";
 
 const logo = require("../../../assets/logo.png");
@@ -108,6 +108,7 @@ export function DashboardScreen() {
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const isFinancial = user && FINANCIAL_ROLES.includes(user.role);
+  const isPilotoUser = isPiloto(user?.role);
   const navigation = useNavigation<any>();
   const { data, isLoading, error, refetch, isRefetching } = useDashboard();
 
@@ -123,12 +124,22 @@ export function DashboardScreen() {
 
   if (!isFinancial) {
     // Rol operativo: accesos rápidos en vez del panel financiero.
+    // El piloto solo tiene FieldJobsTab y MoreTab → no navegar a OrdersTab/InventoryTab.
     return (
       <Screen scroll>
         {header}
-        <QuickLink icon="construct" color={colors.info} title="Órdenes de servicio" onPress={() => navigation.navigate("OrdersTab")} />
-        <QuickLink icon="cube" color={colors.teal} title="Inventario" onPress={() => navigation.navigate("InventoryTab")} />
-        <QuickLink icon="grid" color={colors.grape} title="Más módulos" onPress={() => navigation.navigate("MoreTab")} />
+        {isPilotoUser ? (
+          <>
+            <QuickLink icon="leaf" color={colors.primary} title="Trabajos de campo" onPress={() => navigation.navigate("FieldJobsTab")} />
+            <QuickLink icon="grid" color={colors.grape} title="Más módulos" onPress={() => navigation.navigate("MoreTab")} />
+          </>
+        ) : (
+          <>
+            <QuickLink icon="construct" color={colors.info} title="Órdenes de servicio" onPress={() => navigation.navigate("OrdersTab")} />
+            <QuickLink icon="cube" color={colors.teal} title="Inventario" onPress={() => navigation.navigate("InventoryTab")} />
+            <QuickLink icon="grid" color={colors.grape} title="Más módulos" onPress={() => navigation.navigate("MoreTab")} />
+          </>
+        )}
       </Screen>
     );
   }
