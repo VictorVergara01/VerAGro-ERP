@@ -47,7 +47,7 @@ class FieldJobViewSet(viewsets.ModelViewSet):
             "customer", "equipment", "technician"
         ).prefetch_related("invoices", "products")
         user = self.request.user
-        if user.role == roles.PILOTO:
+        if user.is_authenticated and user.role == roles.PILOTO:
             qs = qs.filter(technician_id=user.id)
         params = self.request.query_params
         for key, field in (

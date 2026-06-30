@@ -3152,12 +3152,13 @@ export interface components {
          *     * `general_admin` - Administrador General
          *     * `sales` - Facturación / Ventas
          *     * `technician` - Técnico
+         *     * `piloto` - Piloto
          *     * `inventory` - Inventario
          *     * `accounting` - Contabilidad
          *     * `readonly` - Consulta
          * @enum {string}
          */
-        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "inventory" | "accounting" | "readonly";
+        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "piloto" | "inventory" | "accounting" | "readonly";
         ServiceChecklist: {
             readonly id: number;
             readonly service_order: number;
