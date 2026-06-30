@@ -15,7 +15,7 @@ import {
 } from "../../theme";
 import type { MoreNav } from "../../navigation/types";
 import { useAuth } from "../auth/useAuth";
-import { ROLE_LABELS } from "../auth/roles";
+import { ROLE_LABELS, isPiloto } from "../auth/roles";
 
 type Item = {
   label: string;
@@ -31,32 +31,49 @@ export function MenuScreen() {
   const { user, logout } = useAuth();
   const nav = useNavigation<MoreNav>();
 
-  const groups: { title: string; items: Item[] }[] = [
-    {
-      title: "Menú",
-      items: [
-        { label: "Clientes", icon: "people", color: colors.warning, onPress: () => nav.navigate("Customers") },
-        { label: "Equipos", icon: "hardware-chip", color: colors.grape, onPress: () => nav.navigate("Equipment") },
-        { label: "Proveedores", icon: "car", color: colors.info, onPress: () => nav.navigate("Suppliers") },
-        { label: "Compras", icon: "cart", color: colors.teal, onPress: () => nav.navigate("Purchasing") },
-      ],
-    },
-    {
-      title: "Facturación",
-      items: [
-        { label: "Cotizaciones", icon: "document-text", color: colors.info, onPress: () => nav.navigate("Quotes") },
-        { label: "Facturas", icon: "receipt", color: colors.grape, onPress: () => nav.navigate("Invoices") },
-      ],
-    },
-    {
-      title: "General",
-      items: [
-        { label: "Reportes", icon: "bar-chart", color: colors.primary, onPress: () => nav.navigate("Reports") },
-        { label: "Configuración", icon: "settings", color: colors.dimmed, onPress: () => nav.navigate("Settings") },
-        { label: "Mi perfil", icon: "person", color: colors.primary, onPress: () => nav.navigate("Profile") },
-      ],
-    },
-  ];
+  const piloto = isPiloto(user?.role);
+
+  const groups: { title: string; items: Item[] }[] = piloto
+    ? [
+        {
+          title: "Menú",
+          items: [
+            { label: "Clientes", icon: "people", color: colors.warning, onPress: () => nav.navigate("Customers") },
+          ],
+        },
+        {
+          title: "General",
+          items: [
+            { label: "Mi perfil", icon: "person", color: colors.primary, onPress: () => nav.navigate("Profile") },
+          ],
+        },
+      ]
+    : [
+        {
+          title: "Menú",
+          items: [
+            { label: "Clientes", icon: "people", color: colors.warning, onPress: () => nav.navigate("Customers") },
+            { label: "Equipos", icon: "hardware-chip", color: colors.grape, onPress: () => nav.navigate("Equipment") },
+            { label: "Proveedores", icon: "car", color: colors.info, onPress: () => nav.navigate("Suppliers") },
+            { label: "Compras", icon: "cart", color: colors.teal, onPress: () => nav.navigate("Purchasing") },
+          ],
+        },
+        {
+          title: "Facturación",
+          items: [
+            { label: "Cotizaciones", icon: "document-text", color: colors.info, onPress: () => nav.navigate("Quotes") },
+            { label: "Facturas", icon: "receipt", color: colors.grape, onPress: () => nav.navigate("Invoices") },
+          ],
+        },
+        {
+          title: "General",
+          items: [
+            { label: "Reportes", icon: "bar-chart", color: colors.primary, onPress: () => nav.navigate("Reports") },
+            { label: "Configuración", icon: "settings", color: colors.dimmed, onPress: () => nav.navigate("Settings") },
+            { label: "Mi perfil", icon: "person", color: colors.primary, onPress: () => nav.navigate("Profile") },
+          ],
+        },
+      ];
 
   return (
     <Screen scroll>

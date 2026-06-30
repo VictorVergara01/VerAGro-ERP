@@ -3,6 +3,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { useTheme, type ThemeColors } from "../theme";
+import { useAuth } from "../features/auth/useAuth";
+import { isPiloto } from "../features/auth/roles";
 import { DashboardScreen } from "../features/dashboard/DashboardScreen";
 import { MyOrdersScreen } from "../features/orders/MyOrdersScreen";
 import { OrderDetailScreen } from "../features/orders/OrderDetailScreen";
@@ -179,6 +181,8 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export function MainTabs() {
   const { colors } = useTheme();
+  const { user } = useAuth();
+  const piloto = isPiloto(user?.role);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -211,22 +215,26 @@ export function MainTabs() {
           tabBarIcon: ({ color, size }) => <Ionicons name="leaf" size={size} color={color} />,
         }}
       />
-      <Tab.Screen
-        name="OrdersTab"
-        component={OrdersNavigator}
-        options={{
-          title: "Órdenes",
-          tabBarIcon: ({ color, size }) => <Ionicons name="construct" size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="InventoryTab"
-        component={InventoryNavigator}
-        options={{
-          title: "Inventario",
-          tabBarIcon: ({ color, size }) => <Ionicons name="cube" size={size} color={color} />,
-        }}
-      />
+      {!piloto && (
+        <Tab.Screen
+          name="OrdersTab"
+          component={OrdersNavigator}
+          options={{
+            title: "Órdenes",
+            tabBarIcon: ({ color, size }) => <Ionicons name="construct" size={size} color={color} />,
+          }}
+        />
+      )}
+      {!piloto && (
+        <Tab.Screen
+          name="InventoryTab"
+          component={InventoryNavigator}
+          options={{
+            title: "Inventario",
+            tabBarIcon: ({ color, size }) => <Ionicons name="cube" size={size} color={color} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="MoreTab"
         component={MoreNavigator}
