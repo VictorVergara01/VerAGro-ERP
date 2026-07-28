@@ -54,6 +54,37 @@ class ProductViewSet(viewsets.ModelViewSet):
                 raise ValidationError(
                     {"equipment_type": "Debe ser un id numérico."}
                 )
+        equipment_model = params.get("equipment_model")
+        if equipment_model:
+            try:
+                qs = qs.filter(
+                    compatibilities__equipment_model_id=int(equipment_model)
+                ).distinct()
+            except (TypeError, ValueError):
+                raise ValidationError({"equipment_model": "Debe ser un id numérico."})
+        component = params.get("component")
+        if component:
+            try:
+                qs = qs.filter(compatibilities__component_id=int(component)).distinct()
+            except (TypeError, ValueError):
+                raise ValidationError({"component": "Debe ser un id numérico."})
+        compatible_with = params.get("compatible_with_equipment")
+        if compatible_with:
+            from apps.equipment.models import Equipment
+
+            try:
+                equipment = Equipment.objects.filter(id=int(compatible_with)).first()
+            except (TypeError, ValueError):
+                raise ValidationError(
+                    {"compatible_with_equipment": "Debe ser un id numérico."}
+                )
+            model_id = equipment.catalog_model_id if equipment else None
+            # Sin equipo o sin modelo técnico → sin resultados compatibles.
+            qs = (
+                qs.filter(compatibilities__equipment_model_id=model_id).distinct()
+                if model_id
+                else qs.none()
+            )
         return qs
 
     def perform_destroy(self, instance):

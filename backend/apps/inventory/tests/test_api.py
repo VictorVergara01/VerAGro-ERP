@@ -293,3 +293,48 @@ def test_filter_equipment_type_no_duplicates(inv_client):
 def test_invalid_equipment_type_filter_returns_400(inv_client):
     resp = inv_client.get("/api/inventory/products/?equipment_type=abc")
     assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_filter_products_by_equipment_model_and_component(inv_client):
+    from apps.equipment.models import EquipmentType, EquipmentModel, EquipmentComponent
+    from apps.inventory.models import ProductCompatibility
+
+    t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50")
+    c1 = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
+    c2 = EquipmentComponent.objects.create(equipment_model=m, code="prop_m1", name="Hélice")
+    p_motor = Product.objects.create(sku="PM-1", name="Motor")
+    p_prop = Product.objects.create(sku="PP-1", name="Hélice")
+    Product.objects.create(sku="PX-1", name="Sin compat")
+    ProductCompatibility.objects.create(product=p_motor, equipment_model=m, component=c1)
+    ProductCompatibility.objects.create(product=p_prop, equipment_model=m, component=c2)
+
+    by_model = inv_client.get(f"/api/inventory/products/?equipment_model={m.id}")
+    assert sorted(p["name"] for p in by_model.data["results"]) == ["Hélice", "Motor"]
+
+    by_comp = inv_client.get(f"/api/inventory/products/?component={c1.id}")
+    assert [p["name"] for p in by_comp.data["results"]] == ["Motor"]
+
+
+@pytest.mark.django_db
+def test_filter_products_compatible_with_equipment(inv_client):
+    from apps.customers.models import Customer
+    from apps.equipment.models import EquipmentType, EquipmentModel, EquipmentComponent, Equipment
+    from apps.inventory.models import ProductCompatibility
+
+    t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50")
+    c1 = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
+    prod = Product.objects.create(sku="EM-1", name="Motor")
+    ProductCompatibility.objects.create(product=prod, equipment_model=m, component=c1)
+    cli = Customer.objects.create(name="C")
+    eq = Equipment.objects.create(name="T50 físico", equipment_type=t, customer=cli, catalog_model=m)
+
+    resp = inv_client.get(f"/api/inventory/products/?compatible_with_equipment={eq.id}")
+    assert [p["name"] for p in resp.data["results"]] == ["Motor"]
+
+
+@pytest.mark.django_db
+def test_invalid_equipment_model_filter_returns_400(inv_client):
+    assert inv_client.get("/api/inventory/products/?equipment_model=abc").status_code == 400
