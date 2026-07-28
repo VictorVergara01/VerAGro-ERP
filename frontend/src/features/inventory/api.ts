@@ -7,6 +7,7 @@ import type { InventoryMovement, Product, ProductCategory } from "./types";
 export interface ProductListParams {
   search?: string;
   category?: number;
+  equipmentType?: number;
   includeInactive?: boolean;
   page?: number;
   pageSize?: number;
@@ -21,10 +22,11 @@ export function useProducts(params: ProductListParams) {
           query: {
             search: params.search || undefined,
             category: params.category,
+            equipment_type: params.equipmentType,
             include_inactive: params.includeInactive ? "true" : undefined,
             page: params.page,
             page_size: params.pageSize,
-          },
+          } as Record<string, unknown>,
         },
       });
       if (error || !data) throw new Error("No se pudieron cargar los productos.");

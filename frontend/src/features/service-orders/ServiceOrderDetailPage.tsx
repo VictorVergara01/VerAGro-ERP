@@ -344,7 +344,13 @@ export function ServiceOrderDetailPage() {
       </Group>
 
       {orderId != null && (
-        <AddPartModal opened={addOpen} onClose={closeAdd} orderId={orderId} />
+        <AddPartModal
+          opened={addOpen}
+          onClose={closeAdd}
+          orderId={orderId}
+          equipmentType={order.equipment_type ?? null}
+          equipmentTypeName={order.equipment_type_name ?? null}
+        />
       )}
       <ServiceOrderFormModal opened={editOpen} onClose={closeEdit} order={order} />
     </Stack>
