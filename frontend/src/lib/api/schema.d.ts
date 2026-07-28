@@ -2826,6 +2826,8 @@ export interface components {
             readonly customer_name?: string;
             equipment?: number | null;
             readonly equipment_name?: string;
+            readonly equipment_type?: number | null;
+            readonly equipment_type_name?: string | null;
             service_type?: components["schemas"]["ServiceTypeEnum"];
             readonly status?: components["schemas"]["ServiceOrderStatusEnum"];
             /** Format: date */
@@ -3206,6 +3208,8 @@ export interface components {
             readonly customer_name: string;
             equipment?: number | null;
             readonly equipment_name: string;
+            readonly equipment_type: number | null;
+            readonly equipment_type_name: string | null;
             service_type?: components["schemas"]["ServiceTypeEnum"];
             readonly status: components["schemas"]["ServiceOrderStatusEnum"];
             /** Format: date */
