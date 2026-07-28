@@ -31,7 +31,6 @@ interface FormValues {
   default_margin_percentage: number | string;
   main_supplier: string | null;
   compatible_equipment_types: string[];
-  compatible_models: string;
   description: string;
 }
 
@@ -49,7 +48,6 @@ const EMPTY: FormValues = {
   default_margin_percentage: 0,
   main_supplier: null,
   compatible_equipment_types: [],
-  compatible_models: "",
   description: "",
 };
 
@@ -204,21 +202,13 @@ export function ProductFormModal({
           </Grid.Col>
           <Grid.Col span={12}>
             <MultiSelect
-              label="Equipos compatibles"
+              label="Modelos compatibles"
               data={(types.data ?? []).map((t) => ({
                 value: String(t.id),
                 label: t.name,
               }))}
               searchable
               {...form.getInputProps("compatible_equipment_types")}
-            />
-          </Grid.Col>
-          <Grid.Col span={12}>
-            <Textarea
-              label="Modelos compatibles"
-              autosize
-              minRows={2}
-              {...form.getInputProps("compatible_models")}
             />
           </Grid.Col>
           <Grid.Col span={12}>

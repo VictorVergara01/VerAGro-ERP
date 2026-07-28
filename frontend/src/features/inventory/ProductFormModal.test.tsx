@@ -45,4 +45,22 @@ describe("ProductFormModal", () => {
       sku: "",
     });
   });
+
+  it("etiqueta el multiselect como 'Modelos compatibles' y no muestra textarea de texto libre", () => {
+    renderModal();
+    expect(screen.getByRole("combobox", { name: /Modelos/ })).toBeInTheDocument();
+    // El textarea redundante de texto libre ya no existe.
+    expect(screen.queryByLabelText("Modelos compatibles (texto)")).toBeNull();
+  });
+
+  it("no envía compatible_models en el payload", async () => {
+    saveMutate.mockClear();
+    renderModal();
+    fireEvent.change(screen.getByLabelText(/Nombre/), {
+      target: { value: "P" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    await waitFor(() => expect(saveMutate).toHaveBeenCalledTimes(1));
+    expect(saveMutate.mock.calls[0][0]).not.toHaveProperty("compatible_models");
+  });
 });
