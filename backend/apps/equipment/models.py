@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from apps.core.models import TimeStampedModel
 
@@ -48,6 +49,68 @@ class EquipmentModel(TimeStampedModel):
 
     def __str__(self):
         return f"{self.brand} {self.name}"
+
+
+class EquipmentComponent(TimeStampedModel):
+    class ComponentType(models.TextChoices):
+        ASSEMBLY = "assembly", "Conjunto"
+        POSITION = "position", "Posición reemplazable"
+
+    equipment_model = models.ForeignKey(
+        EquipmentModel, on_delete=models.CASCADE, related_name="components"
+    )
+    parent = models.ForeignKey(
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="children"
+    )
+    code = models.CharField(max_length=100)
+    name = models.CharField(max_length=150)
+    component_type = models.CharField(
+        max_length=20, choices=ComponentType.choices, default=ComponentType.POSITION
+    )
+    diagram_key = models.CharField(max_length=100, blank=True, default="")
+    position = models.CharField(max_length=100, blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("sort_order", "name")
+        indexes = [
+            models.Index(fields=["equipment_model"]),
+            models.Index(fields=["parent"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["equipment_model", "code"], name="uniq_component_model_code"
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def path(self):
+        names, node, seen = [], self, set()
+        while node is not None and node.pk not in seen:
+            seen.add(node.pk)
+            names.append(node.name)
+            node = node.parent
+        return " > ".join(reversed(names))
+
+    def clean(self):
+        if self.parent_id:
+            if self.parent.equipment_model_id != self.equipment_model_id:
+                raise ValidationError(
+                    {"parent": "El padre debe pertenecer al mismo modelo técnico."}
+                )
+            ancestor, seen = self.parent, set()
+            while ancestor is not None:
+                if ancestor.pk == self.pk:
+                    raise ValidationError({"parent": "Relación cíclica no permitida."})
+                if ancestor.pk in seen:
+                    break
+                seen.add(ancestor.pk)
+                ancestor = ancestor.parent
 
 
 class Equipment(TimeStampedModel):
