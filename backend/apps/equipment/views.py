@@ -114,3 +114,35 @@ class EquipmentModelViewSet(viewsets.ModelViewSet):
         model = self.get_object()
         components = model.components.filter(is_active=True)
         return Response(serialize_component_tree(components))
+
+
+class EquipmentComponentViewSet(viewsets.ModelViewSet):
+    """CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+    Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active."""
+
+    serializer_class = EquipmentComponentSerializer
+    permission_classes = [RoleWriteOrReadOnly(*roles.LOOKUPS_WRITE)]
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = EquipmentComponent.objects.select_related("parent", "equipment_model")
+        params = self.request.query_params
+        if params.get("include_inactive", "").lower() not in ("1", "true", "yes", "on"):
+            qs = qs.filter(is_active=True)
+        model = params.get("equipment_model")
+        if model:
+            try:
+                qs = qs.filter(equipment_model_id=int(model))
+            except (TypeError, ValueError):
+                raise ValidationError({"equipment_model": "Debe ser un id numérico."})
+        parent = params.get("parent")
+        if parent:
+            try:
+                qs = qs.filter(parent_id=int(parent))
+            except (TypeError, ValueError):
+                raise ValidationError({"parent": "Debe ser un id numérico."})
+        return qs
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=["is_active", "updated_at"])

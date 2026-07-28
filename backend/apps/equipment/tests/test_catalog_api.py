@@ -72,3 +72,42 @@ def test_model_write_requires_role(drone):
         format="json",
     )
     assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_component_crud_and_filter(inv_client, drone):
+    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50")
+    root = inv_client.post(
+        "/api/equipment/components/",
+        {"equipment_model": m.id, "code": "propulsion", "name": "Propulsión", "component_type": "assembly"},
+        format="json",
+    )
+    assert root.status_code == 201, root.data
+    child = inv_client.post(
+        "/api/equipment/components/",
+        {"equipment_model": m.id, "parent": root.data["id"], "code": "motor", "name": "Motor"},
+        format="json",
+    )
+    assert child.status_code == 201
+    assert child.data["path"] == "Propulsión > Motor"
+    # Filtro por modelo
+    by_model = inv_client.get(f"/api/equipment/components/?equipment_model={m.id}")
+    codes = [c["code"] for c in by_model.data]
+    assert set(codes) == {"propulsion", "motor"}
+    # Filtro por parent
+    by_parent = inv_client.get(f"/api/equipment/components/?parent={root.data['id']}")
+    assert [c["code"] for c in by_parent.data] == ["motor"]
+
+
+@pytest.mark.django_db
+def test_component_rejects_parent_of_other_model(inv_client, drone):
+    m1 = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="A", model_code="A")
+    m2 = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="B", model_code="B")
+    p = EquipmentComponent.objects.create(equipment_model=m1, code="a", name="A")
+    resp = inv_client.post(
+        "/api/equipment/components/",
+        {"equipment_model": m2.id, "parent": p.id, "code": "b", "name": "B"},
+        format="json",
+    )
+    assert resp.status_code == 400
+    assert "parent" in resp.data
