@@ -17,9 +17,14 @@ vi.mock("./api", () => ({
   useSaveProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSupplierOptions: () => ({ data: [] }),
   useAdjustStock: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useComponentsByModel: () => ({ data: [] }),
+  useProductCompatibilities: () => ({ data: [] }),
+  useSaveCompatibility: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteCompatibility: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("../equipment/api", () => ({
   useEquipmentTypes: () => ({ data: [] }),
+  useEquipmentModels: () => ({ data: [] }),
 }));
 vi.mock("../auth/useAuth", () => ({
   useAuth: () => ({ user: { role: "super_admin" } }),

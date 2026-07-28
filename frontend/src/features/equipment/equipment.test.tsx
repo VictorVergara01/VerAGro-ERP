@@ -12,6 +12,7 @@ vi.mock("./api", () => ({
   useDeleteEquipment: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useEquipmentTypes: () => ({ data: [{ id: 1, name: "Drone agrícola" }] }),
   useSaveEquipment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useEquipmentModels: () => ({ data: [] }),
 }));
 // El form usa useCustomers; lo mockeamos para no tocar la red.
 vi.mock("../customers/api", () => ({
