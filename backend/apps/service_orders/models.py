@@ -102,6 +102,13 @@ class ServiceOrderPart(TimeStampedModel):
     product = models.ForeignKey(
         "inventory.Product", on_delete=models.PROTECT, related_name="service_parts"
     )
+    component = models.ForeignKey(
+        "equipment.EquipmentComponent",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="service_order_parts",
+    )
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
