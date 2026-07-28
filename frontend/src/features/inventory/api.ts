@@ -3,6 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import type { Paginated, Schemas } from "../../lib/api/types";
 import type { InventoryMovement, Product, ProductCategory } from "./types";
+import type {
+  EquipmentComponent,
+  ProductCompatibility,
+} from "../equipment/catalogTypes";
 
 export interface ProductListParams {
   search?: string;
@@ -183,6 +187,71 @@ export function useAdjustStock() {
     onSuccess: (_d, vars) => {
       void qc.invalidateQueries({ queryKey: ["products"] });
       void qc.invalidateQueries({ queryKey: ["product", vars.product] });
+    },
+  });
+}
+
+export function useComponentsByModel(modelId: number | undefined) {
+  return useQuery({
+    queryKey: ["equipment-components", modelId],
+    enabled: modelId != null,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/equipment/components/", {
+        params: { query: { equipment_model: modelId } } as any,
+      });
+      if (error || !data) throw new Error("No se pudieron cargar los componentes.");
+      return data as unknown as EquipmentComponent[];
+    },
+  });
+}
+
+export function useProductCompatibilities(productId: number | undefined) {
+  return useQuery({
+    queryKey: ["product-compatibilities", productId],
+    enabled: productId != null,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/inventory/product-compatibilities/", {
+        params: { query: { product: productId } } as any,
+      });
+      if (error || !data) throw new Error("No se pudieron cargar las compatibilidades.");
+      return (data as unknown as Paginated<ProductCompatibility>).results;
+    },
+  });
+}
+
+export function useSaveCompatibility() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      product: number;
+      equipment_model: number;
+      component: number;
+      is_primary: boolean;
+      notes: string;
+    }) => {
+      const { data, error } = await api.POST("/api/inventory/product-compatibilities/", {
+        body: payload as any,
+      });
+      if (error) throw new Error("No se pudo guardar la compatibilidad.");
+      return data as unknown as ProductCompatibility;
+    },
+    onSuccess: (_d, vars) => {
+      void qc.invalidateQueries({ queryKey: ["product-compatibilities", vars.product] });
+    },
+  });
+}
+
+export function useDeleteCompatibility(productId: number | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/inventory/product-compatibilities/{id}/", {
+        params: { path: { id } },
+      });
+      if (error) throw new Error("No se pudo eliminar la compatibilidad.");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["product-compatibilities", productId] });
     },
   });
 }

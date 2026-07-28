@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import type { Paginated } from "../../lib/api/types";
 import type { Equipment, EquipmentType } from "./types";
+import type { EquipmentModel } from "./catalogTypes";
 
 export interface EquipmentListParams {
   search?: string;
@@ -55,6 +56,18 @@ export function useEquipmentTypes() {
       const { data, error } = await api.GET("/api/equipment/types/");
       if (error || !data) throw new Error("No se pudieron cargar los tipos.");
       return data as unknown as EquipmentType[];
+    },
+  });
+}
+
+export function useEquipmentModels() {
+  return useQuery({
+    queryKey: ["equipment-models"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/equipment/models/");
+      if (error || !data) throw new Error("No se pudieron cargar los modelos técnicos.");
+      return data as unknown as EquipmentModel[];
     },
   });
 }
