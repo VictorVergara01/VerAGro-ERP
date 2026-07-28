@@ -20,6 +20,9 @@ class ServiceOrderPhotoSerializer(serializers.ModelSerializer):
 class ServiceOrderPartSerializer(serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
     product_name = serializers.CharField(source="product.name", read_only=True)
+    component_name = serializers.CharField(source="component.name", read_only=True, default=None)
+    component_code = serializers.CharField(source="component.code", read_only=True, default=None)
+    component_path = serializers.CharField(source="component.path", read_only=True, default=None)
 
     class Meta:
         model = ServiceOrderPart
@@ -29,6 +32,10 @@ class ServiceOrderPartSerializer(serializers.ModelSerializer):
             "product",
             "product_sku",
             "product_name",
+            "component",
+            "component_name",
+            "component_code",
+            "component_path",
             "quantity",
             "unit_cost",
             "unit_price",
@@ -58,6 +65,37 @@ class ServiceOrderPartSerializer(serializers.ModelSerializer):
         if product is not None:
             attrs.setdefault("unit_cost", product.average_cost)
             attrs.setdefault("unit_price", product.sale_price)
+
+        # Modo estructurado: si llega componente, validar compatibilidad en backend.
+        component = attrs.get("component")
+        if component is not None:
+            from apps.inventory.models import ProductCompatibility
+
+            order = attrs.get("service_order") or getattr(
+                self.instance, "service_order", None
+            )
+            equipment = getattr(order, "equipment", None) if order else None
+            if equipment is None:
+                raise serializers.ValidationError(
+                    {"component": "La orden no tiene equipo; no se puede usar el despiece."}
+                )
+            if equipment.catalog_model_id is None:
+                raise serializers.ValidationError(
+                    {"component": "El equipo no tiene un modelo técnico asignado."}
+                )
+            if component.equipment_model_id != equipment.catalog_model_id:
+                raise serializers.ValidationError(
+                    {"component": "El componente no pertenece al modelo del equipo."}
+                )
+            compatible = ProductCompatibility.objects.filter(
+                product=product,
+                equipment_model_id=equipment.catalog_model_id,
+                component=component,
+            ).exists()
+            if not compatible:
+                raise serializers.ValidationError(
+                    {"component": "El producto no es compatible con este componente."}
+                )
         return attrs
 
 
@@ -70,6 +108,12 @@ class ServiceOrderSerializer(serializers.ModelSerializer):
     )
     equipment_type_name = serializers.CharField(
         source="equipment.equipment_type.name", read_only=True, allow_null=True
+    )
+    equipment_catalog_model = serializers.IntegerField(
+        source="equipment.catalog_model_id", read_only=True, allow_null=True
+    )
+    equipment_catalog_model_name = serializers.CharField(
+        source="equipment.catalog_model.name", read_only=True, allow_null=True
     )
     technician_name = serializers.CharField(
         source="technician.full_name", read_only=True
@@ -86,6 +130,8 @@ class ServiceOrderSerializer(serializers.ModelSerializer):
             "equipment_name",
             "equipment_type",
             "equipment_type_name",
+            "equipment_catalog_model",
+            "equipment_catalog_model_name",
             "service_type",
             "status",
             "received_date",

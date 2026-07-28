@@ -76,8 +76,12 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = ServiceOrder.objects.select_related(
-            "customer", "equipment", "equipment__equipment_type", "technician"
-        ).prefetch_related("parts__product")
+            "customer",
+            "equipment",
+            "equipment__equipment_type",
+            "equipment__catalog_model",
+            "technician",
+        ).prefetch_related("parts__product", "parts__component")
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),
