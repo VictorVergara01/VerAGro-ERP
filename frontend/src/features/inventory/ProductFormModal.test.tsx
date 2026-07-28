@@ -48,9 +48,9 @@ describe("ProductFormModal", () => {
 
   it("etiqueta el multiselect como 'Modelos compatibles' y no muestra textarea de texto libre", () => {
     renderModal();
-    expect(screen.getByRole("combobox", { name: /Modelos/ })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Modelos compatibles" })).toBeInTheDocument();
     // El textarea redundante de texto libre ya no existe.
-    expect(screen.queryByLabelText("Modelos compatibles (texto)")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: /Modelos/ })).toBeNull();
   });
 
   it("no envía compatible_models en el payload", async () => {
