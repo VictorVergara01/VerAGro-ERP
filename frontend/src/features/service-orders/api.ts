@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import type { Paginated } from "../../lib/api/types";
 import type { ServiceOrder } from "./types";
+import type { ComponentTreeNode, CompatibleProductsResponse } from "./despieceTypes";
 
 export interface SOListParams {
   search?: string;
@@ -173,6 +174,7 @@ export interface AddPartInput {
   unit_cost?: string;
   unit_price?: string;
   notes?: string;
+  component?: number;
 }
 
 export function useAddPart(id: number | undefined) {
@@ -226,5 +228,48 @@ export function useGenerateDocument(id: number | undefined) {
       return data as { id: number; quote_number?: string; invoice_number?: string };
     },
     onSuccess: () => invalidate(qc, id),
+  });
+}
+
+export function useOrderComponentTree(orderId: number | undefined) {
+  return useQuery({
+    queryKey: ["order-component-tree", orderId],
+    enabled: orderId != null,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/api/service-orders/{id}/component-tree/",
+        { params: { path: { id: orderId as number } } },
+      );
+      if (error || !data)
+        throw new Error(
+          "El equipo de la orden no tiene un modelo técnico asignado.",
+        );
+      return data as unknown as ComponentTreeNode[];
+    },
+    retry: false,
+  });
+}
+
+export function useCompatibleProducts(
+  orderId: number | undefined,
+  componentId: number | undefined,
+) {
+  return useQuery({
+    queryKey: ["order-compatible", orderId, componentId],
+    enabled: orderId != null && componentId != null,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/api/service-orders/{id}/compatible-products/",
+        {
+          params: {
+            path: { id: orderId as number },
+            query: { component: componentId } as unknown as never,
+          },
+        },
+      );
+      if (error || !data)
+        throw new Error("No se pudieron cargar las piezas compatibles.");
+      return data as unknown as CompatibleProductsResponse;
+    },
   });
 }
