@@ -95,3 +95,23 @@ def test_structured_part_requires_catalog_model(tech, scenario):
         format="json",
     )
     assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_patch_part_attach_component_without_resending_product(tech, scenario):
+    _, _, comp, _, _, prod, order = scenario
+    resp = tech.post(
+        f"/api/service-orders/{order.id}/add-part/",
+        {"product": prod.id, "quantity": "1"},
+        format="json",
+    )
+    assert resp.status_code == 201, resp.data
+    part_id = resp.data["id"]
+
+    resp = tech.patch(
+        f"/api/service-order-parts/{part_id}/",
+        {"component": comp.id},
+        format="json",
+    )
+    assert resp.status_code == 200, resp.data
+    assert resp.data["component"] == comp.id

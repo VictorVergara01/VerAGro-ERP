@@ -61,7 +61,7 @@ class ServiceOrderPartSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Defaults de costo/precio desde el producto si no se envían.
-        product = attrs.get("product")
+        product = attrs.get("product") or getattr(self.instance, "product", None)
         if product is not None:
             attrs.setdefault("unit_cost", product.average_cost)
             attrs.setdefault("unit_price", product.sale_price)
