@@ -20,6 +20,7 @@ import {
   IconDownload,
   IconEdit,
   IconEye,
+  IconLink,
   IconPlus,
   IconSearch,
   IconTrash,
@@ -44,6 +45,7 @@ import {
 } from "./api";
 import { ImportModal } from "./ImportModal";
 import { downloadProductsCsv } from "./importExport";
+import { ProductCompatibilityModal } from "./ProductCompatibilityModal";
 import { ProductFormModal } from "./ProductFormModal";
 import type { Product } from "./types";
 
@@ -57,6 +59,7 @@ export function InventoryPage() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [editing, setEditing] = useState<Product | null>(null);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
+  const [compatProduct, setCompatProduct] = useState<Product | null>(null);
   const [formOpen, { open: openForm, close: closeForm }] = useDisclosure(false);
   const [adjustOpen, { open: openAdjust, close: closeAdjust }] = useDisclosure(false);
   const [importOpen, { open: openImport, close: closeImport }] = useDisclosure(false);
@@ -243,6 +246,13 @@ export function InventoryPage() {
           >
             <IconAdjustments size={18} />
           </ActionIcon>
+          <ActionIcon
+            variant="subtle"
+            aria-label="Compatibilidad técnica"
+            onClick={() => setCompatProduct(p)}
+          >
+            <IconLink size={18} />
+          </ActionIcon>
           <ActionIcon variant="subtle" onClick={() => navigate(`/inventory/${p.id}`)}>
             <IconEye size={18} />
           </ActionIcon>
@@ -386,6 +396,11 @@ export function InventoryPage() {
       <ProductFormModal opened={formOpen} onClose={closeForm} product={editing} />
       <AdjustStockModal opened={adjustOpen} onClose={closeAdjust} product={adjusting} />
       <ImportModal opened={importOpen} onClose={closeImport} />
+      <ProductCompatibilityModal
+        opened={compatProduct != null}
+        onClose={() => setCompatProduct(null)}
+        product={compatProduct}
+      />
     </Stack>
   );
 }
