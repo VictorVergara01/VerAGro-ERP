@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.models import TimeStampedModel
@@ -100,3 +101,49 @@ class InventoryMovement(TimeStampedModel):
 
     def __str__(self):
         return f"{self.movement_type} {self.quantity} x {self.product}"
+
+
+class ProductCompatibility(TimeStampedModel):
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="compatibilities"
+    )
+    equipment_model = models.ForeignKey(
+        "equipment.EquipmentModel",
+        on_delete=models.CASCADE,
+        related_name="product_compatibilities",
+    )
+    component = models.ForeignKey(
+        "equipment.EquipmentComponent",
+        on_delete=models.CASCADE,
+        related_name="product_compatibilities",
+    )
+    is_primary = models.BooleanField(default=False)
+    notes = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        ordering = ("id",)
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["equipment_model"]),
+            models.Index(fields=["component"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["product", "equipment_model", "component"],
+                name="uniq_product_model_component",
+            )
+        ]
+        verbose_name_plural = "Product compatibilities"
+
+    def __str__(self):
+        return f"{self.product} → {self.component}"
+
+    def clean(self):
+        if (
+            self.component_id
+            and self.equipment_model_id
+            and self.component.equipment_model_id != self.equipment_model_id
+        ):
+            raise ValidationError(
+                {"component": "El componente no pertenece al modelo indicado."}
+            )
