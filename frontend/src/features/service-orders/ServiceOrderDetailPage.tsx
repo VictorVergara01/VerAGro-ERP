@@ -32,6 +32,7 @@ import { isAdmin as isAdminRole } from "../auth/roles";
 import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AddPartModal } from "./AddPartModal";
+import { InteractivePartsTab } from "./components/InteractivePartsTab";
 import {
   useDeletePart,
   useGenerateDocument,
@@ -276,11 +277,15 @@ export function ServiceOrderDetailPage() {
         </Grid>
       </Card>
 
-      <Tabs defaultValue="parts">
+      <Tabs defaultValue="despiece">
         <Tabs.List>
+          <Tabs.Tab value="despiece">Despiece</Tabs.Tab>
           <Tabs.Tab value="parts">Piezas</Tabs.Tab>
           <Tabs.Tab value="checklist">Checklist</Tabs.Tab>
         </Tabs.List>
+        <Tabs.Panel value="despiece" pt="md">
+          <InteractivePartsTab order={order} />
+        </Tabs.Panel>
         <Tabs.Panel value="parts" pt="md">
           <Card>
             <Group justify="space-between" mb="sm">
