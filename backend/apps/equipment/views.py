@@ -6,8 +6,13 @@ from rest_framework.response import Response
 from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
-from .models import Equipment, EquipmentType
+from .models import Equipment, EquipmentType, EquipmentModel, EquipmentComponent
 from .serializers import EquipmentSerializer, EquipmentTypeSerializer
+from .catalog_serializers import (
+    EquipmentModelSerializer,
+    EquipmentComponentSerializer,
+    serialize_component_tree,
+)
 
 
 class EquipmentTypeViewSet(viewsets.ModelViewSet):
@@ -77,3 +82,35 @@ class EquipmentViewSet(viewsets.ModelViewSet):
             serializer = ServiceOrderSummarySerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         return Response(ServiceOrderSummarySerializer(qs, many=True).data)
+
+
+class EquipmentModelViewSet(viewsets.ModelViewSet):
+    """CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+    Sin paginación (alimenta selectores). Soft-delete vía is_active."""
+
+    serializer_class = EquipmentModelSerializer
+    permission_classes = [RoleWriteOrReadOnly(*roles.LOOKUPS_WRITE)]
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = EquipmentModel.objects.select_related("equipment_type")
+        params = self.request.query_params
+        if params.get("include_inactive", "").lower() not in ("1", "true", "yes", "on"):
+            qs = qs.filter(is_active=True)
+        etype = params.get("equipment_type")
+        if etype:
+            try:
+                qs = qs.filter(equipment_type_id=int(etype))
+            except (TypeError, ValueError):
+                raise ValidationError({"equipment_type": "Debe ser un id numérico."})
+        return qs
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=["is_active", "updated_at"])
+
+    @action(detail=True, methods=["get"], url_path="component-tree")
+    def component_tree(self, request, pk=None):
+        model = self.get_object()
+        components = model.components.filter(is_active=True)
+        return Response(serialize_component_tree(components))
