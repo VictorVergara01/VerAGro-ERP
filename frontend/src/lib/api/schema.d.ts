@@ -303,6 +303,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/equipment/components/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active.
+         */
+        get: operations["equipment_components_list"];
+        put?: never;
+        /**
+         * @description CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active.
+         */
+        post: operations["equipment_components_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/components/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active.
+         */
+        get: operations["equipment_components_retrieve"];
+        /**
+         * @description CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active.
+         */
+        put: operations["equipment_components_update"];
+        post?: never;
+        /**
+         * @description CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active.
+         */
+        delete: operations["equipment_components_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description CRUD de componentes del árbol. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta el árbol/selectores). Soft-delete vía is_active.
+         */
+        patch: operations["equipment_components_partial_update"];
+        trace?: never;
+    };
+    "/api/equipment/models/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        get: operations["equipment_models_list"];
+        put?: never;
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        post: operations["equipment_models_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/models/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        get: operations["equipment_models_retrieve"];
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        put: operations["equipment_models_update"];
+        post?: never;
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        delete: operations["equipment_models_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        patch: operations["equipment_models_partial_update"];
+        trace?: never;
+    };
+    "/api/equipment/models/{id}/component-tree/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description CRUD de modelos técnicos. Lectura para todos; escritura admin/inventory.
+         *     Sin paginación (alimenta selectores). Soft-delete vía is_active.
+         */
+        get: operations["equipment_models_component_tree_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/equipment/types/": {
         parameters: {
             query?: never;
@@ -553,6 +685,44 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/product-compatibilities/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory. */
+        get: operations["inventory_product_compatibilities_list"];
+        put?: never;
+        /** @description CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory. */
+        post: operations["inventory_product_compatibilities_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/product-compatibilities/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory. */
+        get: operations["inventory_product_compatibilities_retrieve"];
+        /** @description CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory. */
+        put: operations["inventory_product_compatibilities_update"];
+        post?: never;
+        /** @description CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory. */
+        delete: operations["inventory_product_compatibilities_destroy"];
+        options?: never;
+        head?: never;
+        /** @description CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory. */
+        patch: operations["inventory_product_compatibilities_partial_update"];
         trace?: never;
     };
     "/api/inventory/products/": {
@@ -1491,6 +1661,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/service-orders/{id}/compatible-products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["service_orders_compatible_products_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-orders/{id}/component-tree/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["service_orders_component_tree_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/service-orders/{id}/deliver/": {
         parameters: {
             query?: never;
@@ -1837,6 +2039,12 @@ export interface components {
             readonly updated_at: string;
         };
         /**
+         * @description * `assembly` - Conjunto
+         *     * `position` - Posición reemplazable
+         * @enum {string}
+         */
+        ComponentTypeEnum: "assembly" | "position";
+        /**
          * @description * `rice` - Arroz
          *     * `corn` - Maíz
          *     * `pasture` - Pasto
@@ -1872,6 +2080,12 @@ export interface components {
          * @enum {string}
          */
         CustomerTypeEnum: "person" | "company";
+        /**
+         * @description * `svg` - SVG
+         *     * `image` - Imagen
+         * @enum {string}
+         */
+        DiagramTypeEnum: "svg" | "image";
         Equipment: {
             readonly id: number;
             readonly customer_name: string;
@@ -1894,6 +2108,36 @@ export interface components {
             notes?: string;
             customer?: number | null;
             equipment_type: number;
+            catalog_model?: number | null;
+        };
+        EquipmentComponent: {
+            readonly id: number;
+            equipment_model: number;
+            parent?: number | null;
+            code: string;
+            name: string;
+            component_type?: components["schemas"]["ComponentTypeEnum"];
+            diagram_key?: string;
+            position?: string;
+            description?: string;
+            sort_order?: number;
+            is_active?: boolean;
+            readonly path: string;
+        };
+        EquipmentModel: {
+            readonly id: number;
+            equipment_type: number;
+            readonly equipment_type_name: string;
+            brand: string;
+            name: string;
+            model_code: string;
+            /** @default  */
+            revision: string;
+            description?: string;
+            diagram_type?: components["schemas"]["DiagramTypeEnum"];
+            /** Format: uri */
+            diagram_file?: string | null;
+            is_active?: boolean;
         };
         /**
          * @description * `active` - Activo
@@ -2207,6 +2451,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Invoice"][];
         };
+        PaginatedProductCompatibilityList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["ProductCompatibility"][];
+        };
         PaginatedProductList: {
             /** @example 123 */
             count: number;
@@ -2510,6 +2769,36 @@ export interface components {
             notes?: string;
             customer?: number | null;
             equipment_type?: number;
+            catalog_model?: number | null;
+        };
+        PatchedEquipmentComponent: {
+            readonly id?: number;
+            equipment_model?: number;
+            parent?: number | null;
+            code?: string;
+            name?: string;
+            component_type?: components["schemas"]["ComponentTypeEnum"];
+            diagram_key?: string;
+            position?: string;
+            description?: string;
+            sort_order?: number;
+            is_active?: boolean;
+            readonly path?: string;
+        };
+        PatchedEquipmentModel: {
+            readonly id?: number;
+            equipment_type?: number;
+            readonly equipment_type_name?: string;
+            brand?: string;
+            name?: string;
+            model_code?: string;
+            /** @default  */
+            revision: string;
+            description?: string;
+            diagram_type?: components["schemas"]["DiagramTypeEnum"];
+            /** Format: uri */
+            diagram_file?: string | null;
+            is_active?: boolean;
         };
         PatchedEquipmentType: {
             readonly id?: number;
@@ -2668,6 +2957,18 @@ export interface components {
             is_active?: boolean;
             /** Format: decimal */
             default_margin_percentage?: string;
+        };
+        PatchedProductCompatibility: {
+            readonly id?: number;
+            product?: number;
+            equipment_model?: number;
+            readonly equipment_model_name?: string;
+            component?: number;
+            readonly component_name?: string;
+            readonly component_code?: string;
+            readonly component_path?: string;
+            is_primary?: boolean;
+            notes?: string;
         };
         PatchedPurchaseAdditionalCost: {
             readonly id?: number;
@@ -2828,6 +3129,8 @@ export interface components {
             readonly equipment_name?: string;
             readonly equipment_type?: number | null;
             readonly equipment_type_name?: string | null;
+            readonly equipment_catalog_model?: number | null;
+            readonly equipment_catalog_model_name?: string | null;
             service_type?: components["schemas"]["ServiceTypeEnum"];
             readonly status?: components["schemas"]["ServiceOrderStatusEnum"];
             /** Format: date */
@@ -2871,6 +3174,10 @@ export interface components {
             product?: number;
             readonly product_sku?: string;
             readonly product_name?: string;
+            component?: number | null;
+            readonly component_name?: string;
+            readonly component_code?: string;
+            readonly component_path?: string;
             /** Format: decimal */
             quantity?: string;
             /** Format: decimal */
@@ -3010,6 +3317,18 @@ export interface components {
             is_active?: boolean;
             /** Format: decimal */
             default_margin_percentage?: string;
+        };
+        ProductCompatibility: {
+            readonly id: number;
+            product: number;
+            equipment_model: number;
+            readonly equipment_model_name: string;
+            component: number;
+            readonly component_name: string;
+            readonly component_code: string;
+            readonly component_path: string;
+            is_primary?: boolean;
+            notes?: string;
         };
         PurchaseAdditionalCost: {
             readonly id: number;
@@ -3210,6 +3529,8 @@ export interface components {
             readonly equipment_name: string;
             readonly equipment_type: number | null;
             readonly equipment_type_name: string | null;
+            readonly equipment_catalog_model: number | null;
+            readonly equipment_catalog_model_name: string | null;
             service_type?: components["schemas"]["ServiceTypeEnum"];
             readonly status: components["schemas"]["ServiceOrderStatusEnum"];
             /** Format: date */
@@ -3253,6 +3574,10 @@ export interface components {
             product: number;
             readonly product_sku: string;
             readonly product_name: string;
+            component?: number | null;
+            readonly component_name: string;
+            readonly component_code: string;
+            readonly component_path: string;
             /** Format: decimal */
             quantity: string;
             /** Format: decimal */
@@ -4299,6 +4624,314 @@ export interface operations {
             };
         };
     };
+    equipment_components_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentComponent"][];
+                };
+            };
+        };
+    };
+    equipment_components_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentComponent"];
+                "application/x-www-form-urlencoded": components["schemas"]["EquipmentComponent"];
+                "multipart/form-data": components["schemas"]["EquipmentComponent"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentComponent"];
+                };
+            };
+        };
+    };
+    equipment_components_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment component. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentComponent"];
+                };
+            };
+        };
+    };
+    equipment_components_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment component. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentComponent"];
+                "application/x-www-form-urlencoded": components["schemas"]["EquipmentComponent"];
+                "multipart/form-data": components["schemas"]["EquipmentComponent"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentComponent"];
+                };
+            };
+        };
+    };
+    equipment_components_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment component. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    equipment_components_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment component. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedEquipmentComponent"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedEquipmentComponent"];
+                "multipart/form-data": components["schemas"]["PatchedEquipmentComponent"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentComponent"];
+                };
+            };
+        };
+    };
+    equipment_models_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentModel"][];
+                };
+            };
+        };
+    };
+    equipment_models_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentModel"];
+                "application/x-www-form-urlencoded": components["schemas"]["EquipmentModel"];
+                "multipart/form-data": components["schemas"]["EquipmentModel"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentModel"];
+                };
+            };
+        };
+    };
+    equipment_models_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment model. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentModel"];
+                };
+            };
+        };
+    };
+    equipment_models_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment model. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentModel"];
+                "application/x-www-form-urlencoded": components["schemas"]["EquipmentModel"];
+                "multipart/form-data": components["schemas"]["EquipmentModel"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentModel"];
+                };
+            };
+        };
+    };
+    equipment_models_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment model. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    equipment_models_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment model. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedEquipmentModel"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedEquipmentModel"];
+                "multipart/form-data": components["schemas"]["PatchedEquipmentModel"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentModel"];
+                };
+            };
+        };
+    };
+    equipment_models_component_tree_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this equipment model. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentModel"];
+                };
+            };
+        };
+    };
     equipment_types_list: {
         parameters: {
             query?: never;
@@ -4884,6 +5517,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Product"][];
+                };
+            };
+        };
+    };
+    inventory_product_compatibilities_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedProductCompatibilityList"];
+                };
+            };
+        };
+    };
+    inventory_product_compatibilities_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCompatibility"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProductCompatibility"];
+                "multipart/form-data": components["schemas"]["ProductCompatibility"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCompatibility"];
+                };
+            };
+        };
+    };
+    inventory_product_compatibilities_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product compatibility. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCompatibility"];
+                };
+            };
+        };
+    };
+    inventory_product_compatibilities_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product compatibility. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCompatibility"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProductCompatibility"];
+                "multipart/form-data": components["schemas"]["ProductCompatibility"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCompatibility"];
+                };
+            };
+        };
+    };
+    inventory_product_compatibilities_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product compatibility. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    inventory_product_compatibilities_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product compatibility. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProductCompatibility"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProductCompatibility"];
+                "multipart/form-data": components["schemas"]["PatchedProductCompatibility"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCompatibility"];
                 };
             };
         };
@@ -7488,6 +8269,50 @@ export interface operations {
                 "multipart/form-data": components["schemas"]["ServiceOrder"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceOrder"];
+                };
+            };
+        };
+    };
+    service_orders_compatible_products_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service order. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceOrder"];
+                };
+            };
+        };
+    };
+    service_orders_component_tree_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service order. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
