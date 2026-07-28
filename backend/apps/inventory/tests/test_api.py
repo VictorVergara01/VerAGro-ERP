@@ -256,3 +256,40 @@ def test_create_product_with_duplicate_sku_returns_400(inv_client):
         format="json",
     )
     assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_filter_by_equipment_type(inv_client):
+    from apps.equipment.models import EquipmentType
+
+    t50 = EquipmentType.objects.create(name="Agras T50")
+    gen = EquipmentType.objects.create(name="Generador D12500")
+    p_t50 = Product.objects.create(sku="ET-1", name="Impeller")
+    p_t50.compatible_equipment_types.add(t50)
+    p_both = Product.objects.create(sku="ET-2", name="Tornillo comun")
+    p_both.compatible_equipment_types.add(t50, gen)
+    Product.objects.create(sku="ET-3", name="Sin modelo")
+
+    resp = inv_client.get(f"/api/inventory/products/?equipment_type={t50.id}")
+    names = sorted(p["name"] for p in resp.data["results"])
+    assert names == ["Impeller", "Tornillo comun"]
+
+
+@pytest.mark.django_db
+def test_filter_equipment_type_no_duplicates(inv_client):
+    from apps.equipment.models import EquipmentType
+
+    t50 = EquipmentType.objects.create(name="Agras T50")
+    gen = EquipmentType.objects.create(name="Generador D12500")
+    p = Product.objects.create(sku="DUP-ET", name="Multi")
+    p.compatible_equipment_types.add(t50, gen)
+
+    resp = inv_client.get(f"/api/inventory/products/?equipment_type={t50.id}")
+    skus = [x["sku"] for x in resp.data["results"]]
+    assert skus.count("DUP-ET") == 1  # sin duplicados por el join M2M
+
+
+@pytest.mark.django_db
+def test_invalid_equipment_type_filter_returns_400(inv_client):
+    resp = inv_client.get("/api/inventory/products/?equipment_type=abc")
+    assert resp.status_code == 400

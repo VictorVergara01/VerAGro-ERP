@@ -43,6 +43,16 @@ class ProductViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(category_id=int(category))
             except (TypeError, ValueError):
                 raise ValidationError({"category": "Debe ser un id numérico."})
+        equipment_type = params.get("equipment_type")
+        if equipment_type:
+            try:
+                qs = qs.filter(
+                    compatible_equipment_types__id=int(equipment_type)
+                ).distinct()
+            except (TypeError, ValueError):
+                raise ValidationError(
+                    {"equipment_type": "Debe ser un id numérico."}
+                )
         return qs
 
     def perform_destroy(self, instance):
