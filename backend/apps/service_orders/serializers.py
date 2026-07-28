@@ -65,6 +65,12 @@ class ServiceOrderSerializer(serializers.ModelSerializer):
     parts = ServiceOrderPartSerializer(many=True, read_only=True)
     customer_name = serializers.CharField(source="customer.name", read_only=True)
     equipment_name = serializers.CharField(source="equipment.name", read_only=True)
+    equipment_type = serializers.IntegerField(
+        source="equipment.equipment_type_id", read_only=True, allow_null=True
+    )
+    equipment_type_name = serializers.CharField(
+        source="equipment.equipment_type.name", read_only=True, allow_null=True
+    )
     technician_name = serializers.CharField(
         source="technician.full_name", read_only=True
     )
@@ -78,6 +84,8 @@ class ServiceOrderSerializer(serializers.ModelSerializer):
             "customer_name",
             "equipment",
             "equipment_name",
+            "equipment_type",
+            "equipment_type_name",
             "service_type",
             "status",
             "received_date",

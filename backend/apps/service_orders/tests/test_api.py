@@ -260,3 +260,25 @@ def test_equipment_service_history(tech_client, customer):
     resp = tech_client.get(f"/api/equipment/{eq.id}/service-history/")
     assert resp.status_code == 200
     assert resp.data["count"] == 1
+
+
+@pytest.mark.django_db
+def test_order_exposes_equipment_type(tech_client, customer):
+    etype = EquipmentType.objects.create(name="Agras T50")
+    eq = Equipment.objects.create(
+        name="Dron 1", customer=customer, equipment_type=etype
+    )
+    o = ServiceOrder.objects.create(customer=customer, equipment=eq)
+    resp = tech_client.get(f"/api/service-orders/{o.id}/")
+    assert resp.status_code == 200
+    assert resp.data["equipment_type"] == etype.id
+    assert resp.data["equipment_type_name"] == "Agras T50"
+
+
+@pytest.mark.django_db
+def test_order_without_equipment_has_null_equipment_type(tech_client, customer):
+    o = ServiceOrder.objects.create(customer=customer)
+    resp = tech_client.get(f"/api/service-orders/{o.id}/")
+    assert resp.status_code == 200
+    assert resp.data["equipment_type"] is None
+    assert resp.data["equipment_type_name"] is None
