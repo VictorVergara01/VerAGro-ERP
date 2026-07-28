@@ -115,3 +115,31 @@ def test_patch_part_attach_component_without_resending_product(tech, scenario):
     )
     assert resp.status_code == 200, resp.data
     assert resp.data["component"] == comp.id
+
+
+@pytest.mark.django_db
+def test_order_component_tree(tech, scenario):
+    _, m, comp, other_comp, _, _, order = scenario
+    resp = tech.get(f"/api/service-orders/{order.id}/component-tree/")
+    assert resp.status_code == 200
+    codes = {n["code"] for n in resp.data}
+    assert {"motor_m1", "prop_m1"} <= codes
+
+
+@pytest.mark.django_db
+def test_order_component_tree_without_catalog_model_400(tech):
+    cli = Customer.objects.create(name="C")
+    order = ServiceOrder.objects.create(customer=cli)  # sin equipo
+    resp = tech.get(f"/api/service-orders/{order.id}/component-tree/")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_order_compatible_products(tech, scenario):
+    _, m, comp, _, _, prod, order = scenario
+    resp = tech.get(f"/api/service-orders/{order.id}/compatible-products/?component={comp.id}")
+    assert resp.status_code == 200
+    assert resp.data["equipment_model"]["id"] == m.id
+    assert resp.data["component"]["path"] == "Motor"
+    assert [p["sku"] for p in resp.data["products"]] == ["MOT-1"]
+    assert resp.data["products"][0]["available_quantity"] is not None

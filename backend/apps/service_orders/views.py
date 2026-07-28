@@ -264,6 +264,74 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             InvoiceSerializer(invoice).data, status=http_status.HTTP_201_CREATED
         )
 
+    # --- Catálogo técnico (árbol de componentes / productos compatibles) ---
+    @action(detail=True, methods=["get"], url_path="component-tree")
+    def component_tree(self, request, pk=None):
+        from apps.equipment.catalog_serializers import serialize_component_tree
+
+        order = self.get_object()
+        equipment = order.equipment
+        model = getattr(equipment, "catalog_model", None) if equipment else None
+        if model is None:
+            raise ValidationError(
+                {"detail": "El equipo de la orden no tiene un modelo técnico asignado."}
+            )
+        components = model.components.filter(is_active=True)
+        return Response(serialize_component_tree(components))
+
+    @action(detail=True, methods=["get"], url_path="compatible-products")
+    def compatible_products(self, request, pk=None):
+        from apps.equipment.models import EquipmentComponent
+        from apps.inventory.models import ProductCompatibility
+
+        order = self.get_object()
+        equipment = order.equipment
+        model = getattr(equipment, "catalog_model", None) if equipment else None
+        if model is None:
+            raise ValidationError(
+                {"detail": "El equipo de la orden no tiene un modelo técnico asignado."}
+            )
+        component_id = _int_param(request.query_params, "component")
+        if component_id is None:
+            raise ValidationError({"component": "Este parámetro es obligatorio."})
+        try:
+            component = model.components.get(id=component_id)
+        except EquipmentComponent.DoesNotExist:
+            raise ValidationError(
+                {"component": "El componente no pertenece al modelo del equipo."}
+            )
+        compat = (
+            ProductCompatibility.objects.filter(
+                equipment_model=model, component=component, product__is_active=True
+            )
+            .select_related("product")
+        )
+        products = [
+            {
+                "id": c.product.id,
+                "sku": c.product.sku,
+                "name": c.product.name,
+                "stock_quantity": str(c.product.stock_quantity),
+                "reserved_quantity": str(c.product.reserved_quantity),
+                "available_quantity": str(c.product.available_quantity),
+                "sale_price": str(c.product.sale_price),
+                "location": c.product.location,
+                "is_primary": c.is_primary,
+            }
+            for c in compat
+        ]
+        return Response(
+            {
+                "equipment_model": {"id": model.id, "name": model.name},
+                "component": {
+                    "id": component.id,
+                    "name": component.name,
+                    "path": component.path,
+                },
+                "products": products,
+            }
+        )
+
 
 class ServiceOrderPartViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceOrderPartSerializer
