@@ -7,6 +7,7 @@ import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import {
   useEquipment,
+  useEquipmentModels,
   useEquipmentServiceHistory,
   type EquipmentServiceSummary,
 } from "./api";
@@ -26,6 +27,9 @@ export function EquipmentDetailPage() {
   const equipmentId = id ? Number(id) : undefined;
   const { data: equipment, isLoading, error } = useEquipment(equipmentId);
   const history = useEquipmentServiceHistory(equipmentId);
+  const models = useEquipmentModels();
+  const catalogModelName =
+    (models.data ?? []).find((m) => m.id === equipment?.catalog_model)?.name ?? null;
 
   if (isLoading) return <Loader />;
   if (error || !equipment)
@@ -57,6 +61,9 @@ export function EquipmentDetailPage() {
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Modelo" value={equipment.model} />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}>
+            <Field label="Modelo técnico" value={catalogModelName ?? "—"} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="N.º de serie" value={equipment.serial_number} />

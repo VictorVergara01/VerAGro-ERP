@@ -12,7 +12,7 @@ import { notifications } from "@mantine/notifications";
 import { useEffect } from "react";
 
 import { useCustomers } from "../customers/api";
-import { useEquipmentTypes, useSaveEquipment } from "./api";
+import { useEquipmentModels, useEquipmentTypes, useSaveEquipment } from "./api";
 import {
   OWNER_TYPE_OPTIONS,
   STATUS_OPTIONS,
@@ -26,6 +26,7 @@ interface FormValues {
   name: string;
   brand: string;
   model: string;
+  catalog_model: string | null;
   serial_number: string;
   internal_code: string;
   purchase_date: string;
@@ -41,6 +42,7 @@ const EMPTY: FormValues = {
   name: "",
   brand: "",
   model: "",
+  catalog_model: null,
   serial_number: "",
   internal_code: "",
   purchase_date: "",
@@ -60,6 +62,7 @@ export function EquipmentFormModal({
 }) {
   const save = useSaveEquipment();
   const types = useEquipmentTypes();
+  const models = useEquipmentModels();
   const customers = useCustomers({});
   const editing = Boolean(equipment?.id);
 
@@ -86,6 +89,9 @@ export function EquipmentFormModal({
               equipment_type: equipment.equipment_type
                 ? String(equipment.equipment_type)
                 : null,
+              catalog_model: equipment.catalog_model
+                ? String(equipment.catalog_model)
+                : null,
               purchase_date: equipment.purchase_date ?? "",
               warranty_expiration: equipment.warranty_expiration ?? "",
             }
@@ -104,6 +110,22 @@ export function EquipmentFormModal({
     value: String(c.id),
     label: c.name,
   }));
+  const modelOptions = (models.data ?? [])
+    .filter((m) =>
+      form.values.equipment_type
+        ? String(m.equipment_type) === form.values.equipment_type
+        : true,
+    )
+    .map((m) => ({ value: String(m.id), label: `${m.brand} ${m.name}` }));
+
+  const onPickModel = (value: string | null) => {
+    form.setFieldValue("catalog_model", value);
+    const model = (models.data ?? []).find((m) => String(m.id) === value);
+    if (model) {
+      if (!form.values.brand.trim()) form.setFieldValue("brand", model.brand);
+      if (!form.values.model.trim()) form.setFieldValue("model", model.name);
+    }
+  };
 
   const handleSubmit = form.onSubmit(async (values) => {
     const isCompany = values.owner_type === "company";
@@ -112,6 +134,7 @@ export function EquipmentFormModal({
       id: equipment?.id,
       customer: isCompany || !values.customer ? null : Number(values.customer),
       equipment_type: values.equipment_type ? Number(values.equipment_type) : null,
+      catalog_model: values.catalog_model ? Number(values.catalog_model) : null,
       purchase_date: values.purchase_date || null,
       warranty_expiration: values.warranty_expiration || null,
     };
@@ -164,6 +187,17 @@ export function EquipmentFormModal({
               data={typeOptions}
               searchable
               {...form.getInputProps("equipment_type")}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, sm: 6 }}>
+            <Select
+              label="Modelo técnico"
+              placeholder="Opcional — catálogo de despiece"
+              data={modelOptions}
+              searchable
+              clearable
+              value={form.values.catalog_model}
+              onChange={onPickModel}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
