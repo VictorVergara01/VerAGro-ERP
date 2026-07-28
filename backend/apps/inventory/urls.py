@@ -5,12 +5,18 @@ from .views import (
     AdjustmentCreateView,
     CategoryViewSet,
     LowStockListView,
+    ProductCompatibilityViewSet,
     ProductViewSet,
 )
 
 router = SimpleRouter()
 router.register(r"inventory/products", ProductViewSet, basename="product")
 router.register(r"inventory/categories", CategoryViewSet, basename="product-category")
+router.register(
+    r"inventory/product-compatibilities",
+    ProductCompatibilityViewSet,
+    basename="product-compatibility",
+)
 
 urlpatterns = [
     path("inventory/adjustments/", AdjustmentCreateView.as_view(), name="inventory-adjustment"),

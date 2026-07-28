@@ -12,11 +12,12 @@ from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .import_export import export_products_csv, import_products_csv
-from .models import Product, ProductCategory
+from .models import Product, ProductCategory, ProductCompatibility
 from .serializers import (
     AdjustmentSerializer,
     InventoryMovementSerializer,
     ProductCategorySerializer,
+    ProductCompatibilitySerializer,
     ProductSerializer,
 )
 
@@ -125,3 +126,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         instance.is_active = False
         instance.save(update_fields=["is_active"])
+
+
+class ProductCompatibilityViewSet(viewsets.ModelViewSet):
+    """CRUD de compatibilidades pieza↔modelo↔componente. Escritura admin/inventory."""
+
+    serializer_class = ProductCompatibilitySerializer
+    permission_classes = [RoleWriteOrReadOnly(*roles.INVENTORY_WRITE)]
+
+    def get_queryset(self):
+        qs = ProductCompatibility.objects.select_related(
+            "product", "equipment_model", "component"
+        )
+        params = self.request.query_params
+        for key, field in (
+            ("product", "product_id"),
+            ("equipment_model", "equipment_model_id"),
+            ("component", "component_id"),
+        ):
+            value = params.get(key)
+            if value:
+                try:
+                    qs = qs.filter(**{field: int(value)})
+                except (TypeError, ValueError):
+                    raise ValidationError({key: "Debe ser un id numérico."})
+        return qs

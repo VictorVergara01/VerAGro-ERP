@@ -3,7 +3,7 @@ import uuid
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import InventoryMovement, Product, ProductCategory
+from .models import InventoryMovement, Product, ProductCategory, ProductCompatibility
 from .services import apply_adjustment, generate_product_sku
 
 
@@ -122,3 +122,48 @@ class AdjustmentSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         return InventoryMovementSerializer(instance).data
+
+
+class ProductCompatibilitySerializer(serializers.ModelSerializer):
+    component_name = serializers.CharField(source="component.name", read_only=True)
+    component_code = serializers.CharField(source="component.code", read_only=True)
+    component_path = serializers.CharField(source="component.path", read_only=True)
+    equipment_model_name = serializers.CharField(
+        source="equipment_model.name", read_only=True
+    )
+
+    class Meta:
+        model = ProductCompatibility
+        fields = (
+            "id",
+            "product",
+            "equipment_model",
+            "equipment_model_name",
+            "component",
+            "component_name",
+            "component_code",
+            "component_path",
+            "is_primary",
+            "notes",
+        )
+        read_only_fields = ("id",)
+
+    def validate(self, attrs):
+        instance = self.instance
+        model = attrs.get(
+            "equipment_model",
+            getattr(instance, "equipment_model", None) if instance else None,
+        )
+        component = attrs.get(
+            "component",
+            getattr(instance, "component", None) if instance else None,
+        )
+        if (
+            model is not None
+            and component is not None
+            and component.equipment_model_id != model.id
+        ):
+            raise serializers.ValidationError(
+                {"component": "El componente no pertenece al modelo indicado."}
+            )
+        return attrs
