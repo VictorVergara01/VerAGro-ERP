@@ -5,6 +5,7 @@ T50), los productos (sku/part_number/name) y una ProductCompatibility por fila.
 NO inventa números OEM: si la fila no trae 'Numero de Pieza', part_number queda vacío.
 """
 import re
+import unicodedata
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -32,6 +33,11 @@ CATEGORY_MAP = {
 }
 
 
+def _norm(text):
+    text = (text or "").strip().lower()
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
+
+
 def _slug(text):
     return re.sub(r"[^a-z0-9]+", "_", text.strip().lower()).strip("_")
 
@@ -50,6 +56,10 @@ class Command(BaseCommand):
             raise CommandError(
                 "No existe el modelo técnico T50. Corre primero seed_equipment_catalog."
             )
+        except EquipmentModel.MultipleObjectsReturned:
+            raise CommandError(
+                "Hay más de un modelo con model_code='T50'; resuélvelo antes de importar."
+            )
 
         wb = load_workbook(options["xlsx"], read_only=True, data_only=True)
         if SHEET not in wb.sheetnames:
@@ -62,7 +72,7 @@ class Command(BaseCommand):
 
         def get_component(categoria):
             nonlocal n_comp, order
-            key = (categoria or "").strip().lower()
+            key = _norm(categoria)
             if key in CATEGORY_MAP:
                 code, name = CATEGORY_MAP[key]
             else:

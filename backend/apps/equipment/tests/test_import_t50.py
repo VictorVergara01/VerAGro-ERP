@@ -71,3 +71,27 @@ def test_import_requires_model(tmp_path):
     _make_xlsx(str(xlsx))
     with pytest.raises(CommandError):
         call_command("import_agras_t50_parts", str(xlsx))
+
+
+@pytest.mark.django_db
+def test_import_matches_accented_category(t50, tmp_path):
+    # Verifica que una categoría con acentos coincida correctamente con la clave sin acento del mapa.
+    xlsx = tmp_path / "t50_accented.xlsx"
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "T50 Todas las Partes"
+    ws.append(["SKU", "Numero de Pieza", "Nombre de Pieza", "Modelo", "Categoria"])
+    # La categoría tiene acento: "Tanque de Fumigación" en lugar de "tanque de fumigacion"
+    ws.append(["T50-ACCENT-001", "TEST.001", "Test Part with Accent", "Agras T50", "Tanque de Fumigación"])
+    wb.save(str(xlsx))
+
+    call_command("import_agras_t50_parts", str(xlsx))
+
+    # Verifica que el componente existe con el código esperado (sin acento)
+    comp = EquipmentComponent.objects.get(equipment_model=t50, code="tanque_fumigacion")
+    assert comp is not None
+    # Verifica que el producto se creó y está asociado al componente correcto
+    p = Product.objects.get(sku="T50-ACCENT-001")
+    assert ProductCompatibility.objects.filter(
+        product=p, equipment_model=t50, component=comp
+    ).exists()
