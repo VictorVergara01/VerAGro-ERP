@@ -12,9 +12,9 @@ describe("EquipmentDiagram", () => {
         <EquipmentDiagram modelCode="T50" selectedKeys={new Set()} onZoneSelect={onZoneSelect} />
       </MantineProvider>,
     );
-    const arm = screen.getByRole("button", { name: /Brazo M1/i });
-    fireEvent.click(arm);
-    expect(onZoneSelect).toHaveBeenCalledWith("arm_m1");
+    const tanque = screen.getByRole("button", { name: /Tanque de fumigación/i });
+    fireEvent.click(tanque);
+    expect(onZoneSelect).toHaveBeenCalledWith("tanque_fumigacion");
   });
 
   it("resalta la zona seleccionada (aria-pressed)", () => {
@@ -22,12 +22,12 @@ describe("EquipmentDiagram", () => {
       <MantineProvider>
         <EquipmentDiagram
           modelCode="T50"
-          selectedKeys={new Set(["arm_m1"])}
+          selectedKeys={new Set(["brazos_m1_m2"])}
           onZoneSelect={vi.fn()}
         />
       </MantineProvider>,
     );
-    expect(screen.getByRole("button", { name: /Brazo M1/i })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /Brazos M1-M2/i })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -40,10 +40,10 @@ describe("EquipmentDiagram", () => {
         <EquipmentDiagram modelCode="T50" selectedKeys={new Set()} onZoneSelect={onZoneSelect} />
       </MantineProvider>,
     );
-    fireEvent.keyDown(screen.getByRole("button", { name: /Sistema de pulverización/i }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Hélices$/i }), {
       key: "Enter",
     });
-    expect(onZoneSelect).toHaveBeenCalledWith("spray");
+    expect(onZoneSelect).toHaveBeenCalledWith("helices");
   });
 
   it("muestra un aviso si el modelo no tiene diagrama", () => {
