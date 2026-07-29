@@ -11,15 +11,8 @@ def test_seed_creates_both_models_and_trees():
     d125 = EquipmentModel.objects.get(model_code="D12500IE")
     assert t50.name == "DJI Agras T50"
     assert d125.name == "DJI D12500iE"
-    # Conjuntos raíz del T50
-    roots = set(
-        EquipmentComponent.objects.filter(
-            equipment_model=t50, parent__isnull=True
-        ).values_list("code", flat=True)
-    )
-    assert {"propulsion", "spray", "electrical", "navigation", "structure", "spreading"} <= roots
-    # Un nodo hoja profundo del T50
-    assert EquipmentComponent.objects.filter(equipment_model=t50, code="motor_m1").exists()
+    # T50 no tiene componentes (el árbol viene del importador)
+    assert not EquipmentComponent.objects.filter(equipment_model=t50).exists()
     # D12500iE tiene su árbol
     assert EquipmentComponent.objects.filter(equipment_model=d125, code="engine").exists()
 
