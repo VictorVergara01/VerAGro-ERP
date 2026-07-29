@@ -27,8 +27,8 @@ móvil verificado con `typecheck` + `expo export`.
 |---|---|
 | Auth + Usuarios | `/api/auth/{login,refresh,me}/`, `/api/users/` |
 | Clientes | `/api/customers/` |
-| Equipos | `/api/equipment/`, `/api/equipment/types/` |
-| Inventario | `/api/inventory/{products,adjustments,low-stock,categories}/`, import/export CSV |
+| Equipos | `/api/equipment/`, `/api/equipment/types/`, **catálogo técnico** `/api/equipment/{models,components}/` + `models/{id}/component-tree/` |
+| Inventario | `/api/inventory/{products,adjustments,low-stock,categories}/`, import/export CSV, **compatibilidades** `/api/inventory/product-compatibilities/` |
 | Proveedores | `/api/suppliers/`, `/api/supplier-products/` |
 | Compras (costeo proporcional) | `/api/purchase-orders/` + recepción parcial |
 | Órdenes de servicio | `/api/service-orders/` + transiciones de estado, piezas, fotos |
@@ -47,7 +47,26 @@ gráficas y command palette (Ctrl/⌘+K).
 Login, dashboard, y paridad de lectura/escritura con el web: clientes, equipos, proveedores,
 inventario (con ajustes), compras, órdenes (transiciones, piezas, reservas, checklist, fotos),
 cotizaciones y facturas (emitir, pagar, PDF compartible, WhatsApp), reportes y configuración.
-Modo oscuro con toggle. Hoy de uso administrativo.
+Modo oscuro con toggle. Hoy de uso administrativo. El **despiece interactivo** está por ahora solo
+en el web.
+
+### Catálogo técnico y despiece interactivo
+
+Capa de catálogo que estructura la relación equipo↔repuesto para el taller:
+
+- **Modelos técnicos** (`EquipmentModel`) normalizados y un **árbol de componentes**
+  (`EquipmentComponent`: conjuntos y posiciones reemplazables, p. ej. *Sistema de propulsión →
+  Brazo M1 → Motor M1*). Un equipo físico se asocia a su modelo técnico.
+- **Compatibilidad estructurada** (`ProductCompatibility`): una pieza del inventario se declara
+  compatible con un modelo y un componente exacto (una pieza puede servir a varios modelos y
+  posiciones). Se administra desde el web (ficha de producto) y desde el formulario de equipo.
+- **Despiece interactivo** en la orden de servicio: pestaña *Despiece* con un árbol de componentes y
+  un **diagrama SVG 2D** del equipo sincronizados en ambos sentidos; al elegir un componente se
+  muestran solo las piezas compatibles (existencia, reservado, disponible, precio, ubicación) con
+  un botón para agregarlas a la orden, guardando **en qué componente** se instala. El backend valida
+  la compatibilidad (no se confía en el filtro del frontend) y conserva el modo manual anterior.
+- **Modelos iniciales** sembrados de forma idempotente: **DJI Agras T50** y **DJI D12500iE**
+  (`manage.py seed_equipment_catalog`).
 
 ## Roles y permisos
 
