@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from rest_framework import filters, mixins, status as http_status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -81,7 +82,15 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             "equipment__equipment_type",
             "equipment__catalog_model",
             "technician",
-        ).prefetch_related("parts__product", "parts__component")
+        ).prefetch_related(
+            Prefetch(
+                "parts",
+                queryset=ServiceOrderPart.objects.select_related(
+                    "product",
+                    "component__parent__parent__parent__parent",
+                ),
+            )
+        )
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),

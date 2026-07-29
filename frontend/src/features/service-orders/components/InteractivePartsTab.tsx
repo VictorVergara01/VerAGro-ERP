@@ -13,18 +13,16 @@ const TERMINAL = ["finished", "invoiced", "delivered", "cancelled"];
 
 // Aplana el árbol en índices: id→nodo, id→códigos (propio + ancestros), code→id.
 function indexTree(nodes: ComponentTreeNode[]) {
-  const byId = new Map<number, ComponentTreeNode>();
   const ancestorCodes = new Map<number, Set<string>>();
   const idByCode = new Map<string, number>();
   const walk = (node: ComponentTreeNode, parentCodes: string[]) => {
-    byId.set(node.id, node);
     idByCode.set(node.code, node.id);
     const codes = new Set([...parentCodes, node.code, node.diagram_key].filter(Boolean));
     ancestorCodes.set(node.id, codes);
     node.children.forEach((c) => walk(c, [...parentCodes, node.code, node.diagram_key]));
   };
   nodes.forEach((n) => walk(n, []));
-  return { byId, ancestorCodes, idByCode };
+  return { ancestorCodes, idByCode };
 }
 
 export function InteractivePartsTab({ order }: { order: ServiceOrder }) {
