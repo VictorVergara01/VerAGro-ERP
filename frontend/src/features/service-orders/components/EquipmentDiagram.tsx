@@ -51,31 +51,40 @@ const ZONE_CSS = `
   stroke-width: 2.5;
 }
 .veragro-zone:focus-visible .zone-fill { stroke: var(--mantine-primary-color-filled); stroke-width: 2.5; }
+.veragro-zone .arm { fill: none; stroke: var(--mantine-color-dimmed); stroke-width: 11; stroke-linecap: round; transition: stroke 120ms; }
+.veragro-zone:hover .arm { stroke: var(--mantine-primary-color-light); }
+.veragro-zone.is-selected .arm { stroke: var(--mantine-primary-color-filled); }
+.veragro-zone:focus-visible .arm { stroke: var(--mantine-primary-color-filled); }
 .veragro-diagram text { fill: var(--mantine-color-dimmed); font-size: 11px; font-family: var(--mantine-font-family-monospace, monospace); }
-@media (prefers-reduced-motion: reduce) { .veragro-zone .zone-fill { transition: none; } }
+.veragro-diagram text.zone-label { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .veragro-zone .zone-fill, .veragro-zone .arm { transition: none; } }
 `;
 
 function T50Diagram(props: Omit<ZoneProps, "zoneKey" | "label" | "children">) {
-  // Vista superior esquemática: protector frontal, dos grupos de brazos con hélices,
-  // cuerpo central en tres bandas (frontal/intermedio/trasero), tanque, sistema
-  // centrífugo, módulo de distribución, cableado y tren de aterrizaje.
+  // Vista superior esquemática del T50, con zonas separadas (sin encimar):
+  // el cuerpo central es una pila de tiles (chasis frontal/intermedio/trasero,
+  // tanque, sistema centrífugo) con el módulo y el cableado a un costado; los
+  // cuatro brazos (M1-M2 izq., M3-M4 der.) terminan en rotores = hélices; el
+  // tren de aterrizaje son dos patas al pie y el protector va al frente.
   //
-  // Grupo de brazos izquierdo (M1-M2, arriba-izq. y abajo-izq.) y derecho (M3-M4,
-  // arriba-der. y abajo-der.); las hélices son anillos propios en cada punta.
-  const armLine = (x1: number, y1: number, x2: number, y2: number) => (
-    <line x1={x1} y1={y1} x2={x2} y2={y2} className="zone-fill" />
+  // Rotores (puntas de brazo): FL, FR arriba; RL, RR abajo.
+  const FL = [78, 116] as const;
+  const FR = [322, 116] as const;
+  const RL = [78, 300] as const;
+  const RR = [322, 300] as const;
+  const arm = (a: readonly [number, number], b: readonly [number, number]) => (
+    <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} className="arm" />
   );
-  const motor = (cx: number, cy: number) => <circle cx={cx} cy={cy} r={14} className="zone-fill" />;
-  const propeller = (cx: number, cy: number) => (
+  const rotor = (cx: number, cy: number) => (
     <>
-      <circle cx={cx} cy={cy} r={24} className="zone-fill" fillOpacity={0.35} />
+      <circle cx={cx} cy={cy} r={22} className="zone-fill" fillOpacity={0.3} />
       <circle cx={cx} cy={cy} r={9} className="zone-fill" />
     </>
   );
 
   return (
     <svg
-      viewBox="0 0 380 380"
+      viewBox="0 0 400 400"
       className="veragro-diagram"
       role="group"
       aria-label="Diagrama DJI Agras T50 (vista superior)"
@@ -83,82 +92,77 @@ function T50Diagram(props: Omit<ZoneProps, "zoneKey" | "label" | "children">) {
     >
       <style>{ZONE_CSS}</style>
 
-      {/* Protector frontal */}
+      {/* Protector frontal (nariz, al frente) */}
       <Zone zoneKey="protector_frontal" label="Protector frontal" {...props}>
-        <path d="M 140 30 Q 190 8 240 30 L 232 62 Q 190 48 148 62 Z" className="zone-fill" />
-        <text x={190} y={44} textAnchor="middle">PROTECTOR</text>
+        <path d="M 168 58 Q 200 30 232 58 L 228 74 Q 200 54 172 74 Z" className="zone-fill" />
+        <text className="zone-label" x={200} y={52} textAnchor="middle">PROT.</text>
       </Zone>
 
-      {/* Brazos M1-M2 (izquierda: arriba-izq. y abajo-izq.) */}
+      {/* Brazos M1-M2 (dos brazos izquierdos) */}
       <Zone zoneKey="brazos_m1_m2" label="Brazos M1-M2" {...props}>
-        {armLine(190, 190, 70, 90)}
-        {armLine(190, 190, 70, 290)}
-        {motor(70, 90)}
-        {motor(70, 290)}
-        <rect x={40} y={170} width={40} height={40} rx={8} className="zone-fill" />
-        <text x={60} y={195} textAnchor="middle">M1-M2</text>
+        {arm([152, 168], FL)}
+        {arm([152, 290], RL)}
+        <text className="zone-label" x={116} y={212} textAnchor="middle">M1·M2</text>
       </Zone>
 
-      {/* Brazos M3-M4 (derecha: arriba-der. y abajo-der.) */}
+      {/* Brazos M3-M4 (dos brazos derechos) */}
       <Zone zoneKey="brazos_m3_m4" label="Brazos M3-M4" {...props}>
-        {armLine(190, 190, 310, 90)}
-        {armLine(190, 190, 310, 290)}
-        {motor(310, 90)}
-        {motor(310, 290)}
-        <rect x={300} y={170} width={40} height={40} rx={8} className="zone-fill" />
-        <text x={320} y={195} textAnchor="middle">M3-M4</text>
+        {arm([248, 168], FR)}
+        {arm([248, 290], RR)}
+        <text className="zone-label" x={285} y={238} textAnchor="middle">M3·M4</text>
       </Zone>
 
-      {/* Hélices: anillos en las cuatro puntas de los brazos */}
+      {/* Hélices: los cuatro rotores en las puntas de los brazos */}
       <Zone zoneKey="helices" label="Hélices" {...props}>
-        {propeller(70, 90)}
-        {propeller(70, 290)}
-        {propeller(310, 90)}
-        {propeller(310, 290)}
-        <text x={190} y={355} textAnchor="middle">HELICES</text>
+        {rotor(...FL)}
+        {rotor(...FR)}
+        {rotor(...RL)}
+        {rotor(...RR)}
+        <text className="zone-label" x={200} y={100} textAnchor="middle">HÉLICES</text>
       </Zone>
 
-      {/* Cuerpo central: tres bandas de chasis */}
+      {/* Tren de aterrizaje: dos patas al pie */}
+      <Zone zoneKey="tren_aterrizaje" label="Tren de aterrizaje" {...props}>
+        <path d="M 178 316 L 170 362 Q 184 370 192 362 L 190 316 Z" className="zone-fill" />
+        <path d="M 222 316 L 230 362 Q 216 370 208 362 L 210 316 Z" className="zone-fill" />
+        <text className="zone-label" x={200} y={384} textAnchor="middle">TREN</text>
+      </Zone>
+
+      {/* Cuerpo central: pila de tiles (sin encimar) */}
       <Zone zoneKey="chasis_frontal" label="Chasis frontal" {...props}>
-        <rect x={150} y={95} width={80} height={40} rx={8} className="zone-fill" />
-        <text x={190} y={119} textAnchor="middle">CH.FRONT</text>
+        <rect x={150} y={118} width={100} height={30} rx={7} className="zone-fill" />
+        <text className="zone-label" x={200} y={137} textAnchor="middle">CH.FRONT</text>
+      </Zone>
+
+      <Zone zoneKey="tanque_fumigacion" label="Tanque de fumigación" {...props}>
+        <rect x={150} y={154} width={100} height={58} rx={10} className="zone-fill" />
+        <text className="zone-label" x={200} y={187} textAnchor="middle">TANQUE</text>
       </Zone>
 
       <Zone zoneKey="chasis_intermedio" label="Chasis intermedio" {...props}>
-        <rect x={140} y={135} width={100} height={110} rx={8} className="zone-fill" />
+        <rect x={150} y={218} width={100} height={28} rx={7} className="zone-fill" />
+        <text className="zone-label" x={200} y={236} textAnchor="middle">CH.INTER</text>
+      </Zone>
+
+      <Zone zoneKey="sistema_centrifugo" label="Sistema centrífugo" {...props}>
+        <rect x={150} y={252} width={100} height={28} rx={7} className="zone-fill" />
+        <text className="zone-label" x={200} y={270} textAnchor="middle">CENTRÍF.</text>
       </Zone>
 
       <Zone zoneKey="chasis_trasero" label="Chasis trasero" {...props}>
-        <rect x={150} y={245} width={80} height={40} rx={8} className="zone-fill" />
-        <text x={190} y={269} textAnchor="middle">CH.TRAS</text>
+        <rect x={150} y={286} width={100} height={28} rx={7} className="zone-fill" />
+        <text className="zone-label" x={200} y={304} textAnchor="middle">CH.TRAS</text>
       </Zone>
 
-      {/* Tanque de fumigación: rect grande central sobre el chasis intermedio */}
-      <Zone zoneKey="tanque_fumigacion" label="Tanque de fumigación" {...props}>
-        <rect x={155} y={150} width={70} height={60} rx={10} className="zone-fill" />
-        <text x={190} y={184} textAnchor="middle">TANQUE</text>
-      </Zone>
-
-      {/* Sistema centrífugo: bajo el tanque */}
-      <Zone zoneKey="sistema_centrifugo" label="Sistema centrífugo" {...props}>
-        <rect x={165} y={214} width={50} height={26} rx={6} className="zone-fill" />
-        <text x={190} y={231} textAnchor="middle">CENTRIF.</text>
-      </Zone>
-
-      {/* Módulo de distribución: pequeño rect en el cuerpo, junto al chasis frontal */}
+      {/* Módulo de distribución y cableado: tiles al costado del tanque */}
       <Zone zoneKey="modulo_distribucion" label="Módulo de distribución" {...props}>
-        <rect x={200} y={100} width={26} height={20} rx={4} className="zone-fill" />
+        <rect x={256} y={154} width={44} height={26} rx={5} className="zone-fill" />
+        <text className="zone-label" x={278} y={171} textAnchor="middle">MÓD.</text>
       </Zone>
 
-      {/* Cableado de chasis: banda fina cruzando el cuerpo */}
       <Zone zoneKey="cableado_chasis" label="Cableado de chasis" {...props}>
-        <rect x={140} y={142} width={100} height={10} className="zone-fill" />
-      </Zone>
-
-      {/* Tren de aterrizaje: dos patas bajo el cuerpo */}
-      <Zone zoneKey="tren_aterrizaje" label="Tren de aterrizaje" {...props}>
-        <path d="M 155 285 L 145 340 Q 165 350 175 340 L 168 285 Z" className="zone-fill" />
-        <path d="M 225 285 L 235 340 Q 215 350 205 340 L 212 285 Z" className="zone-fill" />
+        <rect x={256} y={186} width={44} height={26} rx={5} className="zone-fill" />
+        <text className="zone-label" x={278} y={203} textAnchor="middle">CBL.</text>
       </Zone>
     </svg>
   );
