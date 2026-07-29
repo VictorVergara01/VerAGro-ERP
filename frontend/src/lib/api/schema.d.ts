@@ -2926,6 +2926,7 @@ export interface components {
             name?: string;
             description?: string;
             barcode?: string;
+            part_number?: string;
             brand?: string;
             model?: string;
             unit_of_measure?: string;
@@ -3286,6 +3287,7 @@ export interface components {
             name: string;
             description?: string;
             barcode?: string;
+            part_number?: string;
             brand?: string;
             model?: string;
             unit_of_measure?: string;
