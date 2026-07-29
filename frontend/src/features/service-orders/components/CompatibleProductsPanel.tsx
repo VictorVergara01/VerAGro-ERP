@@ -52,6 +52,11 @@ function ProductRow({
             Disp. {product.available_quantity} · Reserv. {product.reserved_quantity} ·{" "}
             {formatCurrency(product.sale_price)} · Ubic. {product.location || "—"}
           </Text>
+          {product.part_number && (
+            <Text size="xs" c="dimmed" ff="monospace">
+              N.º pieza: {product.part_number}
+            </Text>
+          )}
         </div>
         <Stack gap={6} align="flex-end">
           <NumberInput<number>

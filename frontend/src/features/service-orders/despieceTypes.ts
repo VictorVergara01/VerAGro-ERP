@@ -13,6 +13,7 @@ export interface CompatibleProduct {
   id: number;
   sku: string;
   name: string;
+  part_number: string;
   stock_quantity: string;
   reserved_quantity: string;
   available_quantity: string;

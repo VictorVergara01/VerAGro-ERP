@@ -320,6 +320,7 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
                 "id": c.product.id,
                 "sku": c.product.sku,
                 "name": c.product.name,
+                "part_number": c.product.part_number,
                 "stock_quantity": str(c.product.stock_quantity),
                 "reserved_quantity": str(c.product.reserved_quantity),
                 "available_quantity": str(c.product.available_quantity),

@@ -25,6 +25,7 @@ class Product(TimeStampedModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     barcode = models.CharField(max_length=100, blank=True)
+    part_number = models.CharField(max_length=100, blank=True, default="")
     category = models.ForeignKey(
         ProductCategory,
         on_delete=models.PROTECT,

@@ -9,10 +9,10 @@ const data: CompatibleProductsResponse = {
   equipment_model: { id: 1, name: "DJI Agras T50" },
   component: { id: 3, name: "Motor M1", path: "Propulsión > Brazo M1 > Motor M1" },
   products: [
-    { id: 10, sku: "DJI-T50-MOTOR-CW", name: "Motor CW", stock_quantity: "4.00",
+    { id: 10, sku: "DJI-T50-MOTOR-CW", name: "Motor CW", part_number: "YC.JG.MY001043", stock_quantity: "4.00",
       reserved_quantity: "0.00", available_quantity: "4.00", sale_price: "450.00",
       location: "A-03", is_primary: true },
-    { id: 11, sku: "DJI-T50-MOTOR-CCW", name: "Motor CCW", stock_quantity: "0.00",
+    { id: 11, sku: "DJI-T50-MOTOR-CCW", name: "Motor CCW", part_number: "", stock_quantity: "0.00",
       reserved_quantity: "0.00", available_quantity: "0.00", sale_price: "450.00",
       location: "A-04", is_primary: false },
   ],
