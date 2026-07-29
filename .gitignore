@@ -34,3 +34,6 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Excel de repuestos (binarios grandes con imágenes)
+data/catalogo/*.xlsx
