@@ -5,13 +5,42 @@ from rest_framework.validators import UniqueValidator
 
 from .models import InventoryMovement, Product, ProductCategory, ProductCompatibility
 from .services import apply_adjustment, generate_product_sku
+from .validators import margin_triplet_errors
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = ("id", "name", "description", "is_active", "default_margin_percentage")
+        fields = (
+            "id",
+            "name",
+            "description",
+            "is_active",
+            "default_margin_percentage",
+            "min_margin_percentage",
+            "max_margin_percentage",
+        )
         read_only_fields = ("id",)
+
+    def validate(self, attrs):
+        instance = self.instance
+        errors = margin_triplet_errors(
+            attrs.get(
+                "min_margin_percentage",
+                getattr(instance, "min_margin_percentage", 0) if instance else 0,
+            ),
+            attrs.get(
+                "default_margin_percentage",
+                getattr(instance, "default_margin_percentage", 0) if instance else 0,
+            ),
+            attrs.get(
+                "max_margin_percentage",
+                getattr(instance, "max_margin_percentage", 0) if instance else 0,
+            ),
+        )
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
     def update(self, instance, validated_data):
         old = instance.default_margin_percentage
@@ -45,7 +74,29 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_at",
             "stock_quantity",
             "reserved_quantity",
+            "min_sale_price",
+            "max_sale_price",
         )
+
+    def validate(self, attrs):
+        instance = self.instance
+        errors = margin_triplet_errors(
+            attrs.get(
+                "min_margin_percentage",
+                getattr(instance, "min_margin_percentage", 0) if instance else 0,
+            ),
+            attrs.get(
+                "default_margin_percentage",
+                getattr(instance, "default_margin_percentage", 0) if instance else 0,
+            ),
+            attrs.get(
+                "max_margin_percentage",
+                getattr(instance, "max_margin_percentage", 0) if instance else 0,
+            ),
+        )
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
     def create(self, validated_data):
         provided_sku = (validated_data.get("sku") or "").strip()

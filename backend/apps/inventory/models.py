@@ -11,6 +11,12 @@ class ProductCategory(TimeStampedModel):
     default_margin_percentage = models.DecimalField(
         max_digits=12, decimal_places=2, default=0
     )
+    min_margin_percentage = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    max_margin_percentage = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
 
     class Meta:
         ordering = ("name",)
@@ -52,6 +58,17 @@ class Product(TimeStampedModel):
     default_margin_percentage = models.DecimalField(
         max_digits=12, decimal_places=2, default=0
     )
+    min_margin_percentage = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    max_margin_percentage = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    # Rango de venta derivado de average_cost. Se denormaliza (en vez de
+    # calcularse al vuelo) para poder filtrar en SQL el reporte de ventas
+    # bajo el piso sin recorrer producto por producto.
+    min_sale_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    max_sale_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
     main_supplier = models.ForeignKey(
         "suppliers.Supplier",
