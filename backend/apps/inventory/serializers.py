@@ -118,6 +118,7 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
             "movement_type",
             "quantity",
             "unit_cost",
+            "average_cost_after",
             "reference_type",
             "reference_id",
             "notes",

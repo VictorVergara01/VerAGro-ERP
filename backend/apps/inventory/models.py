@@ -106,7 +106,21 @@ class InventoryMovement(TimeStampedModel):
     )
     movement_type = models.CharField(max_length=30, choices=MovementType.choices)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
-    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # 4 decimales para no perder el costo landed, que se calcula con esa precisión
+    # en PurchaseOrderLine.landed_unit_cost.
+    unit_cost = models.DecimalField(max_digits=14, decimal_places=4, default=0)
+    # Promedio ponderado del producto DESPUÉS de aplicar este movimiento. Es lo que
+    # permite reconstruir la evolución del costo en el historial.
+    average_cost_after = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
+    purchase_order_line = models.ForeignKey(
+        "purchasing.PurchaseOrderLine",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="movements",
+    )
     reference_type = models.CharField(max_length=50, blank=True)
     reference_id = models.PositiveIntegerField(null=True, blank=True)
     notes = models.TextField(blank=True)
