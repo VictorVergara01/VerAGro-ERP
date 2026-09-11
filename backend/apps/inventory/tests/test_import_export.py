@@ -105,6 +105,45 @@ def test_import_respects_manual_sale_price_and_blank_sku_autogenerates():
 
 
 @pytest.mark.django_db
+def test_import_manual_sale_price_survives_stock_inicial():
+    # apply_adjustment llama apply_margin() internamente al mover el promedio; si el
+    # precio manual se fijara ANTES del ajuste, este test lo detectaría pisado.
+    user = User.objects.create_user(
+        email="i3b@veragro.com", password="x", full_name="i", role="inventory"
+    )
+    text = "sku,nombre,stock_inicial,costo,precio_venta\nMP-1,Con precio manual,5,10,99\n"
+    result = import_products_csv(_csv_file(text), user)
+    assert result["creados"] == 1, result
+    product = Product.objects.get(sku="MP-1")
+    assert product.sale_price == Decimal("99.00")  # el manual gana, no lo pisa el ajuste
+    assert product.stock_quantity == Decimal("5")
+    assert product.average_cost == Decimal("10")
+
+
+@pytest.mark.django_db
+def test_import_stock_inicial_sin_costo_reporta_error_de_fila_y_no_revienta_el_resto():
+    # apply_adjustment (Task 5) exige unit_cost > 0 para adjustment_in y lanza el
+    # ValidationError de DRF, no ValueError: si _create_row no lo anticipa, esa
+    # excepción se escapa del try de import_products_csv (que sólo atrapa ValueError)
+    # y tumba el import completo en vez de reportar sólo la fila mala.
+    user = User.objects.create_user(
+        email="i3c@veragro.com", password="x", full_name="i", role="inventory"
+    )
+    text = (
+        "sku,nombre,stock_inicial,costo\n"
+        "SC-1,Sin costo,5,\n"
+        "OK-2,Con costo,3,7\n"
+    )
+    result = import_products_csv(_csv_file(text), user)
+    assert result["creados"] == 1  # sólo OK-2
+    motivos = {e["fila"]: e["motivo"] for e in result["errores"]}
+    assert 2 in motivos
+    assert "costo" in motivos[2].lower()
+    assert not Product.objects.filter(sku="SC-1").exists()
+    assert Product.objects.filter(sku="OK-2").exists()
+
+
+@pytest.mark.django_db
 def test_import_best_effort_reports_skips_and_errors():
     user = User.objects.create_user(
         email="i4@veragro.com", password="x", full_name="i", role="inventory"

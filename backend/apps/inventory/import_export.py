@@ -127,6 +127,13 @@ def _create_row(row, user):
     precio_venta = _parse_decimal(precio_text, "precio_venta") if precio_text else None
     is_active = _parse_bool(row.get("activo"), default=True)
 
+    # apply_adjustment exige unit_cost > 0 para adjustment_in (alimenta el promedio).
+    # Se valida aquí, ANTES de crear nada, para que la fila caiga en "errores" con un
+    # motivo legible en vez de que el ValidationError de DRF se escape del try de
+    # ValueError en import_products_csv y tumbe el resto del archivo.
+    if stock_inicial > 0 and costo <= 0:
+        raise ValueError("El costo es obligatorio cuando hay stock inicial.")
+
     category = _get_or_create_category(row.get("categoria"))
     supplier = _get_or_create_supplier(row.get("proveedor"))
 
@@ -155,12 +162,6 @@ def _create_row(row, user):
         product.sku = f"SKU-{product.pk:06d}"
         product.save(update_fields=["sku"])
 
-    if precio_venta is not None:
-        product.sale_price = precio_venta
-        product.save(update_fields=["sale_price", "updated_at"])
-    else:
-        apply_margin(product)
-
     if stock_inicial > 0:
         apply_adjustment(
             product=product,
@@ -170,6 +171,18 @@ def _create_row(row, user):
             notes="Carga inicial",
             user=user,
         )
+
+    # El precio se fija DESPUÉS del ajuste: apply_adjustment ya llama apply_margin()
+    # internamente al mover el promedio, y eso pisaría un precio_venta manual si el
+    # bloque de precio corriera antes. Con precio manual, este bloque tiene la
+    # última palabra; sin él, apply_margin ya dejó el precio derivado correcto y
+    # llamarlo de nuevo aquí es idempotente.
+    if precio_venta is not None:
+        product.sale_price = precio_venta
+        product.save(update_fields=["sale_price", "updated_at"])
+    else:
+        apply_margin(product)
+
     return product
 
 
