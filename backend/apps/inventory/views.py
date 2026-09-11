@@ -12,9 +12,10 @@ from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .import_export import export_products_csv, import_products_csv
-from .models import Product, ProductCategory, ProductCompatibility
+from .models import InventoryMovement, Product, ProductCategory, ProductCompatibility
 from .serializers import (
     AdjustmentSerializer,
+    CostHistoryEntrySerializer,
     InventoryMovementSerializer,
     ProductCategorySerializer,
     ProductCompatibilitySerializer,
@@ -22,6 +23,12 @@ from .serializers import (
 )
 
 InventoryWrite = RoleWriteOrReadOnly(*roles.INVENTORY_WRITE)
+
+COST_HISTORY_TYPES = (
+    InventoryMovement.MovementType.PURCHASE_IN,
+    InventoryMovement.MovementType.ADJUSTMENT_IN,
+    InventoryMovement.MovementType.RETURN_IN,
+)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -96,6 +103,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         product = self.get_object()
         qs = product.movements.all()
         return Response(InventoryMovementSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=["get"], url_path="cost-history")
+    def cost_history(self, request, pk=None):
+        """Historial de costos: sólo entradas, con el desglose de su compra."""
+        product = self.get_object()
+        qs = (
+            product.movements.filter(movement_type__in=COST_HISTORY_TYPES)
+            .select_related(
+                "purchase_order_line__purchase_order__supplier",
+            )
+            .order_by("-created_at", "-id")
+        )
+        return Response(CostHistoryEntrySerializer(qs, many=True).data)
 
     @action(detail=False, methods=["get"])
     def export(self, request):

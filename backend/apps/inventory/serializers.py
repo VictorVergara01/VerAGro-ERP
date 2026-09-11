@@ -1,4 +1,5 @@
 import uuid
+from decimal import ROUND_HALF_UP, Decimal
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -124,6 +125,59 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
             "notes",
             "created_by",
             "created_at",
+        )
+
+
+class CostHistoryEntrySerializer(serializers.ModelSerializer):
+    """Una entrada del historial de costos de un producto.
+
+    Los cuatro campos de compra van en null cuando el movimiento no viene de una
+    orden (un ajuste, por ejemplo).
+    """
+
+    purchase_order_number = serializers.CharField(
+        source="purchase_order_line.purchase_order.order_number",
+        read_only=True,
+        default=None,
+    )
+    supplier_name = serializers.CharField(
+        source="purchase_order_line.purchase_order.supplier.name",
+        read_only=True,
+        default=None,
+    )
+    supplier_unit_cost = serializers.DecimalField(
+        source="purchase_order_line.unit_purchase_cost",
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        default=None,
+    )
+    allocated_extra_per_unit = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InventoryMovement
+        fields = (
+            "id",
+            "created_at",
+            "movement_type",
+            "quantity",
+            "unit_cost",
+            "average_cost_after",
+            "purchase_order_number",
+            "supplier_name",
+            "supplier_unit_cost",
+            "allocated_extra_per_unit",
+            "notes",
+        )
+
+    def get_allocated_extra_per_unit(self, obj):
+        line = obj.purchase_order_line
+        if line is None or not line.quantity_ordered:
+            return None
+        return str(
+            (line.allocated_extra_cost / line.quantity_ordered).quantize(
+                Decimal("0.0001"), rounding=ROUND_HALF_UP
+            )
         )
 
 
