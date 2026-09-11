@@ -89,9 +89,13 @@ def test_list_excludes_inactive_by_default(inv_client):
 @pytest.mark.django_db
 def test_adjustment_endpoint_increases_stock(inv_client):
     p = Product.objects.create(sku="ADJ-1", name="P", stock_quantity=Decimal("2"))
+    # unit_cost explícito: la entrada por ajuste ahora exige costo (alimenta el promedio).
     resp = inv_client.post(
         "/api/inventory/adjustments/",
-        {"product": p.id, "movement_type": "adjustment_in", "quantity": "3"},
+        {
+            "product": p.id, "movement_type": "adjustment_in", "quantity": "3",
+            "unit_cost": "10",
+        },
         format="json",
     )
     assert resp.status_code == 201
@@ -116,9 +120,13 @@ def test_adjustment_out_insufficient_returns_400(inv_client):
 @pytest.mark.django_db
 def test_product_movements_list(inv_client):
     p = Product.objects.create(sku="MV-1", name="P", stock_quantity=Decimal("0"))
+    # unit_cost explícito: la entrada por ajuste ahora exige costo (alimenta el promedio).
     inv_client.post(
         "/api/inventory/adjustments/",
-        {"product": p.id, "movement_type": "adjustment_in", "quantity": "4"},
+        {
+            "product": p.id, "movement_type": "adjustment_in", "quantity": "4",
+            "unit_cost": "5",
+        },
         format="json",
     )
     resp = inv_client.get(f"/api/inventory/products/{p.id}/movements/")
@@ -202,9 +210,14 @@ def test_adjustment_on_inactive_product_rejected(inv_client):
     p = Product.objects.create(
         sku="INA-1", name="Inactivo", stock_quantity=Decimal("5"), is_active=False
     )
+    # unit_cost explícito: no es lo que se prueba aquí (el 400 es por producto
+    # inactivo, fuera del queryset del campo), pero mantiene el payload realista.
     resp = inv_client.post(
         "/api/inventory/adjustments/",
-        {"product": p.id, "movement_type": "adjustment_in", "quantity": "1"},
+        {
+            "product": p.id, "movement_type": "adjustment_in", "quantity": "1",
+            "unit_cost": "5",
+        },
         format="json",
     )
     assert resp.status_code == 400

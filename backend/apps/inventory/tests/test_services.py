@@ -15,8 +15,10 @@ from apps.inventory.services import (
 @pytest.mark.django_db
 def test_adjustment_in_increases_stock():
     p = Product.objects.create(sku="A1", name="P", stock_quantity=Decimal("5"))
+    # unit_cost explícito: la entrada por ajuste ahora exige costo (alimenta el promedio).
     m = apply_adjustment(
-        product=p, movement_type="adjustment_in", quantity=Decimal("3")
+        product=p, movement_type="adjustment_in", quantity=Decimal("3"),
+        unit_cost=Decimal("10"),
     )
     p.refresh_from_db()
     assert p.stock_quantity == Decimal("8")
@@ -77,7 +79,11 @@ def test_adjustment_updates_product_updated_at():
     p = Product.objects.create(sku="A7", name="P", stock_quantity=Decimal("5"))
     before = p.updated_at
     time.sleep(0.01)
-    apply_adjustment(product=p, movement_type="adjustment_in", quantity=Decimal("1"))
+    # unit_cost explícito: la entrada por ajuste ahora exige costo (alimenta el promedio).
+    apply_adjustment(
+        product=p, movement_type="adjustment_in", quantity=Decimal("1"),
+        unit_cost=Decimal("1"),
+    )
     p.refresh_from_db()
     assert p.updated_at > before
 

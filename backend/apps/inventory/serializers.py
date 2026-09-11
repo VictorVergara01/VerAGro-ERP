@@ -136,9 +136,16 @@ class AdjustmentSerializer(serializers.Serializer):
     )
     quantity = serializers.DecimalField(max_digits=12, decimal_places=2)
     unit_cost = serializers.DecimalField(
-        max_digits=12, decimal_places=2, required=False, default=0
+        max_digits=14, decimal_places=4, required=False, default=0
     )
     notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        if attrs.get("movement_type") == "adjustment_in" and not attrs.get("unit_cost"):
+            raise serializers.ValidationError(
+                {"unit_cost": "La entrada por ajuste requiere el costo unitario."}
+            )
+        return attrs
 
     def create(self, validated_data):
         request = self.context.get("request")

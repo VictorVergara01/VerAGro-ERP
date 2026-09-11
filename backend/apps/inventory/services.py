@@ -124,8 +124,13 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
     """Aplica un ajuste manual de stock de forma atómica.
 
     Solo admite adjustment_in / adjustment_out. quantity debe ser > 0.
-    adjustment_out no puede dejar el stock negativo. Crea el InventoryMovement
-    y actualiza stock_quantity en la misma transacción.
+
+    La entrada exige unit_cost > 0 y alimenta el costo promedio ponderado igual
+    que una recepción de compra: si no, cargar mercancía por ajuste dejaría el
+    promedio desactualizado y el precio de venta mal derivado.
+
+    La salida no altera el promedio; se valoriza al promedio vigente.
+    adjustment_out no puede dejar el stock disponible en negativo.
     """
     if movement_type not in ADJUSTMENT_TYPES:
         raise ValidationError(
@@ -135,29 +140,43 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
     if quantity <= 0:
         raise ValidationError({"quantity": "La cantidad debe ser mayor que cero."})
 
+    is_entry = movement_type == InventoryMovement.MovementType.ADJUSTMENT_IN
+    unit_cost = Decimal(str(unit_cost or 0))
+    if is_entry and unit_cost <= 0:
+        raise ValidationError(
+            {"unit_cost": "La entrada por ajuste requiere el costo unitario: alimenta el costo promedio."}
+        )
+
     locked = Product.objects.select_for_update().get(pk=product.pk)
     before_available = locked.available_quantity
 
-    if movement_type == "adjustment_out":
-        # Se valida contra available_quantity (stock − reservado): no se puede
-        # ajustar a la baja stock que ya está reservado para una orden.
+    if is_entry:
+        # El promedio se calcula ANTES de mover el stock: usa el stock previo como peso.
+        average_after = apply_weighted_average(locked, quantity, unit_cost)
+        locked.stock_quantity = locked.stock_quantity + quantity
+        movement_cost = unit_cost
+    else:
         if quantity > locked.available_quantity:
             raise ValidationError(
                 {"quantity": "El ajuste dejaría el stock disponible en negativo."}
             )
         locked.stock_quantity = locked.stock_quantity - quantity
-    else:  # adjustment_in
-        locked.stock_quantity = locked.stock_quantity + quantity
+        # La salida se valoriza al promedio vigente y no lo altera.
+        movement_cost = locked.average_cost
+        average_after = locked.average_cost
 
     # updated_at es auto_now pero NO se actualiza si se omite de update_fields.
-    locked.save(update_fields=["stock_quantity", "updated_at"])
+    locked.save(update_fields=["stock_quantity", "average_cost", "updated_at"])
+    if is_entry:
+        apply_margin(locked)
     _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,
         movement_type=movement_type,
         quantity=quantity,
-        unit_cost=unit_cost or 0,
+        unit_cost=movement_cost,
+        average_cost_after=average_after,
         notes=notes or "",
         created_by=user,
     )
