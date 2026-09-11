@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.inventory.price_range import PriceFloorMixin
+
 from .models import ServiceOrder, ServiceOrderPart, ServiceOrderPhoto
 
 
@@ -17,7 +19,7 @@ class ServiceOrderPhotoSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "uploaded_by", "created_at")
 
 
-class ServiceOrderPartSerializer(serializers.ModelSerializer):
+class ServiceOrderPartSerializer(PriceFloorMixin, serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
     product_name = serializers.CharField(source="product.name", read_only=True)
     component_name = serializers.CharField(source="component.name", read_only=True, default=None)
@@ -39,6 +41,8 @@ class ServiceOrderPartSerializer(serializers.ModelSerializer):
             "quantity",
             "unit_cost",
             "unit_price",
+            "price_floor",
+            "below_min_price",
             "total_price",
             "status",
             "notes",

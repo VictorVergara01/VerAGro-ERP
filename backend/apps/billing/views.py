@@ -44,7 +44,7 @@ class QuoteViewSet(viewsets.ModelViewSet):
     EDITABLE = (Quote.Status.DRAFT, Quote.Status.SENT)
 
     def get_queryset(self):
-        qs = Quote.objects.select_related("customer").prefetch_related("lines")
+        qs = Quote.objects.select_related("customer").prefetch_related("lines__product")
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),
@@ -149,7 +149,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Invoice.objects.select_related("customer").prefetch_related(
-            "lines", "payments"
+            "lines__product", "payments"
         )
         params = self.request.query_params
         for key, field in (

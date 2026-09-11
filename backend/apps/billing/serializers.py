@@ -1,11 +1,13 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.inventory.price_range import PriceFloorMixin
+
 from .models import Invoice, InvoiceLine, Payment, Quote, QuoteLine
 from .services import recalculate_invoice, recalculate_quote
 
 
-class QuoteLineSerializer(serializers.ModelSerializer):
+class QuoteLineSerializer(PriceFloorMixin, serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
 
     class Meta:
@@ -18,6 +20,8 @@ class QuoteLineSerializer(serializers.ModelSerializer):
             "description",
             "quantity",
             "unit_price",
+            "price_floor",
+            "below_min_price",
             "discount_amount",
             "tax_amount",
             "total",
@@ -99,7 +103,7 @@ class QuoteSerializer(serializers.ModelSerializer):
         return instance
 
 
-class InvoiceLineSerializer(serializers.ModelSerializer):
+class InvoiceLineSerializer(PriceFloorMixin, serializers.ModelSerializer):
     product_sku = serializers.CharField(source="product.sku", read_only=True)
 
     class Meta:
@@ -112,6 +116,8 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
             "description",
             "quantity",
             "unit_price",
+            "price_floor",
+            "below_min_price",
             "unit_cost",
             "margin_amount",
             "discount_amount",
