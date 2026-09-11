@@ -17,6 +17,28 @@ def _q(value):
     return Decimal(value).quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
+def apply_weighted_average(locked_product, quantity_in, unit_cost):
+    """Promedio móvil ponderado. ÚNICO lugar del sistema donde average_cost cambia.
+
+    Recibe el producto YA bloqueado con select_for_update(): no abre transacción ni
+    bloquea por su cuenta, eso es responsabilidad del llamador.
+
+    Debe llamarse ANTES de actualizar stock_quantity: usa el stock previo como peso
+    del costo acumulado. Muta el objeto en memoria y devuelve el nuevo promedio; no
+    guarda (el llamador ya hace un save() con su propio update_fields).
+    """
+    quantity_in = Decimal(str(quantity_in))
+    unit_cost = Decimal(str(unit_cost))
+    new_stock = locked_product.stock_quantity + quantity_in
+    if new_stock > 0:
+        locked_product.average_cost = _q(
+            (locked_product.stock_quantity * locked_product.average_cost
+             + quantity_in * unit_cost)
+            / new_stock
+        )
+    return locked_product.average_cost
+
+
 def _notify_if_crossed(product, before_available):
     """Notifica stock bajo solo si esta operación cruzó el umbral hacia abajo."""
     if product.minimum_stock <= 0:

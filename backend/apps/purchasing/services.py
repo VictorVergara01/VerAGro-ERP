@@ -4,7 +4,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.inventory.models import InventoryMovement, Product
-from apps.inventory.services import effective_margin
+from apps.inventory.services import apply_margin, apply_weighted_average
 from apps.suppliers.models import SupplierProduct
 
 from .models import PurchaseOrder
@@ -130,17 +130,10 @@ def receive_lines(*, purchase_order, receipts, user=None):
         cost = line.landed_unit_cost
         product = Product.objects.select_for_update().get(pk=line.product_id)
 
-        new_stock = product.stock_quantity + quantity
-        if new_stock > 0:
-            product.average_cost = _q(
-                (product.stock_quantity * product.average_cost + quantity * cost)
-                / new_stock
-            )
-        product.stock_quantity = new_stock
+        # El promedio se calcula ANTES de mover el stock: usa el stock previo como peso.
+        average_after = apply_weighted_average(product, quantity, cost)
+        product.stock_quantity = product.stock_quantity + quantity
         product.last_purchase_cost = _q(cost)
-        # Precio de venta: margen vive en inventario (producto o categoría).
-        margin = effective_margin(product)
-        product.sale_price = _q(cost * (Decimal("1") + margin / Decimal("100")))
         # Primera compra del producto: el proveedor de la orden queda como principal.
         if product.main_supplier_id is None:
             product.main_supplier_id = purchase_order.supplier_id
@@ -149,17 +142,21 @@ def receive_lines(*, purchase_order, receipts, user=None):
                 "stock_quantity",
                 "average_cost",
                 "last_purchase_cost",
-                "sale_price",
                 "main_supplier",
                 "updated_at",
             ]
         )
+        # El precio (y su rango) se derivan del promedio, nunca del landed de esta
+        # compra. Una sola fuente de verdad: apply_margin() en inventory.
+        apply_margin(product)
 
         InventoryMovement.objects.create(
             product=product,
             movement_type=InventoryMovement.MovementType.PURCHASE_IN,
             quantity=quantity,
-            unit_cost=_q(cost),
+            unit_cost=cost,
+            average_cost_after=average_after,
+            purchase_order_line=line,
             reference_type="purchase_order",
             reference_id=purchase_order.id,
             notes=f"Recepción orden {purchase_order.order_number}",
