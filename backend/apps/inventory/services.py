@@ -32,37 +32,68 @@ def generate_product_sku(pk):
     return f"SKU-{pk:06d}"
 
 
-def effective_margin(product):
-    """Margen efectivo: el del producto si > 0; si no, el de su categoría; si ninguno, 0."""
-    if product.default_margin_percentage and product.default_margin_percentage > 0:
-        return product.default_margin_percentage
+def effective_margins(product):
+    """(mínimo, objetivo, máximo) con cascada producto → categoría → 0.
+
+    La cascada se resuelve campo por campo: un producto puede definir su mínimo
+    y heredar el máximo de su categoría. Un margen en 0 significa "no configurado".
+    """
     category = product.category
-    if (
-        category
-        and category.default_margin_percentage
-        and category.default_margin_percentage > 0
-    ):
-        return category.default_margin_percentage
-    return Decimal("0")
+
+    def pick(own_value, category_attr):
+        if own_value and own_value > 0:
+            return own_value
+        if category is not None:
+            inherited = getattr(category, category_attr, None)
+            if inherited and inherited > 0:
+                return inherited
+        return Decimal("0")
+
+    return (
+        pick(product.min_margin_percentage, "min_margin_percentage"),
+        pick(product.default_margin_percentage, "default_margin_percentage"),
+        pick(product.max_margin_percentage, "max_margin_percentage"),
+    )
+
+
+def effective_margin(product):
+    """Margen objetivo efectivo. Envoltorio de effective_margins() para llamadores previos."""
+    return effective_margins(product)[1]
+
+
+def _price_at(base_cost, margin):
+    return _q(base_cost * (Decimal("1") + margin / Decimal("100")))
 
 
 def apply_margin(product):
-    """Recalcula sale_price = average_cost * (1 + margen efectivo / 100) y guarda.
+    """Recalcula el trío de precios sobre average_cost y guarda.
 
     Sin costo base (average_cost <= 0) no se puede derivar el precio: se respeta el
-    precio manual y no se toca (el precio se fijará al recibir la primera compra).
+    precio manual y no se toca nada (el precio se fijará al recibir la primera compra).
+    Si un margen del rango está sin configurar, su precio iguala al sugerido: el
+    rango colapsa a un punto y el comportamiento es el previo a esta función.
     """
     if not product.average_cost or product.average_cost <= 0:
         return product
-    margin = effective_margin(product)
-    product.sale_price = _q(product.average_cost * (Decimal("1") + margin / Decimal("100")))
-    product.save(update_fields=["sale_price", "updated_at"])
+    minimum, target, maximum = effective_margins(product)
+    base = product.average_cost
+    product.sale_price = _price_at(base, target)
+    product.min_sale_price = _price_at(base, minimum) if minimum > 0 else product.sale_price
+    product.max_sale_price = _price_at(base, maximum) if maximum > 0 else product.sale_price
+    product.save(
+        update_fields=["sale_price", "min_sale_price", "max_sale_price", "updated_at"]
+    )
     return product
 
 
 def apply_category_margin(category):
-    """Recalcula el precio de los productos de la categoría que NO tienen margen propio."""
-    for product in category.products.filter(default_margin_percentage=0):
+    """Recalcula el rango de precios de todos los productos de la categoría.
+
+    No se filtra por "sin margen propio": con tres márgenes un producto puede
+    heredar unos y definir otros. apply_margin() respeta los propios vía
+    effective_margins(), así que recalcular todos da el resultado correcto.
+    """
+    for product in category.products.all():
         apply_margin(product)
 
 

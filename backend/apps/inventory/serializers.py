@@ -29,9 +29,14 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        old = instance.default_margin_percentage
+        watched = (
+            "default_margin_percentage",
+            "min_margin_percentage",
+            "max_margin_percentage",
+        )
+        before = {field: getattr(instance, field) for field in watched}
         category = super().update(instance, validated_data)
-        if category.default_margin_percentage != old:
+        if any(getattr(category, field) != before[field] for field in watched):
             from .services import apply_category_margin
 
             apply_category_margin(category)
@@ -86,15 +91,18 @@ class ProductSerializer(serializers.ModelSerializer):
         return product
 
     def update(self, instance, validated_data):
-        old_margin = instance.default_margin_percentage
-        old_category = instance.category_id
+        watched = (
+            "default_margin_percentage",
+            "min_margin_percentage",
+            "max_margin_percentage",
+        )
+        before = {field: getattr(instance, field) for field in watched}
+        before_category = instance.category_id
         product = super().update(instance, validated_data)
-        # El precio depende del margen efectivo: cambia con el margen del producto
-        # o con su categoría. Recalcular si cambió cualquiera de los dos.
-        if (
-            product.default_margin_percentage != old_margin
-            or product.category_id != old_category
-        ):
+        # El rango depende de los tres márgenes efectivos, que cambian con los del
+        # producto o con los de su categoría. Recalcular si cambió cualquiera.
+        changed = any(getattr(product, field) != before[field] for field in watched)
+        if changed or product.category_id != before_category:
             from .services import apply_margin
 
             apply_margin(product)
