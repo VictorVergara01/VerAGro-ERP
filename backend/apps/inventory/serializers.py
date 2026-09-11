@@ -5,7 +5,7 @@ from rest_framework.validators import UniqueValidator
 
 from .models import InventoryMovement, Product, ProductCategory, ProductCompatibility
 from .services import apply_adjustment, generate_product_sku
-from .validators import margin_triplet_errors
+from .validators import margin_errors_for
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -23,21 +23,7 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def validate(self, attrs):
-        instance = self.instance
-        errors = margin_triplet_errors(
-            attrs.get(
-                "min_margin_percentage",
-                getattr(instance, "min_margin_percentage", 0) if instance else 0,
-            ),
-            attrs.get(
-                "default_margin_percentage",
-                getattr(instance, "default_margin_percentage", 0) if instance else 0,
-            ),
-            attrs.get(
-                "max_margin_percentage",
-                getattr(instance, "max_margin_percentage", 0) if instance else 0,
-            ),
-        )
+        errors = margin_errors_for(attrs, self.instance)
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
@@ -79,21 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
-        instance = self.instance
-        errors = margin_triplet_errors(
-            attrs.get(
-                "min_margin_percentage",
-                getattr(instance, "min_margin_percentage", 0) if instance else 0,
-            ),
-            attrs.get(
-                "default_margin_percentage",
-                getattr(instance, "default_margin_percentage", 0) if instance else 0,
-            ),
-            attrs.get(
-                "max_margin_percentage",
-                getattr(instance, "max_margin_percentage", 0) if instance else 0,
-            ),
-        )
+        errors = margin_errors_for(attrs, self.instance)
         if errors:
             raise serializers.ValidationError(errors)
         return attrs

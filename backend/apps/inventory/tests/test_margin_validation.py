@@ -2,8 +2,8 @@ from decimal import Decimal
 
 import pytest
 
-from apps.inventory.models import Product
-from apps.inventory.serializers import ProductSerializer
+from apps.inventory.models import Product, ProductCategory
+from apps.inventory.serializers import ProductCategorySerializer, ProductSerializer
 from apps.inventory.validators import margin_triplet_errors
 
 
@@ -66,3 +66,32 @@ def test_serializer_acepta_trio_valido():
     assert s.is_valid(), s.errors
     product = s.save()
     assert Product.objects.filter(pk=product.pk).exists()
+
+
+@pytest.mark.django_db
+def test_category_serializer_rechaza_minimo_sobre_maximo():
+    s = ProductCategorySerializer(
+        data={
+            "name": "Filtros",
+            "min_margin_percentage": "50",
+            "default_margin_percentage": "30",
+            "max_margin_percentage": "40",
+        }
+    )
+    assert not s.is_valid()
+    assert "min_margin_percentage" in s.errors
+
+
+@pytest.mark.django_db
+def test_category_serializer_acepta_trio_valido():
+    s = ProductCategorySerializer(
+        data={
+            "name": "Filtros",
+            "min_margin_percentage": "25",
+            "default_margin_percentage": "30",
+            "max_margin_percentage": "45",
+        }
+    )
+    assert s.is_valid(), s.errors
+    category = s.save()
+    assert ProductCategory.objects.filter(pk=category.pk).exists()

@@ -28,3 +28,22 @@ def margin_triplet_errors(minimum, target, maximum):
     if maximum > 0 and target > 0 and target > maximum:
         errors["max_margin_percentage"] = MSG_TARGET_OVER_MAX
     return errors
+
+
+def margin_errors_for(attrs, instance):
+    """Valida el trío de márgenes de un serializer.
+
+    Para cada uno de los tres campos, usa el valor entrante en `attrs` si está
+    presente; si no, cae al valor actual de `instance` (0 si no hay instancia,
+    es decir, en creación). Comparten esta resolución tanto `ProductSerializer`
+    como `ProductCategorySerializer`.
+    """
+
+    def field(name):
+        return attrs.get(name, getattr(instance, name, 0) if instance else 0)
+
+    return margin_triplet_errors(
+        field("min_margin_percentage"),
+        field("default_margin_percentage"),
+        field("max_margin_percentage"),
+    )
