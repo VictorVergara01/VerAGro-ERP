@@ -11,7 +11,6 @@ import {
   Stack,
   Tabs,
   Text,
-  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
@@ -28,6 +27,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
+import { PriceWithFloorWarning } from "../../components/ui/PriceWithFloorWarning";
 import { useAuth } from "../auth/useAuth";
 import { isAdmin as isAdminRole } from "../auth/roles";
 import { ServiceOrderChecklistCard } from "../checklists/ServiceOrderChecklistCard";
@@ -150,16 +150,13 @@ export function ServiceOrderDetailPage() {
     {
       header: "Precio",
       align: "right",
-      render: (p) =>
-        p.below_min_price ? (
-          <Tooltip label={`Bajo el mínimo: piso ${formatCurrency(p.price_floor)}`}>
-            <Text c="red" fw={600} component="span">
-              {formatCurrency(p.unit_price)}
-            </Text>
-          </Tooltip>
-        ) : (
-          formatCurrency(p.unit_price)
-        ),
+      render: (p) => (
+        <PriceWithFloorWarning
+          value={p.unit_price}
+          floor={p.price_floor}
+          belowMin={p.below_min_price}
+        />
+      ),
     },
     { header: "Total", align: "right", render: (p) => formatCurrency(p.total_price) },
     {

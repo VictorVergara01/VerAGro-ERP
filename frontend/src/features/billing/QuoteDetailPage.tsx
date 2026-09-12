@@ -8,7 +8,6 @@ import {
   Stack,
   Table,
   Text,
-  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -16,6 +15,7 @@ import { IconEdit } from "@tabler/icons-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { DetailHeader } from "../../components/ui/DetailHeader";
+import { PriceWithFloorWarning } from "../../components/ui/PriceWithFloorWarning";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { useAuth } from "../auth/useAuth";
 import { canWriteBilling } from "../auth/roles";
@@ -143,15 +143,11 @@ export function QuoteDetailPage() {
                   <Table.Td>{l.description || l.product_sku}</Table.Td>
                   <Table.Td ta="right">{l.quantity}</Table.Td>
                   <Table.Td ta="right">
-                    {l.below_min_price ? (
-                      <Tooltip label={`Bajo el mínimo: piso ${formatCurrency(l.price_floor)}`}>
-                        <Text c="red" fw={600} component="span">
-                          {formatCurrency(l.unit_price)}
-                        </Text>
-                      </Tooltip>
-                    ) : (
-                      formatCurrency(l.unit_price)
-                    )}
+                    <PriceWithFloorWarning
+                      value={l.unit_price}
+                      floor={l.price_floor}
+                      belowMin={l.below_min_price}
+                    />
                   </Table.Td>
                   <Table.Td ta="right">{formatCurrency(l.total)}</Table.Td>
                 </Table.Tr>
