@@ -12,7 +12,7 @@ class Command(BaseCommand):
     help = (
         "Elimina los productos de prueba (por prefijo de SKU) con sus movimientos. "
         "Por defecto (o con --dry-run) sólo informa: hay que pasar --confirm para "
-        "que borre de verdad."
+        "que borre de verdad. --dry-run y --confirm son mutuamente excluyentes."
     )
 
     def add_arguments(self, parser):
@@ -20,7 +20,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Simula sin borrar (ya es el comportamiento por defecto; no-op).",
+            help=(
+                "Simula sin borrar (ya es el comportamiento por defecto). "
+                "Incompatible con --confirm."
+            ),
         )
         parser.add_argument(
             "--confirm", action="store_true", help="Ejecuta el borrado de verdad."
@@ -40,6 +43,16 @@ class Command(BaseCommand):
     PREFIX_MIN_LENGTH = 3
 
     def handle(self, *args, **options):
+        # Pedir simulación y borrado a la vez es contradictorio, y el riesgo no es
+        # simétrico: si se ignorara --dry-run, el operador que creyó simular pierde
+        # datos. Se aborta antes de tocar la base para que tenga que elegir.
+        if options["dry_run"] and options["confirm"]:
+            raise CommandError(
+                "--dry-run y --confirm son contradictorios: el primero simula y el "
+                "segundo borra. Usa --dry-run (o ningún flag) para simular, o sólo "
+                "--confirm para borrar de verdad."
+            )
+
         prefix = options["prefix"]
         if len(prefix) < self.PREFIX_MIN_LENGTH:
             raise CommandError(

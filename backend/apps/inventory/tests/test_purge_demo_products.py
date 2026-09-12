@@ -59,10 +59,25 @@ def test_dry_run_es_el_comportamiento_por_defecto(datos_de_prueba):
 def test_dry_run_flag_explicito_no_borra_nada(datos_de_prueba):
     # M1: --dry-run está documentado (help + spec) pero antes del fix no existía
     # como argumento y la invocación documentada fallaba con "unrecognized
-    # arguments". Es un no-op: el dry-run ya es el comportamiento por defecto.
+    # arguments". Por sí solo no cambia nada: el dry-run ya es el comportamiento
+    # por defecto. Lo que sí hace es entrar en conflicto con --confirm (abajo).
     demo, real = datos_de_prueba
     out = StringIO()
     call_command("purge_demo_products", "--dry-run", stdout=out)
+    assert Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
+    assert InventoryMovement.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_dry_run_con_confirm_aborta_y_no_borra_nada(datos_de_prueba):
+    # Pedir simular y borrar a la vez es contradictorio, y el riesgo no es
+    # simétrico: si se ignorara --dry-run, quien creyó simular pierde datos. Se
+    # aborta antes de tocar la base para que tenga que elegir.
+    demo, real = datos_de_prueba
+    with pytest.raises(CommandError) as exc:
+        call_command("purge_demo_products", "--dry-run", "--confirm", stdout=StringIO())
+    assert "contradictorios" in str(exc.value)
     assert Product.objects.filter(pk=demo.pk).exists()
     assert Product.objects.filter(pk=real.pk).exists()
     assert InventoryMovement.objects.count() == 1
