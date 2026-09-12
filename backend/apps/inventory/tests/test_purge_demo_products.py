@@ -1,0 +1,192 @@
+from decimal import Decimal
+from io import StringIO
+
+import pytest
+from django.core.management import CommandError, call_command
+
+from apps.billing.models import Invoice, InvoiceLine, Quote, QuoteLine
+from apps.checklists.models import (
+    ChecklistTemplate,
+    ChecklistTemplateItem,
+    ServiceChecklist,
+    ServiceChecklistItem,
+)
+from apps.customers.models import Customer
+from apps.inventory.models import InventoryMovement, Product
+from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine
+from apps.service_orders.models import ServiceOrder, ServiceOrderPart
+from apps.suppliers.models import Supplier
+
+
+@pytest.fixture
+def datos_de_prueba(db):
+    demo = Product.objects.create(sku="SKU-000001", name="Demo")
+    real = Product.objects.create(sku="T50-001", name="Real")
+    InventoryMovement.objects.create(
+        product=demo,
+        movement_type=InventoryMovement.MovementType.ADJUSTMENT_IN,
+        quantity=Decimal("1"),
+        unit_cost=Decimal("1"),
+    )
+    return demo, real
+
+
+@pytest.fixture
+def service_order(db):
+    customer = Customer.objects.create(name="Cliente OS")
+    return ServiceOrder.objects.create(customer=customer)
+
+
+@pytest.fixture
+def purchase_order(db):
+    supplier = Supplier.objects.create(name="Proveedor")
+    return PurchaseOrder.objects.create(supplier=supplier)
+
+
+@pytest.mark.django_db
+def test_dry_run_es_el_comportamiento_por_defecto(datos_de_prueba):
+    demo, real = datos_de_prueba
+    out = StringIO()
+    call_command("purge_demo_products", stdout=out)
+    assert Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
+    texto = out.getvalue()
+    assert "SKU-000001" in texto
+    assert "T50-001" not in texto
+
+
+@pytest.mark.django_db
+def test_confirm_borra_productos_y_movimientos(datos_de_prueba):
+    demo, real = datos_de_prueba
+    call_command("purge_demo_products", "--confirm", stdout=StringIO())
+    assert not Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
+    assert InventoryMovement.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_aborta_si_hay_facturas_afectadas_sin_allow_orphans(datos_de_prueba):
+    demo, _ = datos_de_prueba
+    customer = Customer.objects.create(name="Cliente")
+    invoice = Invoice.objects.create(customer=customer)
+    InvoiceLine.objects.create(
+        invoice=invoice, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
+    )
+    with pytest.raises(CommandError):
+        call_command("purge_demo_products", "--confirm", stdout=StringIO())
+    assert Product.objects.filter(pk=demo.pk).exists()   # no borró nada
+
+
+@pytest.mark.django_db
+def test_allow_orphans_permite_borrar_y_deja_la_linea_huerfana(datos_de_prueba):
+    demo, _ = datos_de_prueba
+    customer = Customer.objects.create(name="Cliente")
+    invoice = Invoice.objects.create(customer=customer)
+    line = InvoiceLine.objects.create(
+        invoice=invoice, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
+    )
+    call_command(
+        "purge_demo_products", "--confirm", "--allow-orphans", stdout=StringIO()
+    )
+    line.refresh_from_db()
+    assert line.product_id is None              # SET_NULL
+    assert not Product.objects.filter(pk=demo.pk).exists()
+
+
+@pytest.mark.django_db
+def test_bloquea_por_piezas_de_orden_de_servicio(datos_de_prueba, service_order):
+    demo, _ = datos_de_prueba
+    ServiceOrderPart.objects.create(
+        service_order=service_order, product=demo, quantity=Decimal("1")
+    )
+    with pytest.raises(CommandError):
+        call_command("purge_demo_products", "--confirm", stdout=StringIO())
+    assert Product.objects.filter(pk=demo.pk).exists()   # PROTECT: no borró nada
+
+
+@pytest.mark.django_db
+def test_bloquea_por_lineas_de_orden_de_compra(datos_de_prueba, purchase_order):
+    demo, _ = datos_de_prueba
+    PurchaseOrderLine.objects.create(
+        purchase_order=purchase_order,
+        product=demo,
+        quantity_ordered=Decimal("1"),
+        unit_purchase_cost=Decimal("1"),
+    )
+    with pytest.raises(CommandError):
+        call_command("purge_demo_products", "--confirm", stdout=StringIO())
+    assert Product.objects.filter(pk=demo.pk).exists()   # PROTECT: no borró nada
+
+
+@pytest.mark.django_db
+def test_aborta_si_hay_cotizaciones_afectadas_sin_allow_orphans(datos_de_prueba):
+    demo, _ = datos_de_prueba
+    customer = Customer.objects.create(name="Cliente cotización")
+    quote = Quote.objects.create(customer=customer)
+    QuoteLine.objects.create(
+        quote=quote, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
+    )
+    with pytest.raises(CommandError):
+        call_command("purge_demo_products", "--confirm", stdout=StringIO())
+    assert Product.objects.filter(pk=demo.pk).exists()   # no borró nada
+
+
+@pytest.mark.django_db
+def test_allow_orphans_deja_huerfana_la_linea_de_cotizacion(datos_de_prueba):
+    demo, _ = datos_de_prueba
+    customer = Customer.objects.create(name="Cliente cotización")
+    quote = Quote.objects.create(customer=customer)
+    line = QuoteLine.objects.create(
+        quote=quote, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
+    )
+    call_command(
+        "purge_demo_products", "--confirm", "--allow-orphans", stdout=StringIO()
+    )
+    line.refresh_from_db()
+    assert line.product_id is None               # SET_NULL
+    assert not Product.objects.filter(pk=demo.pk).exists()
+
+
+@pytest.mark.django_db
+def test_aborta_si_hay_checklist_items_afectados_sin_allow_orphans(
+    datos_de_prueba, service_order
+):
+    demo, _ = datos_de_prueba
+    template = ChecklistTemplate.objects.create(name="Plantilla")
+    template_item = ChecklistTemplateItem.objects.create(
+        template=template, name="Ítem"
+    )
+    checklist = ServiceChecklist.objects.create(
+        service_order=service_order, checklist_template=template
+    )
+    ServiceChecklistItem.objects.create(
+        service_checklist=checklist,
+        template_item=template_item,
+        recommended_product=demo,
+    )
+    with pytest.raises(CommandError):
+        call_command("purge_demo_products", "--confirm", stdout=StringIO())
+    assert Product.objects.filter(pk=demo.pk).exists()   # no borró nada
+
+
+@pytest.mark.django_db
+def test_allow_orphans_deja_huerfano_el_checklist_item(datos_de_prueba, service_order):
+    demo, _ = datos_de_prueba
+    template = ChecklistTemplate.objects.create(name="Plantilla")
+    template_item = ChecklistTemplateItem.objects.create(
+        template=template, name="Ítem"
+    )
+    checklist = ServiceChecklist.objects.create(
+        service_order=service_order, checklist_template=template
+    )
+    item = ServiceChecklistItem.objects.create(
+        service_checklist=checklist,
+        template_item=template_item,
+        recommended_product=demo,
+    )
+    call_command(
+        "purge_demo_products", "--confirm", "--allow-orphans", stdout=StringIO()
+    )
+    item.refresh_from_db()
+    assert item.recommended_product_id is None    # SET_NULL
+    assert not Product.objects.filter(pk=demo.pk).exists()
