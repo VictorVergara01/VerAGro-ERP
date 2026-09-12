@@ -28,8 +28,21 @@ class Command(BaseCommand):
             ),
         )
 
+    #: Piso de longitud del prefijo. Uno corto (o vacío) matchea SKUs reales del
+    #: catálogo (p. ej. "T50-001") y se llevaría datos de producción. "SKU" ya
+    #: entra holgado; "T50-" del catálogo real también.
+    PREFIX_MIN_LENGTH = 3
+
     def handle(self, *args, **options):
         prefix = options["prefix"]
+        if len(prefix) < self.PREFIX_MIN_LENGTH:
+            raise CommandError(
+                f"El prefijo '{prefix}' es demasiado corto (mínimo "
+                f"{self.PREFIX_MIN_LENGTH} caracteres): con un prefijo tan corto "
+                "el comando podría alcanzar productos reales del catálogo. "
+                "Usa un prefijo más específico."
+            )
+
         products = Product.objects.filter(sku__startswith=prefix)
         product_ids = list(products.values_list("id", flat=True))
 
@@ -45,6 +58,9 @@ class Command(BaseCommand):
 
         # PROTECT: bloquean el borrado, no hay forma de continuar sin tocar
         # documentos reales de negocio (órdenes de servicio o de compra).
+        # Se CALCULAN e IMPRIMEN junto con los SET_NULL antes de decidir si se
+        # aborta, para que el dry-run (y un --confirm que termina abortando)
+        # siempre muestre el panorama completo en una sola pasada.
         service_parts = ServiceOrderPart.objects.filter(
             product_id__in=product_ids
         ).select_related("service_order")
@@ -72,13 +88,6 @@ class Command(BaseCommand):
                     f"  - orden de compra {line.purchase_order.order_number}: "
                     f"producto {line.product_id}"
                 )
-
-        if blocking:
-            raise CommandError(
-                "Hay referencias que bloquean el borrado (PROTECT): "
-                + "; ".join(blocking)
-                + ". Resuélvelas antes de purgar."
-            )
 
         # SET_NULL: NO bloquean, pero dejarían la referencia huérfana en silencio.
         # Por eso se exige autorización explícita (--allow-orphans).
@@ -129,6 +138,16 @@ class Command(BaseCommand):
             )
             for obj in queryset[:20]:
                 self.stdout.write(f"  - {describe(obj)}")
+
+        # Con el panorama completo ya impreso (PROTECT y SET_NULL), recién ahora
+        # se decide si abortar. El aborto por PROTECT tiene prioridad porque no
+        # hay forma de continuar sin tocar documentos reales.
+        if blocking:
+            raise CommandError(
+                "Hay referencias que bloquean el borrado (PROTECT): "
+                + "; ".join(blocking)
+                + ". Resuélvelas antes de purgar."
+            )
 
         if not options["confirm"]:
             self.stdout.write(

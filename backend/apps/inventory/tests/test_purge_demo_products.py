@@ -190,3 +190,64 @@ def test_allow_orphans_deja_huerfano_el_checklist_item(datos_de_prueba, service_
     item.refresh_from_db()
     assert item.recommended_product_id is None    # SET_NULL
     assert not Product.objects.filter(pk=demo.pk).exists()
+
+
+@pytest.mark.django_db
+def test_muestra_protect_y_set_null_antes_de_abortar_sin_flags(
+    datos_de_prueba, service_order
+):
+    """Fix round 1: el dry-run (la llamada sin flags, la más segura) debe
+    calcular e imprimir TODOS los hallazgos -PROTECT y SET_NULL- antes de
+    decidir si aborta, para no obligar al usuario a resolver un bloqueo,
+    reejecutar, y sólo entonces enterarse del huérfano."""
+    demo, _ = datos_de_prueba
+    ServiceOrderPart.objects.create(
+        service_order=service_order, product=demo, quantity=Decimal("1")
+    )
+    customer = Customer.objects.create(name="Cliente")
+    invoice = Invoice.objects.create(customer=customer)
+    InvoiceLine.objects.create(
+        invoice=invoice, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
+    )
+
+    out = StringIO()
+    with pytest.raises(CommandError):
+        call_command("purge_demo_products", stdout=out)  # sin ningún flag
+
+    texto = out.getvalue()
+    assert "orden de servicio" in texto               # sección PROTECT
+    assert "líneas de factura" in texto               # sección SET_NULL
+    assert "SET_NULL" in texto
+    assert Product.objects.filter(pk=demo.pk).exists()  # no borró nada
+
+
+@pytest.mark.django_db
+def test_prefix_vacio_se_rechaza_y_no_borra_nada(datos_de_prueba):
+    demo, real = datos_de_prueba
+    with pytest.raises(CommandError):
+        call_command(
+            "purge_demo_products", "--prefix", "", "--confirm", stdout=StringIO()
+        )
+    assert Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
+
+
+@pytest.mark.django_db
+def test_prefix_de_dos_caracteres_se_rechaza(datos_de_prueba):
+    demo, real = datos_de_prueba
+    with pytest.raises(CommandError):
+        call_command(
+            "purge_demo_products", "--prefix", "SK", "--confirm", stdout=StringIO()
+        )
+    assert Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
+
+
+@pytest.mark.django_db
+def test_prefix_de_tres_caracteres_es_valido(datos_de_prueba):
+    demo, real = datos_de_prueba
+    call_command(
+        "purge_demo_products", "--prefix", "SKU", "--confirm", stdout=StringIO()
+    )
+    assert not Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
