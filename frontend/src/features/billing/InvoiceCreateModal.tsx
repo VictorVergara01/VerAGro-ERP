@@ -12,9 +12,10 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useDebouncedValue } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useCustomers } from "../customers/api";
@@ -64,7 +65,15 @@ export function InvoiceCreateModal({
   const create = useCreateInvoice();
   const update = useUpdateInvoice(invoice?.id);
   const customers = useCustomers({});
-  const products = useProducts({});
+  // La búsqueda de productos va al servidor: con un catálogo de cientos de piezas,
+  // traer sólo la primera página y filtrar en cliente escondía todo lo que no
+  // cupiera en ella. El debounce de 300 ms es el mismo que usan los listados.
+  const [productSearch, setProductSearch] = useState("");
+  const [debouncedProductSearch] = useDebouncedValue(productSearch, 300);
+  const products = useProducts({
+    search: debouncedProductSearch || undefined,
+    pageSize: 50,
+  });
   const navigate = useNavigate();
   const editing = Boolean(invoice?.id);
 
@@ -100,10 +109,22 @@ export function InvoiceCreateModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, invoice]);
 
-  const productOptions = (products.data?.results ?? []).map((p) => ({
+  const fetched = products.data?.results ?? [];
+  const productOptions = fetched.map((p) => ({
     value: String(p.id),
     label: `${p.sku} · ${p.name}`,
   }));
+  // Un producto ya elegido puede no venir en la página actual (al editar una
+  // factura, o tras acotar la búsqueda). Sin esto el Select mostraría el campo
+  // vacío y daría la impresión de que la línea perdió su producto.
+  for (const line of form.values.lines) {
+    if (line.product && !productOptions.some((o) => o.value === line.product)) {
+      productOptions.push({ value: line.product, label: line.description || "—" });
+    }
+  }
+
+  const total = products.data?.count ?? fetched.length;
+  const hayMas = total > fetched.length;
 
   const onPickProduct = (i: number, value: string | null) => {
     form.setFieldValue(`lines.${i}.product`, value);
@@ -203,6 +224,7 @@ export function InvoiceCreateModal({
               <Text fw={600}>Conceptos</Text>
               <ActionIcon
                 size="sm"
+                aria-label="Agregar línea"
                 onClick={() =>
                   form.insertListItem("lines", {
                     line_type: "product",
@@ -250,6 +272,20 @@ export function InvoiceCreateModal({
                     placeholder="—"
                     value={form.values.lines[i].product}
                     onChange={(v) => onPickProduct(i, v)}
+                    searchValue={productSearch}
+                    onSearchChange={setProductSearch}
+                    // El servidor ya filtró: volver a filtrar en cliente
+                    // descartaría coincidencias por campos que no están en la
+                    // etiqueta (descripción, código de barras).
+                    filter={({ options }) => options}
+                    nothingFoundMessage={
+                      products.isFetching ? "Buscando…" : "Sin resultados"
+                    }
+                    description={
+                      hayMas
+                        ? `Mostrando ${fetched.length} de ${total}: escribe para buscar`
+                        : undefined
+                    }
                   />
                 </Table.Td>
                 <Table.Td>
@@ -265,7 +301,12 @@ export function InvoiceCreateModal({
                   <NumberInput min={0} decimalScale={2} {...form.getInputProps(`lines.${i}.unit_cost`)} />
                 </Table.Td>
                 <Table.Td>
-                  <ActionIcon color="red" variant="subtle" onClick={() => form.removeListItem("lines", i)}>
+                  <ActionIcon
+                    color="red"
+                    variant="subtle"
+                    aria-label="Quitar línea"
+                    onClick={() => form.removeListItem("lines", i)}
+                  >
                     <IconTrash size={16} />
                   </ActionIcon>
                 </Table.Td>
