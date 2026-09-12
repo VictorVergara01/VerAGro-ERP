@@ -91,13 +91,14 @@ export function useAdjustStock() {
       product: number;
       movement_type: string;
       quantity: string;
+      unit_cost?: string;
       notes?: string;
     }) => {
       const body = {
         product: input.product,
         movement_type: input.movement_type,
         quantity: input.quantity,
-        unit_cost: "0",
+        ...(input.unit_cost ? { unit_cost: input.unit_cost } : {}),
         notes: input.notes ?? "",
       };
       const { error } = await api.POST("/api/inventory/adjustments/", {

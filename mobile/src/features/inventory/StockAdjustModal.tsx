@@ -18,6 +18,7 @@ export function StockAdjustModal({
   const { colors } = useTheme();
   const [type, setType] = useState("adjustment_in");
   const [quantity, setQuantity] = useState("");
+  const [unitCost, setUnitCost] = useState("");
   const [notes, setNotes] = useState("");
   const adjust = useAdjustStock();
 
@@ -25,17 +26,33 @@ export function StockAdjustModal({
     if (visible) {
       setType("adjustment_in");
       setQuantity("");
+      setUnitCost("");
       setNotes("");
     }
   }, [visible]);
+
+  const isEntry = type === "adjustment_in";
 
   const submit = () => {
     if (!product) return;
     const qty = Number(quantity);
     if (!Number.isFinite(qty) || qty <= 0)
       return Alert.alert("Cantidad inválida", "Ingresa una cantidad mayor que cero.");
+    const cost = Number(unitCost);
+    if (isEntry && (!unitCost || !Number.isFinite(cost) || cost <= 0)) {
+      return Alert.alert(
+        "Costo inválido",
+        "La entrada requiere el costo unitario: alimenta el costo promedio.",
+      );
+    }
     adjust.mutate(
-      { product: product.id, movement_type: type, quantity: quantity, notes },
+      {
+        product: product.id,
+        movement_type: type,
+        quantity: quantity,
+        unit_cost: isEntry ? unitCost : undefined,
+        notes,
+      },
       { onSuccess: onClose, onError: (e) => Alert.alert("Error", (e as Error).message) },
     );
   };
@@ -57,13 +74,24 @@ export function StockAdjustModal({
       <Segmented
         label="Tipo de ajuste"
         value={type}
-        onChange={setType}
+        onChange={(v) => {
+          setType(v);
+          setUnitCost("");
+        }}
         options={[
           { value: "adjustment_in", label: "Entrada (+)" },
           { value: "adjustment_out", label: "Salida (−)" },
         ]}
       />
       <LabeledInput label="Cantidad" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
+      {isEntry ? (
+        <LabeledInput
+          label="Costo unitario"
+          value={unitCost}
+          onChangeText={setUnitCost}
+          keyboardType="numeric"
+        />
+      ) : null}
       <LabeledInput label="Notas" value={notes} onChangeText={setNotes} multiline />
     </FormModal>
   );
