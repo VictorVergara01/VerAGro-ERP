@@ -60,6 +60,34 @@ const EMPTY: FormValues = {
   description: "",
 };
 
+// Mapea explícitamente sólo las claves de FormValues. A propósito NO se hace
+// `{ ...product }`: Product trae campos derivados/read-only (min_sale_price,
+// max_sale_price, stock_quantity, reserved_quantity, available_quantity, id,
+// created_at, updated_at...) que jamás deben terminar en el payload de escritura.
+// Enumerar los campos a mano cierra esa clase de fuga de una vez, en vez de
+// despojar cada campo derivado nuevo que el backend agregue a futuro.
+function productToFormValues(product: Product): FormValues {
+  return {
+    sku: product.sku ?? "",
+    name: product.name,
+    category: product.category ? String(product.category) : null,
+    brand: product.brand ?? "",
+    model: product.model ?? "",
+    unit_of_measure: product.unit_of_measure ?? "",
+    barcode: product.barcode ?? "",
+    location: product.location ?? "",
+    minimum_stock: product.minimum_stock ?? 0,
+    sale_price: product.sale_price ?? 0,
+    average_cost: product.average_cost ?? 0,
+    default_margin_percentage: product.default_margin_percentage ?? 0,
+    min_margin_percentage: product.min_margin_percentage ?? 0,
+    max_margin_percentage: product.max_margin_percentage ?? 0,
+    main_supplier: product.main_supplier ? String(product.main_supplier) : null,
+    compatible_equipment_types: (product.compatible_equipment_types ?? []).map(String),
+    description: product.description ?? "",
+  };
+}
+
 export function ProductFormModal({
   opened,
   onClose,
@@ -79,31 +107,36 @@ export function ProductFormModal({
     initialValues: EMPTY,
     validate: {
       name: (v) => (v.trim() ? null : "El nombre es obligatorio."),
-      min_margin_percentage: (value, values) =>
-        Number(value) > 0 && Number(values.max_margin_percentage) > 0
-          && Number(value) > Number(values.max_margin_percentage)
-          ? "El margen mínimo no puede superar al máximo."
-          : null,
+      // Espejo de margin_triplet_errors() en el backend (backend/apps/inventory/validators.py):
+      // compara los tres pares ignorando los que estén en 0 ("no configurado"), y cuando
+      // min > max y min > target son ambos ciertos, el mensaje de min > target manda (el
+      // backend evalúa en ese orden y el segundo pisa al primero en el dict de errores).
+      min_margin_percentage: (value, values) => {
+        const min = Number(value) || 0;
+        const target = Number(values.default_margin_percentage) || 0;
+        const max = Number(values.max_margin_percentage) || 0;
+        let message: string | null = null;
+        if (min > 0 && max > 0 && min > max) {
+          message = "El margen mínimo no puede superar al máximo.";
+        }
+        if (min > 0 && target > 0 && min > target) {
+          message = "El margen mínimo no puede superar al objetivo.";
+        }
+        return message;
+      },
+      max_margin_percentage: (value, values) => {
+        const max = Number(value) || 0;
+        const target = Number(values.default_margin_percentage) || 0;
+        return max > 0 && target > 0 && target > max
+          ? "El margen objetivo no puede superar al máximo."
+          : null;
+      },
     },
   });
 
   useEffect(() => {
     if (opened) {
-      form.setValues({
-        ...EMPTY,
-        ...(product
-          ? {
-              ...product,
-              category: product.category ? String(product.category) : null,
-              main_supplier: product.main_supplier
-                ? String(product.main_supplier)
-                : null,
-              compatible_equipment_types: (
-                product.compatible_equipment_types ?? []
-              ).map(String),
-            }
-          : {}),
-      } as FormValues);
+      form.setValues(product ? productToFormValues(product) : EMPTY);
       form.resetDirty();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
