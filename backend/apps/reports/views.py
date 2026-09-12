@@ -365,6 +365,10 @@ class BelowFloorSalesReport(APIView):
                 product__isnull=False,
                 product__min_sale_price__gt=0,
                 unit_price__lt=F("product__min_sale_price"),
+                # Solo facturas que representan una venta real: fuera los
+                # borradores (propuestas, igual que las cotizaciones) y las
+                # anuladas (ventas que no ocurrieron).
+                invoice__status__in=SALES_STATUSES,
             ).select_related("product", "invoice", "invoice__created_by"),
             "invoice__issue_date",
             date_from,
@@ -375,9 +379,13 @@ class BelowFloorSalesReport(APIView):
             ServiceOrderPart.objects.filter(
                 product__min_sale_price__gt=0,
                 unit_price__lt=F("product__min_sale_price"),
-            ).select_related(
-                "product", "service_order", "service_order__created_by"
-            ),
+                # Solo piezas efectivamente consumidas (no reservadas, ni
+                # pendientes de compra, ni devueltas) en órdenes que no se
+                # cancelaron.
+                status=ServiceOrderPart.Status.USED,
+            )
+            .exclude(service_order__status=ServiceOrder.Status.CANCELLED)
+            .select_related("product", "service_order", "service_order__created_by"),
             "service_order__received_date",
             date_from,
             date_to,
