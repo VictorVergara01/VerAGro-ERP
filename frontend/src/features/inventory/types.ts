@@ -18,6 +18,23 @@ export interface InventoryMovement {
   created_at: string;
 }
 
+// El endpoint de historial de costos tampoco declara serializer en el schema;
+// tipo local que refleja CostHistoryEntrySerializer del backend. Los campos
+// del desglose de compra vienen en null (no {}) cuando la entrada es un ajuste.
+export type CostHistoryEntry = {
+  id: number;
+  created_at: string;
+  movement_type: string;
+  quantity: string;
+  unit_cost: string;
+  average_cost_after: string;
+  purchase_order_number: string | null;
+  supplier_name: string | null;
+  supplier_unit_cost: string | null;
+  allocated_extra_per_unit: string | null;
+  notes: string;
+};
+
 export const MOVEMENT_LABEL: Record<string, string> = {
   purchase_in: "Entrada por compra",
   service_out: "Salida por servicio",

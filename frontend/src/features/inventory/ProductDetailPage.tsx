@@ -6,7 +6,7 @@ import {
   Grid,
   Loader,
   Stack,
-  Text,
+  Tabs,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconAdjustments } from "@tabler/icons-react";
@@ -17,8 +17,13 @@ import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AdjustStockModal } from "./AdjustStockModal";
-import { useProduct, useProductMovements } from "./api";
-import { MOVEMENT_COLOR, MOVEMENT_LABEL, type InventoryMovement } from "./types";
+import { useProduct, useProductCostHistory, useProductMovements } from "./api";
+import {
+  MOVEMENT_COLOR,
+  MOVEMENT_LABEL,
+  type CostHistoryEntry,
+  type InventoryMovement,
+} from "./types";
 
 const movementColumns: Column<InventoryMovement>[] = [
   { header: "Fecha", render: (m) => formatDate(m.created_at) },
@@ -36,11 +41,42 @@ const movementColumns: Column<InventoryMovement>[] = [
   { header: "Notas", render: (m) => m.notes || "—" },
 ];
 
+const costHistoryColumns: Column<CostHistoryEntry>[] = [
+  { header: "Fecha", render: (e) => formatDate(e.created_at) },
+  { header: "Orden", render: (e) => e.purchase_order_number ?? "—" },
+  { header: "Proveedor", render: (e) => e.supplier_name ?? "—" },
+  { header: "Cant.", align: "right", render: (e) => e.quantity },
+  {
+    header: "Costo prov.",
+    align: "right",
+    render: (e) => (e.supplier_unit_cost ? formatCurrency(e.supplier_unit_cost) : "—"),
+  },
+  {
+    header: "Flete/u",
+    align: "right",
+    render: (e) =>
+      e.allocated_extra_per_unit ? formatCurrency(e.allocated_extra_per_unit) : "—",
+  },
+  { header: "Landed", align: "right", render: (e) => formatCurrency(e.unit_cost) },
+  {
+    header: "Promedio después",
+    align: "right",
+    render: (e) => formatCurrency(e.average_cost_after),
+  },
+];
+
+// El rango es derivado del costo promedio: en 0 significa "sin costo" o "sin
+// márgenes configurados", no un precio real de $0.00.
+function rangePrice(value: string | undefined): string | undefined {
+  return Number(value ?? 0) > 0 ? formatCurrency(value) : undefined;
+}
+
 export function ProductDetailPage() {
   const { id } = useParams();
   const productId = id ? Number(id) : undefined;
   const { data: product, isLoading, error } = useProduct(productId);
   const movements = useProductMovements(productId);
+  const costHistory = useProductCostHistory(productId);
   const [adjustOpen, { open, close }] = useDisclosure(false);
 
   if (isLoading) return <Loader />;
@@ -103,22 +139,41 @@ export function ProductDetailPage() {
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Margen %" value={product.default_margin_percentage} />
           </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}>
+            <Field label="Precio mínimo" value={rangePrice(product.min_sale_price)} />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}>
+            <Field label="Precio máximo" value={rangePrice(product.max_sale_price)} />
+          </Grid.Col>
         </Grid>
       </Card>
 
-      <div>
-        <Text fw={600} mb="xs">
-          Movimientos
-        </Text>
-        <DataTable
-          columns={movementColumns}
-          rows={movements.data ?? []}
-          loading={movements.isLoading}
-          rowKey={(m) => m.id as number}
-          minWidth={760}
-          emptyText="Sin movimientos."
-        />
-      </div>
+      <Tabs defaultValue="movements">
+        <Tabs.List>
+          <Tabs.Tab value="movements">Movimientos</Tabs.Tab>
+          <Tabs.Tab value="cost-history">Historial de costos</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="movements" pt="md">
+          <DataTable
+            columns={movementColumns}
+            rows={movements.data ?? []}
+            loading={movements.isLoading}
+            rowKey={(m) => m.id as number}
+            minWidth={760}
+            emptyText="Sin movimientos."
+          />
+        </Tabs.Panel>
+        <Tabs.Panel value="cost-history" pt="md">
+          <DataTable
+            columns={costHistoryColumns}
+            rows={costHistory.data ?? []}
+            loading={costHistory.isLoading}
+            rowKey={(e) => e.id}
+            minWidth={900}
+            emptyText="Sin historial de costos."
+          />
+        </Tabs.Panel>
+      </Tabs>
 
       <AdjustStockModal opened={adjustOpen} onClose={close} product={product} />
     </Stack>

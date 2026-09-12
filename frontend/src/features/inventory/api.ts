@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
 import type { Paginated, Schemas } from "../../lib/api/types";
-import type { InventoryMovement, Product, ProductCategory } from "./types";
+import type { CostHistoryEntry, InventoryMovement, Product, ProductCategory } from "./types";
 import type {
   EquipmentComponent,
   ProductCompatibility,
@@ -104,6 +104,21 @@ export function useProductMovements(id: number | undefined) {
       );
       if (error || !data) throw new Error("No se pudieron cargar los movimientos.");
       return data as unknown as InventoryMovement[];
+    },
+  });
+}
+
+export function useProductCostHistory(productId?: number) {
+  return useQuery({
+    queryKey: ["product-cost-history", productId],
+    enabled: productId != null,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/api/inventory/products/{id}/cost-history/",
+        { params: { path: { id: productId as number } } },
+      );
+      if (error) throw new Error("No se pudo cargar el historial de costos.");
+      return data as unknown as CostHistoryEntry[];
     },
   });
 }
