@@ -110,7 +110,7 @@ export function useProductMovements(id: number | undefined) {
 
 export function useProductCostHistory(productId?: number) {
   return useQuery({
-    queryKey: ["product-cost-history", productId],
+    queryKey: ["product", productId, "cost-history"],
     enabled: productId != null,
     queryFn: async () => {
       const { data, error } = await api.GET(
