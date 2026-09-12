@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.db.models import Count, DecimalField, F, Sum
 from django.db.models.functions import Coalesce, TruncMonth
@@ -344,3 +345,88 @@ class EquipmentHistoryReport(APIView):
                 "service_orders": orders,
             }
         )
+
+
+class BelowFloorSalesReport(APIView):
+    """Líneas vendidas por debajo del piso de precio vigente del producto.
+
+    Las cotizaciones quedan fuera: son propuestas, no ventas, y meterían
+    negociaciones que nunca se cerraron en la cifra.
+    """
+
+    permission_classes = [Financial]
+
+    @extend_schema(responses=OpenApiTypes.OBJECT)
+    def get(self, request):
+        date_from, date_to = _date_range(request)
+
+        lines = _apply_range(
+            InvoiceLine.objects.filter(
+                product__isnull=False,
+                product__min_sale_price__gt=0,
+                unit_price__lt=F("product__min_sale_price"),
+            ).select_related("product", "invoice", "invoice__created_by"),
+            "invoice__issue_date",
+            date_from,
+            date_to,
+        )
+
+        parts = _apply_range(
+            ServiceOrderPart.objects.filter(
+                product__min_sale_price__gt=0,
+                unit_price__lt=F("product__min_sale_price"),
+            ).select_related(
+                "product", "service_order", "service_order__created_by"
+            ),
+            "service_order__received_date",
+            date_from,
+            date_to,
+        )
+
+        items = [
+            _below_floor_row(
+                document=line.invoice.invoice_number,
+                document_type="invoice",
+                date=line.invoice.issue_date,
+                created_by=line.invoice.created_by,
+                product=line.product,
+                unit_price=line.unit_price,
+                quantity=line.quantity,
+            )
+            for line in lines
+        ] + [
+            _below_floor_row(
+                document=part.service_order.service_order_number,
+                document_type="service_order",
+                date=part.service_order.received_date,
+                created_by=part.service_order.created_by,
+                product=part.product,
+                unit_price=part.unit_price,
+                quantity=part.quantity,
+            )
+            for part in parts
+        ]
+        items.sort(key=lambda row: (row["date"] or ""), reverse=True)
+        return Response({"items": items, "count": len(items)})
+
+
+def _below_floor_row(*, document, document_type, date, created_by, product, unit_price, quantity):
+    floor = product.min_sale_price
+    difference = floor - unit_price
+    percentage = (difference / floor * 100) if floor else Decimal("0")
+    return {
+        "document": document,
+        "document_type": document_type,
+        "date": date.isoformat() if date else None,
+        "created_by": getattr(created_by, "full_name", None),
+        "product_id": product.id,
+        "product_sku": product.sku,
+        "product_name": product.name,
+        "quantity": str(quantity),
+        "unit_price": str(unit_price),
+        "price_floor": str(floor),
+        "difference": str(difference.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+        "difference_percentage": str(
+            percentage.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        ),
+    }

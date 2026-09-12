@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    BelowFloorSalesReport,
     DashboardReport,
     EquipmentHistoryReport,
     LowStockReport,
@@ -23,5 +24,10 @@ urlpatterns = [
         "reports/equipment-history/",
         EquipmentHistoryReport.as_view(),
         name="reports-equipment-history",
+    ),
+    path(
+        "reports/below-floor-sales/",
+        BelowFloorSalesReport.as_view(),
+        name="reports-below-floor-sales",
     ),
 ]
