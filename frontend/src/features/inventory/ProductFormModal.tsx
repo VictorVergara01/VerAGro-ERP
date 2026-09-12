@@ -17,7 +17,7 @@ import { useEffect } from "react";
 import { formatCurrency } from "../../utils/format";
 import { useEquipmentTypes } from "../equipment/api";
 import { useCategories, useSaveProduct, useSupplierOptions } from "./api";
-import { computeRange } from "./priceRange";
+import { computeRange, pickMargin } from "./priceRange";
 import type { Product } from "./types";
 
 interface FormValues {
@@ -270,11 +270,30 @@ export function ProductFormModal({
           </Grid.Col>
           <Grid.Col span={12}>
             {(() => {
+              // Cascada producto → categoría, igual que effective_margins() en el
+              // backend (backend/apps/inventory/services.py): el margen propio
+              // manda si está configurado; si no, se hereda el de la categoría
+              // seleccionada. Sin esto, la previa ignora el margen de categoría
+              // (el caso dominante: 0 productos con margen propio, 12 categorías
+              // con margen) y muestra piso = sugerido = techo = costo promedio
+              // mientras el servidor aplica el margen de la categoría.
+              const selectedCategory = categories.data?.find(
+                (c) => String(c.id) === form.values.category,
+              );
               const range = computeRange(
                 Number(form.values.average_cost ?? 0),
-                Number(form.values.min_margin_percentage ?? 0),
-                Number(form.values.default_margin_percentage ?? 0),
-                Number(form.values.max_margin_percentage ?? 0),
+                pickMargin(
+                  Number(form.values.min_margin_percentage ?? 0),
+                  Number(selectedCategory?.min_margin_percentage ?? 0),
+                ),
+                pickMargin(
+                  Number(form.values.default_margin_percentage ?? 0),
+                  Number(selectedCategory?.default_margin_percentage ?? 0),
+                ),
+                pickMargin(
+                  Number(form.values.max_margin_percentage ?? 0),
+                  Number(selectedCategory?.max_margin_percentage ?? 0),
+                ),
               );
               if (!range.suggested) return null;
               return (

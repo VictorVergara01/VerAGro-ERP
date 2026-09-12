@@ -293,9 +293,12 @@ function BelowFloorPanel({ range }: { range: DateRange }) {
     },
     { header: "Piso", align: "right", render: (r) => formatCurrency(r.price_floor) },
     {
-      header: "Diferencia",
+      header: "Faltante bajo el piso",
       align: "right",
-      render: (r) => `${formatCurrency(r.difference)} (${r.difference_percentage}%)`,
+      // El backend devuelve difference/difference_percentage en positivo (cuánto
+      // le falta al precio vendido para llegar al piso); se antepone el signo acá
+      // para que quede claro que es un faltante, no una diferencia cualquiera.
+      render: (r) => `-${formatCurrency(r.difference)} (-${r.difference_percentage}%)`,
     },
     { header: "Creado por", render: (r) => r.created_by ?? "—" },
   ];

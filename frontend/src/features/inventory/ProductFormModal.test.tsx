@@ -9,9 +9,10 @@ import { ProductFormModal } from "./ProductFormModal";
 import type { Product } from "./types";
 
 const saveMutate = vi.fn().mockResolvedValue({});
+let categoriesData: Array<Record<string, unknown>> = [];
 vi.mock("./api", () => ({
   useSaveProduct: () => ({ mutateAsync: saveMutate, isPending: false }),
-  useCategories: () => ({ data: [] }),
+  useCategories: () => ({ data: categoriesData }),
   useSupplierOptions: () => ({ data: [] }),
 }));
 vi.mock("../equipment/api", () => ({
@@ -65,6 +66,36 @@ function renderModal(product: Product | null = null) {
 }
 
 describe("ProductFormModal", () => {
+  it("la previa del rango usa el margen de la categoría cuando el producto no tiene margen propio", () => {
+    // I3: 0 productos con margen propio y 12 categorías con margen es el caso
+    // dominante en la base real; antes del fix la previa ignoraba la cascada y
+    // mostraba piso = sugerido = techo = costo promedio.
+    categoriesData = [
+      {
+        id: 3,
+        name: "Categoría X",
+        min_margin_percentage: "20.00",
+        default_margin_percentage: "30.00",
+        max_margin_percentage: "45.00",
+      },
+    ];
+    const product: Product = {
+      ...EXISTING_PRODUCT,
+      category: 3,
+      average_cost: "100.00",
+      min_margin_percentage: "0.00",
+      default_margin_percentage: "0.00",
+      max_margin_percentage: "0.00",
+    };
+    const { baseElement } = renderModal(product);
+    categoriesData = [];
+    expect(baseElement.textContent).toContain("Rango sobre el costo promedio");
+    // costo 100 con margen de categoría 20/30/45 -> piso 120, sugerido 130, techo 145
+    expect(baseElement.textContent).toContain("120.00");
+    expect(baseElement.textContent).toContain("130.00");
+    expect(baseElement.textContent).toContain("145.00");
+  });
+
   it("permite guardar sin SKU (se autogenera en el backend)", async () => {
     saveMutate.mockClear();
     renderModal();

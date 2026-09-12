@@ -67,8 +67,12 @@ describe("ReportsPage", () => {
             quantity: "1.00",
             unit_price: "30.00",
             price_floor: "34.38",
-            difference: "-4.38",
-            difference_percentage: "-12.73",
+            // El backend devuelve estos dos campos en positivo (test_below_floor.py
+            // asserta +4.38 / 12.74): antes este fixture tenía el signo invertido y
+            // un porcentaje ligeramente distinto (-12.73), sin que nada lo notara
+            // por ser un mock nunca validado contra la forma real de la respuesta.
+            difference: "4.38",
+            difference_percentage: "12.74",
           },
         ],
       },
@@ -77,7 +81,7 @@ describe("ReportsPage", () => {
     expect(screen.getByText("FAC-000002")).toBeInTheDocument();
     expect(screen.getByText("HEL — Hélice")).toBeInTheDocument();
     expect(screen.getByText("Vendedor Uno")).toBeInTheDocument();
-    expect(screen.getByText(/-12\.73/)).toBeInTheDocument();
+    expect(screen.getByText(/-12\.74/)).toBeInTheDocument();
   });
 
   it("muestra 'Sin acceso' en ventas bajo el piso cuando el rol no tiene acceso al financiero", () => {

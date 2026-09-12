@@ -45,6 +45,9 @@ const marginOf = (item: LookupItem | null, key: MarginKey) => {
 const emptyMargins = () =>
   Object.fromEntries(MARGIN_FIELDS.map((f) => [f.key, "0"])) as Record<MarginKey, string>;
 
+/** 0 (o vacío) significa "no configurado": no se pinta como si fuera un margen real. */
+const fmtMargin = (raw: string) => (Number(raw) > 0 ? `${raw}%` : "—");
+
 const marginsOf = (item: LookupItem | null) =>
   Object.fromEntries(
     MARGIN_FIELDS.map((f) => [f.key, marginOf(item, f.key)]),
@@ -178,10 +181,12 @@ export function LookupManager<T extends LookupItem>({
     ...(withMargin
       ? [
           {
-            header: "Margen %",
+            header: "Margen % (mín / objetivo / máx)",
             align: "right" as const,
             render: (i: T) =>
-              `${marginOf(i, "min_margin_percentage")}% – ${marginOf(i, "max_margin_percentage")}%`,
+              `${fmtMargin(marginOf(i, "min_margin_percentage"))} / ` +
+              `${fmtMargin(marginOf(i, "default_margin_percentage"))} / ` +
+              `${fmtMargin(marginOf(i, "max_margin_percentage"))}`,
           },
         ]
       : []),

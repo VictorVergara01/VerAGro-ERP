@@ -771,7 +771,7 @@ export interface paths {
             cookie?: never;
         };
         /** @description Historial de costos: sólo entradas, con el desglose de su compra. */
-        get: operations["inventory_products_cost_history_retrieve"];
+        get: operations["inventory_products_cost_history_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2005,7 +2005,7 @@ export interface components {
     schemas: {
         Adjustment: {
             product: number;
-            movement_type: components["schemas"]["MovementTypeEnum"];
+            movement_type: components["schemas"]["AdjustmentMovementTypeEnum"];
             /** Format: decimal */
             quantity: string;
             /**
@@ -2017,11 +2017,36 @@ export interface components {
             notes: string;
         };
         /**
+         * @description * `adjustment_in` - adjustment_in
+         *     * `adjustment_out` - adjustment_out
+         * @enum {string}
+         */
+        AdjustmentMovementTypeEnum: "adjustment_in" | "adjustment_out";
+        /**
          * @description * `proportional_by_value` - Proporcional al valor
          *     * `manual` - Manual
          * @enum {string}
          */
         AllocationMethodEnum: "proportional_by_value" | "manual";
+        /** @description Una línea vendida bajo el piso de precio vigente del producto. */
+        BelowFloorSaleItem: {
+            document: string;
+            document_type: components["schemas"]["DocumentTypeEnum"];
+            date: string | null;
+            created_by: string | null;
+            product_id: number;
+            product_sku: string;
+            product_name: string;
+            quantity: string;
+            unit_price: string;
+            price_floor: string;
+            difference: string;
+            difference_percentage: string;
+        };
+        BelowFloorSalesResponse: {
+            items: components["schemas"]["BelowFloorSaleItem"][];
+            count: number;
+        };
         /** @enum {unknown} */
         BlankEnum: "";
         ChangePassword: {
@@ -2084,6 +2109,43 @@ export interface components {
          */
         ComponentTypeEnum: "assembly" | "position";
         /**
+         * @description Una entrada del historial de costos de un producto.
+         *
+         *     Los cuatro campos de compra van en null cuando el movimiento no viene de una
+         *     orden (un ajuste, por ejemplo).
+         */
+        CostHistoryEntry: {
+            readonly id: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            movement_type: components["schemas"]["CostHistoryEntryMovementTypeEnum"];
+            /** Format: decimal */
+            quantity: string;
+            /** Format: decimal */
+            unit_cost?: string;
+            /** Format: decimal */
+            average_cost_after?: string;
+            readonly purchase_order_number: string;
+            readonly supplier_name: string;
+            /** Format: decimal */
+            readonly supplier_unit_cost: string;
+            readonly allocated_extra_per_unit: string;
+            notes?: string;
+        };
+        /**
+         * @description * `purchase_in` - Entrada por compra
+         *     * `service_out` - Salida por servicio
+         *     * `sale_out` - Salida por venta
+         *     * `reservation` - Reserva
+         *     * `reservation_release` - Liberación de reserva
+         *     * `adjustment_in` - Ajuste positivo
+         *     * `adjustment_out` - Ajuste negativo
+         *     * `return_in` - Devolución
+         *     * `damaged_out` - Baja por daño
+         * @enum {string}
+         */
+        CostHistoryEntryMovementTypeEnum: "purchase_in" | "service_out" | "sale_out" | "reservation" | "reservation_release" | "adjustment_in" | "adjustment_out" | "return_in" | "damaged_out";
+        /**
          * @description * `rice` - Arroz
          *     * `corn` - Maíz
          *     * `pasture` - Pasto
@@ -2125,6 +2187,12 @@ export interface components {
          * @enum {string}
          */
         DiagramTypeEnum: "svg" | "image";
+        /**
+         * @description * `invoice` - invoice
+         *     * `service_order` - service_order
+         * @enum {string}
+         */
+        DocumentTypeEnum: "invoice" | "service_order";
         Equipment: {
             readonly id: number;
             readonly customer_name: string;
@@ -2314,7 +2382,7 @@ export interface components {
             /** Format: decimal */
             unit_price?: string;
             readonly price_floor: string;
-            readonly below_min_price: string;
+            readonly below_min_price: boolean;
             /** Format: decimal */
             unit_cost?: string;
             /** Format: decimal */
@@ -2373,12 +2441,6 @@ export interface components {
          * @enum {string}
          */
         MethodEnum: "cash" | "bank_transfer" | "yappy" | "ach" | "card" | "other";
-        /**
-         * @description * `adjustment_in` - adjustment_in
-         *     * `adjustment_out` - adjustment_out
-         * @enum {string}
-         */
-        MovementTypeEnum: "adjustment_in" | "adjustment_out";
         /** @description Datos mínimos para dar de alta un producto desde una línea de OC. */
         NewProduct: {
             name: string;
@@ -2950,7 +3012,7 @@ export interface components {
             /** Format: decimal */
             unit_price?: string;
             readonly price_floor?: string;
-            readonly below_min_price?: string;
+            readonly below_min_price?: boolean;
             /** Format: decimal */
             unit_cost?: string;
             /** Format: decimal */
@@ -2992,9 +3054,9 @@ export interface components {
             /** Format: decimal */
             minimum_stock?: string;
             /** Format: decimal */
-            average_cost?: string;
+            readonly average_cost?: string;
             /** Format: decimal */
-            last_purchase_cost?: string;
+            readonly last_purchase_cost?: string;
             /** Format: decimal */
             sale_price?: string;
             /** Format: decimal */
@@ -3149,7 +3211,7 @@ export interface components {
             /** Format: decimal */
             unit_price?: string;
             readonly price_floor?: string;
-            readonly below_min_price?: string;
+            readonly below_min_price?: boolean;
             /** Format: decimal */
             discount_amount?: string;
             /** Format: decimal */
@@ -3263,7 +3325,7 @@ export interface components {
             /** Format: decimal */
             unit_price?: string;
             readonly price_floor?: string;
-            readonly below_min_price?: string;
+            readonly below_min_price?: boolean;
             /** Format: decimal */
             readonly total_price?: string;
             readonly status?: components["schemas"]["ServiceOrderPartStatusEnum"];
@@ -3379,9 +3441,9 @@ export interface components {
             /** Format: decimal */
             minimum_stock?: string;
             /** Format: decimal */
-            average_cost?: string;
+            readonly average_cost: string;
             /** Format: decimal */
-            last_purchase_cost?: string;
+            readonly last_purchase_cost: string;
             /** Format: decimal */
             sale_price?: string;
             /** Format: decimal */
@@ -3545,7 +3607,7 @@ export interface components {
             /** Format: decimal */
             unit_price?: string;
             readonly price_floor: string;
-            readonly below_min_price: string;
+            readonly below_min_price: boolean;
             /** Format: decimal */
             discount_amount?: string;
             /** Format: decimal */
@@ -3690,7 +3752,7 @@ export interface components {
             /** Format: decimal */
             unit_price?: string;
             readonly price_floor: string;
-            readonly below_min_price: string;
+            readonly below_min_price: boolean;
             /** Format: decimal */
             readonly total_price: string;
             readonly status: components["schemas"]["ServiceOrderPartStatusEnum"];
@@ -5926,9 +5988,12 @@ export interface operations {
             };
         };
     };
-    inventory_products_cost_history_retrieve: {
+    inventory_products_cost_history_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A search term. */
+                search?: string;
+            };
             header?: never;
             path: {
                 /** @description A unique integer value identifying this product. */
@@ -5943,7 +6008,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Product"];
+                    "application/json": components["schemas"]["CostHistoryEntry"][];
                 };
             };
         };
@@ -7536,9 +7601,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["BelowFloorSalesResponse"];
                 };
             };
         };
