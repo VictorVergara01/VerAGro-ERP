@@ -37,3 +37,6 @@ htmlcov/
 
 # Excel de repuestos (binarios grandes con imágenes)
 data/catalogo/*.xlsx
+
+# Respaldos de base de datos (contienen datos reales de clientes y hashes)
+/backups/
