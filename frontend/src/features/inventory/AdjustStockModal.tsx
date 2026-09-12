@@ -45,6 +45,14 @@ export function AdjustStockModal({
       notifications.show({ color: "red", message: "Cantidad inválida." });
       return;
     }
+    const isEntry = type === "adjustment_in";
+    if (isEntry && (!unitCost || Number(unitCost) <= 0)) {
+      notifications.show({
+        color: "red",
+        message: "La entrada requiere el costo unitario: alimenta el costo promedio.",
+      });
+      return;
+    }
     try {
       await adjust.mutateAsync({
         product: product.id,
@@ -83,7 +91,15 @@ export function AdjustStockModal({
             decimalScale={2}
           />
           <NumberInput
-            label="Costo unitario (opcional)"
+            label={
+              type === "adjustment_in" ? "Costo unitario" : "Costo unitario (opcional)"
+            }
+            description={
+              type === "adjustment_in"
+                ? "Entra al costo promedio del producto, igual que una compra."
+                : undefined
+            }
+            withAsterisk={type === "adjustment_in"}
             min={0}
             value={unitCost}
             onChange={(v) => setUnitCost(v as number | string)}
