@@ -76,4 +76,37 @@ describe("AdjustStockModal", () => {
     await userEvent.click(screen.getByRole("button", { name: "Aplicar" }));
     expect(adjust).toHaveBeenCalled();
   });
+
+  it("no muestra el campo de costo unitario para salidas", async () => {
+    const adjust = vi.fn().mockResolvedValue({});
+    renderModal({ adjust });
+    await userEvent.click(screen.getByRole("radio", { name: /Salida/ }));
+    expect(screen.queryByLabelText(/Costo unitario/)).toBeNull();
+  });
+
+  it("envía el payload correcto en una entrada con costo unitario", async () => {
+    const adjust = vi.fn().mockResolvedValue({});
+    renderModal({ adjust });
+    await userEvent.type(screen.getByLabelText("Cantidad"), "5");
+    await userEvent.type(screen.getByLabelText(/Costo unitario/), "12.5");
+    await userEvent.click(screen.getByRole("button", { name: "Aplicar" }));
+    expect(adjust).toHaveBeenCalledTimes(1);
+    expect(adjust.mock.calls[0][0]).toMatchObject({
+      movement_type: "adjustment_in",
+      quantity: "5",
+      unit_cost: "12.5",
+    });
+  });
+
+  it("no arrastra el costo tecleado en entrada al cambiar a salida", async () => {
+    const adjust = vi.fn().mockResolvedValue({});
+    renderModal({ adjust });
+    await userEvent.type(screen.getByLabelText(/Costo unitario/), "12.5");
+    await userEvent.click(screen.getByRole("radio", { name: /Salida/ }));
+    await userEvent.type(screen.getByLabelText("Cantidad"), "5");
+    await userEvent.click(screen.getByRole("button", { name: "Aplicar" }));
+    expect(adjust).toHaveBeenCalledTimes(1);
+    const payload = adjust.mock.calls[0][0] as { unit_cost?: string };
+    expect(payload.unit_cost).toBeUndefined();
+  });
 });

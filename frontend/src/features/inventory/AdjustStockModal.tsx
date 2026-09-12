@@ -77,7 +77,10 @@ export function AdjustStockModal({
           </Text>
           <SegmentedControl
             value={type}
-            onChange={(v) => setType(v)}
+            onChange={(v) => {
+              setType(v);
+              setUnitCost("");
+            }}
             data={[
               { value: "adjustment_in", label: "Entrada (+)" },
               { value: "adjustment_out", label: "Salida (−)" },
@@ -90,21 +93,17 @@ export function AdjustStockModal({
             onChange={(v) => setQuantity(v as number | string)}
             decimalScale={2}
           />
-          <NumberInput
-            label={
-              type === "adjustment_in" ? "Costo unitario" : "Costo unitario (opcional)"
-            }
-            description={
-              type === "adjustment_in"
-                ? "Entra al costo promedio del producto, igual que una compra."
-                : undefined
-            }
-            withAsterisk={type === "adjustment_in"}
-            min={0}
-            value={unitCost}
-            onChange={(v) => setUnitCost(v as number | string)}
-            decimalScale={2}
-          />
+          {type === "adjustment_in" && (
+            <NumberInput
+              label="Costo unitario"
+              description="Entra al costo promedio del producto, igual que una compra."
+              withAsterisk
+              min={0}
+              value={unitCost}
+              onChange={(v) => setUnitCost(v as number | string)}
+              decimalScale={2}
+            />
+          )}
           <Textarea
             label="Notas"
             autosize
