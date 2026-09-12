@@ -763,6 +763,23 @@ export interface paths {
         patch: operations["inventory_products_partial_update"];
         trace?: never;
     };
+    "/api/inventory/products/{id}/cost-history/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Historial de costos: sólo entradas, con el desglose de su compra. */
+        get: operations["inventory_products_cost_history_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/inventory/products/{id}/movements/": {
         parameters: {
             query?: never;
@@ -1288,6 +1305,28 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["quotes_reject_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/below-floor-sales/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Líneas vendidas por debajo del piso de precio vigente del producto.
+         *
+         *     Las cotizaciones quedan fuera: son propuestas, no ventas, y meterían
+         *     negociaciones que nunca se cerraron en la cifra.
+         */
+        get: operations["reports_below_floor_sales_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1971,7 +2010,7 @@ export interface components {
             quantity: string;
             /**
              * Format: decimal
-             * @default 0.00
+             * @default 0.0000
              */
             unit_cost: string;
             /** @default  */
@@ -2259,6 +2298,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
+         *
+         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
+         */
         InvoiceLine: {
             readonly id: number;
             invoice?: number;
@@ -2269,6 +2313,8 @@ export interface components {
             quantity?: string;
             /** Format: decimal */
             unit_price?: string;
+            readonly price_floor: string;
+            readonly below_min_price: string;
             /** Format: decimal */
             unit_cost?: string;
             /** Format: decimal */
@@ -2888,6 +2934,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        /**
+         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
+         *
+         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
+         */
         PatchedInvoiceLine: {
             readonly id?: number;
             invoice?: number;
@@ -2898,6 +2949,8 @@ export interface components {
             quantity?: string;
             /** Format: decimal */
             unit_price?: string;
+            readonly price_floor?: string;
+            readonly below_min_price?: string;
             /** Format: decimal */
             unit_cost?: string;
             /** Format: decimal */
@@ -2946,6 +2999,14 @@ export interface components {
             sale_price?: string;
             /** Format: decimal */
             default_margin_percentage?: string;
+            /** Format: decimal */
+            min_margin_percentage?: string;
+            /** Format: decimal */
+            max_margin_percentage?: string;
+            /** Format: decimal */
+            readonly min_sale_price?: string;
+            /** Format: decimal */
+            readonly max_sale_price?: string;
             is_active?: boolean;
             category?: number | null;
             main_supplier?: number | null;
@@ -2958,6 +3019,10 @@ export interface components {
             is_active?: boolean;
             /** Format: decimal */
             default_margin_percentage?: string;
+            /** Format: decimal */
+            min_margin_percentage?: string;
+            /** Format: decimal */
+            max_margin_percentage?: string;
         };
         PatchedProductCompatibility: {
             readonly id?: number;
@@ -3068,6 +3133,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        /**
+         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
+         *
+         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
+         */
         PatchedQuoteLine: {
             readonly id?: number;
             quote?: number;
@@ -3078,6 +3148,8 @@ export interface components {
             quantity?: string;
             /** Format: decimal */
             unit_price?: string;
+            readonly price_floor?: string;
+            readonly below_min_price?: string;
             /** Format: decimal */
             discount_amount?: string;
             /** Format: decimal */
@@ -3169,6 +3241,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        /**
+         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
+         *
+         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
+         */
         PatchedServiceOrderPart: {
             readonly id?: number;
             service_order?: number;
@@ -3185,6 +3262,8 @@ export interface components {
             unit_cost?: string;
             /** Format: decimal */
             unit_price?: string;
+            readonly price_floor?: string;
+            readonly below_min_price?: string;
             /** Format: decimal */
             readonly total_price?: string;
             readonly status?: components["schemas"]["ServiceOrderPartStatusEnum"];
@@ -3307,6 +3386,14 @@ export interface components {
             sale_price?: string;
             /** Format: decimal */
             default_margin_percentage?: string;
+            /** Format: decimal */
+            min_margin_percentage?: string;
+            /** Format: decimal */
+            max_margin_percentage?: string;
+            /** Format: decimal */
+            readonly min_sale_price: string;
+            /** Format: decimal */
+            readonly max_sale_price: string;
             is_active?: boolean;
             category?: number | null;
             main_supplier?: number | null;
@@ -3319,6 +3406,10 @@ export interface components {
             is_active?: boolean;
             /** Format: decimal */
             default_margin_percentage?: string;
+            /** Format: decimal */
+            min_margin_percentage?: string;
+            /** Format: decimal */
+            max_margin_percentage?: string;
         };
         ProductCompatibility: {
             readonly id: number;
@@ -3438,6 +3529,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
+         *
+         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
+         */
         QuoteLine: {
             readonly id: number;
             quote?: number;
@@ -3448,6 +3544,8 @@ export interface components {
             quantity?: string;
             /** Format: decimal */
             unit_price?: string;
+            readonly price_floor: string;
+            readonly below_min_price: string;
             /** Format: decimal */
             discount_amount?: string;
             /** Format: decimal */
@@ -3570,6 +3668,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
+         *
+         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
+         */
         ServiceOrderPart: {
             readonly id: number;
             service_order?: number;
@@ -3586,6 +3689,8 @@ export interface components {
             unit_cost?: string;
             /** Format: decimal */
             unit_price?: string;
+            readonly price_floor: string;
+            readonly below_min_price: string;
             /** Format: decimal */
             readonly total_price: string;
             readonly status: components["schemas"]["ServiceOrderPartStatusEnum"];
@@ -5821,6 +5926,28 @@ export interface operations {
             };
         };
     };
+    inventory_products_cost_history_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
     inventory_products_movements_retrieve: {
         parameters: {
             query?: never;
@@ -7391,6 +7518,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Quote"];
+                };
+            };
+        };
+    };
+    reports_below_floor_sales_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

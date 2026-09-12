@@ -11,7 +11,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { UseMutationResult } from "@tanstack/react-query";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
@@ -21,11 +21,102 @@ interface LookupItem {
   name: string;
 }
 
-const marginOf = (item: LookupItem | null) => {
-  const value = (item as { default_margin_percentage?: string | number } | null)
-    ?.default_margin_percentage;
+const MARGIN_FIELDS = [
+  { key: "default_margin_percentage", label: "Margen % por defecto" },
+  { key: "min_margin_percentage", label: "Margen mínimo %" },
+  { key: "max_margin_percentage", label: "Margen máximo %" },
+] as const;
+
+type MarginKey = (typeof MARGIN_FIELDS)[number]["key"];
+
+type SaveMutation = UseMutationResult<
+  unknown,
+  Error,
+  { id?: number; name: string } & Partial<Record<MarginKey, string>>
+>;
+
+const marginOf = (item: LookupItem | null, key: MarginKey) => {
+  const value = (item as unknown as Record<string, string | number | undefined> | null)?.[
+    key
+  ];
   return value != null ? String(value) : "0";
 };
+
+const emptyMargins = () =>
+  Object.fromEntries(MARGIN_FIELDS.map((f) => [f.key, "0"])) as Record<MarginKey, string>;
+
+const marginsOf = (item: LookupItem | null) =>
+  Object.fromEntries(
+    MARGIN_FIELDS.map((f) => [f.key, marginOf(item, f.key)]),
+  ) as Record<MarginKey, string>;
+
+/**
+ * Cuerpo del formulario de edición. Recibe `key={editing?.id ?? "new"}` desde el padre
+ * para que React lo remonte con los valores correctos en vez de sincronizar el estado
+ * desde `editing` con un useEffect.
+ */
+function EditForm({
+  item,
+  withMargin,
+  save,
+  onClose,
+}: {
+  item: LookupItem | null;
+  withMargin: boolean;
+  save: SaveMutation;
+  onClose: () => void;
+}) {
+  const [editName, setEditName] = useState(item?.name ?? "");
+  const [editMargins, setEditMargins] = useState<Record<MarginKey, string>>(marginsOf(item));
+
+  const submitEdit = async () => {
+    if (!item || !editName.trim()) return;
+    try {
+      await save.mutateAsync({
+        id: item.id,
+        name: editName.trim(),
+        ...(withMargin
+          ? Object.fromEntries(
+              MARGIN_FIELDS.map((f) => [f.key, editMargins[f.key] || "0"]),
+            )
+          : {}),
+      });
+      notifications.show({ color: "green", message: "Guardado." });
+      onClose();
+    } catch (e) {
+      notifications.show({ color: "red", message: (e as Error).message });
+    }
+  };
+
+  return (
+    <Stack>
+      <TextInput
+        label="Nombre"
+        value={editName}
+        onChange={(e) => setEditName(e.currentTarget.value)}
+      />
+      {withMargin &&
+        MARGIN_FIELDS.map((f) => (
+          <NumberInput
+            key={f.key}
+            label={f.label}
+            value={editMargins[f.key]}
+            onChange={(v) => setEditMargins((prev) => ({ ...prev, [f.key]: String(v) }))}
+            min={0}
+            decimalScale={2}
+          />
+        ))}
+      <Group justify="flex-end">
+        <Button variant="default" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button onClick={submitEdit} loading={save.isPending}>
+          Guardar
+        </Button>
+      </Group>
+    </Stack>
+  );
+}
 
 export function LookupManager<T extends LookupItem>({
   items,
@@ -37,54 +128,30 @@ export function LookupManager<T extends LookupItem>({
 }: {
   items: T[];
   loading: boolean;
-  save: UseMutationResult<
-    unknown,
-    Error,
-    { id?: number; name: string; default_margin_percentage?: string }
-  >;
+  save: SaveMutation;
   remove: UseMutationResult<unknown, Error, number>;
   itemLabel: string;
   withMargin?: boolean;
 }) {
   const [newName, setNewName] = useState("");
-  const [newMargin, setNewMargin] = useState<string>("0");
+  const [newMargins, setNewMargins] = useState<Record<MarginKey, string>>(emptyMargins);
   const [editing, setEditing] = useState<T | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editMargin, setEditMargin] = useState<string>("0");
   const [editOpen, { open, close }] = useDisclosure(false);
-
-  useEffect(() => {
-    if (editing) {
-      setEditName(editing.name);
-      setEditMargin(marginOf(editing));
-    }
-  }, [editing]);
 
   const add = async () => {
     if (!newName.trim()) return;
     try {
       await save.mutateAsync({
         name: newName.trim(),
-        ...(withMargin ? { default_margin_percentage: newMargin || "0" } : {}),
+        ...(withMargin
+          ? Object.fromEntries(
+              MARGIN_FIELDS.map((f) => [f.key, newMargins[f.key] || "0"]),
+            )
+          : {}),
       });
       notifications.show({ color: "green", message: `${itemLabel} creado.` });
       setNewName("");
-      setNewMargin("0");
-    } catch (e) {
-      notifications.show({ color: "red", message: (e as Error).message });
-    }
-  };
-
-  const submitEdit = async () => {
-    if (!editing || !editName.trim()) return;
-    try {
-      await save.mutateAsync({
-        id: editing.id,
-        name: editName.trim(),
-        ...(withMargin ? { default_margin_percentage: editMargin || "0" } : {}),
-      });
-      notifications.show({ color: "green", message: "Guardado." });
-      close();
+      setNewMargins(emptyMargins());
     } catch (e) {
       notifications.show({ color: "red", message: (e as Error).message });
     }
@@ -113,7 +180,8 @@ export function LookupManager<T extends LookupItem>({
           {
             header: "Margen %",
             align: "right" as const,
-            render: (i: T) => `${marginOf(i)}%`,
+            render: (i: T) =>
+              `${marginOf(i, "min_margin_percentage")}% – ${marginOf(i, "max_margin_percentage")}%`,
           },
         ]
       : []),
@@ -149,16 +217,18 @@ export function LookupManager<T extends LookupItem>({
           onKeyDown={(e) => e.key === "Enter" && add()}
           w={320}
         />
-        {withMargin && (
-          <NumberInput
-            placeholder="Margen %"
-            value={newMargin}
-            onChange={(v) => setNewMargin(String(v))}
-            min={0}
-            decimalScale={2}
-            w={140}
-          />
-        )}
+        {withMargin &&
+          MARGIN_FIELDS.map((f) => (
+            <NumberInput
+              key={f.key}
+              placeholder={f.label}
+              value={newMargins[f.key]}
+              onChange={(v) => setNewMargins((prev) => ({ ...prev, [f.key]: String(v) }))}
+              min={0}
+              decimalScale={2}
+              w={140}
+            />
+          ))}
         <Button
           leftSection={<IconPlus size={18} />}
           onClick={add}
@@ -175,30 +245,13 @@ export function LookupManager<T extends LookupItem>({
         emptyText="Sin registros."
       />
       <Modal opened={editOpen} onClose={close} title={`Editar ${itemLabel.toLowerCase()}`}>
-        <Stack>
-          <TextInput
-            label="Nombre"
-            value={editName}
-            onChange={(e) => setEditName(e.currentTarget.value)}
-          />
-          {withMargin && (
-            <NumberInput
-              label="Margen %"
-              value={editMargin}
-              onChange={(v) => setEditMargin(String(v))}
-              min={0}
-              decimalScale={2}
-            />
-          )}
-          <Group justify="flex-end">
-            <Button variant="default" onClick={close}>
-              Cancelar
-            </Button>
-            <Button onClick={submitEdit} loading={save.isPending}>
-              Guardar
-            </Button>
-          </Group>
-        </Stack>
+        <EditForm
+          key={editing?.id ?? "new"}
+          item={editing}
+          withMargin={withMargin}
+          save={save}
+          onClose={close}
+        />
       </Modal>
     </Stack>
   );

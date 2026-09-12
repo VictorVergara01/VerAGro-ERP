@@ -29,12 +29,14 @@ export function useSaveCategory() {
       id?: number;
       name: string;
       default_margin_percentage?: string;
+      min_margin_percentage?: string;
+      max_margin_percentage?: string;
     }) => {
       const body = {
         name: payload.name,
-        ...(payload.default_margin_percentage !== undefined
-          ? { default_margin_percentage: payload.default_margin_percentage }
-          : {}),
+        default_margin_percentage: payload.default_margin_percentage,
+        min_margin_percentage: payload.min_margin_percentage,
+        max_margin_percentage: payload.max_margin_percentage,
       } as ProductCategory;
       if (payload.id) {
         const { error } = await api.PATCH("/api/inventory/categories/{id}/", {

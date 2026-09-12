@@ -6,6 +6,7 @@ import {
   MultiSelect,
   NumberInput,
   Select,
+  Text,
   Textarea,
   TextInput,
 } from "@mantine/core";
@@ -13,8 +14,10 @@ import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useEffect } from "react";
 
+import { formatCurrency } from "../../utils/format";
 import { useEquipmentTypes } from "../equipment/api";
 import { useCategories, useSaveProduct, useSupplierOptions } from "./api";
+import { computeRange } from "./priceRange";
 import type { Product } from "./types";
 
 interface FormValues {
@@ -28,7 +31,10 @@ interface FormValues {
   location: string;
   minimum_stock: number | string;
   sale_price: number | string;
+  average_cost: number | string;
   default_margin_percentage: number | string;
+  min_margin_percentage: number | string;
+  max_margin_percentage: number | string;
   main_supplier: string | null;
   compatible_equipment_types: string[];
   description: string;
@@ -45,7 +51,10 @@ const EMPTY: FormValues = {
   location: "",
   minimum_stock: 0,
   sale_price: 0,
+  average_cost: 0,
   default_margin_percentage: 0,
+  min_margin_percentage: 0,
+  max_margin_percentage: 0,
   main_supplier: null,
   compatible_equipment_types: [],
   description: "",
@@ -70,6 +79,11 @@ export function ProductFormModal({
     initialValues: EMPTY,
     validate: {
       name: (v) => (v.trim() ? null : "El nombre es obligatorio."),
+      min_margin_percentage: (value, values) =>
+        Number(value) > 0 && Number(values.max_margin_percentage) > 0
+          && Number(value) > Number(values.max_margin_percentage)
+          ? "El margen mínimo no puede superar al máximo."
+          : null,
     },
   });
 
@@ -98,6 +112,9 @@ export function ProductFormModal({
   const handleSubmit = form.onSubmit(async (values) => {
     const payload = {
       ...values,
+      // average_cost sólo alimenta la vista previa del rango; el backend lo deriva
+      // de los movimientos de inventario y no debe recibirlo desde este formulario.
+      average_cost: undefined,
       id: product?.id,
       category: values.category ? Number(values.category) : null,
       main_supplier: values.main_supplier ? Number(values.main_supplier) : null,
@@ -105,6 +122,8 @@ export function ProductFormModal({
       minimum_stock: String(values.minimum_stock || 0),
       sale_price: String(values.sale_price || 0),
       default_margin_percentage: String(values.default_margin_percentage || 0),
+      min_margin_percentage: String(values.min_margin_percentage || 0),
+      max_margin_percentage: String(values.max_margin_percentage || 0),
     };
     try {
       await save.mutateAsync(payload as unknown as Partial<Product> & { id?: number });
@@ -199,6 +218,39 @@ export function ProductFormModal({
               decimalScale={2}
               {...form.getInputProps("default_margin_percentage")}
             />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 4 }}>
+            <NumberInput
+              label="Margen mínimo %"
+              min={0}
+              decimalScale={2}
+              {...form.getInputProps("min_margin_percentage")}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 4 }}>
+            <NumberInput
+              label="Margen máximo %"
+              min={0}
+              decimalScale={2}
+              {...form.getInputProps("max_margin_percentage")}
+            />
+          </Grid.Col>
+          <Grid.Col span={12}>
+            {(() => {
+              const range = computeRange(
+                Number(form.values.average_cost ?? 0),
+                Number(form.values.min_margin_percentage ?? 0),
+                Number(form.values.default_margin_percentage ?? 0),
+                Number(form.values.max_margin_percentage ?? 0),
+              );
+              if (!range.suggested) return null;
+              return (
+                <Text size="xs" c="dimmed">
+                  Rango sobre el costo promedio: piso {formatCurrency(range.floor)} · sugerido{" "}
+                  {formatCurrency(range.suggested)} · techo {formatCurrency(range.ceiling)}
+                </Text>
+              );
+            })()}
           </Grid.Col>
           <Grid.Col span={12}>
             <MultiSelect
