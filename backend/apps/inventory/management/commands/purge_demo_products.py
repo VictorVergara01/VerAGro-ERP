@@ -11,11 +11,17 @@ from apps.service_orders.models import ServiceOrderPart
 class Command(BaseCommand):
     help = (
         "Elimina los productos de prueba (por prefijo de SKU) con sus movimientos. "
-        "Por defecto sólo informa: hay que pasar --confirm para que borre."
+        "Por defecto (o con --dry-run) sólo informa: hay que pasar --confirm para "
+        "que borre de verdad."
     )
 
     def add_arguments(self, parser):
         parser.add_argument("--prefix", default="SKU-", help="Prefijo de SKU a purgar.")
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Simula sin borrar (ya es el comportamiento por defecto; no-op).",
+        )
         parser.add_argument(
             "--confirm", action="store_true", help="Ejecuta el borrado de verdad."
         )

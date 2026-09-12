@@ -56,6 +56,19 @@ def test_dry_run_es_el_comportamiento_por_defecto(datos_de_prueba):
 
 
 @pytest.mark.django_db
+def test_dry_run_flag_explicito_no_borra_nada(datos_de_prueba):
+    # M1: --dry-run está documentado (help + spec) pero antes del fix no existía
+    # como argumento y la invocación documentada fallaba con "unrecognized
+    # arguments". Es un no-op: el dry-run ya es el comportamiento por defecto.
+    demo, real = datos_de_prueba
+    out = StringIO()
+    call_command("purge_demo_products", "--dry-run", stdout=out)
+    assert Product.objects.filter(pk=demo.pk).exists()
+    assert Product.objects.filter(pk=real.pk).exists()
+    assert InventoryMovement.objects.count() == 1
+
+
+@pytest.mark.django_db
 def test_confirm_borra_productos_y_movimientos(datos_de_prueba):
     demo, real = datos_de_prueba
     call_command("purge_demo_products", "--confirm", stdout=StringIO())

@@ -6,6 +6,7 @@ from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
+from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -347,6 +348,28 @@ class EquipmentHistoryReport(APIView):
         )
 
 
+class BelowFloorSaleItemSerializer(serializers.Serializer):
+    """Una línea vendida bajo el piso de precio vigente del producto."""
+
+    document = serializers.CharField()
+    document_type = serializers.ChoiceField(choices=["invoice", "service_order"])
+    date = serializers.CharField(allow_null=True)
+    created_by = serializers.CharField(allow_null=True)
+    product_id = serializers.IntegerField()
+    product_sku = serializers.CharField()
+    product_name = serializers.CharField()
+    quantity = serializers.CharField()
+    unit_price = serializers.CharField()
+    price_floor = serializers.CharField()
+    difference = serializers.CharField()
+    difference_percentage = serializers.CharField()
+
+
+class BelowFloorSalesResponseSerializer(serializers.Serializer):
+    items = BelowFloorSaleItemSerializer(many=True)
+    count = serializers.IntegerField()
+
+
 class BelowFloorSalesReport(APIView):
     """Líneas vendidas por debajo del piso de precio vigente del producto.
 
@@ -356,7 +379,7 @@ class BelowFloorSalesReport(APIView):
 
     permission_classes = [Financial]
 
-    @extend_schema(responses=OpenApiTypes.OBJECT)
+    @extend_schema(responses=BelowFloorSalesResponseSerializer)
     def get(self, request):
         date_from, date_to = _date_range(request)
 

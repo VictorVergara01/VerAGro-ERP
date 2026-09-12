@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 
@@ -39,5 +40,6 @@ class PriceFloorMixin(serializers.Serializer):
         minimum = floor_for(getattr(obj, "product", None))
         return None if minimum is None else str(minimum)
 
-    def get_below_min_price(self, obj):
+    @extend_schema_field(serializers.BooleanField())
+    def get_below_min_price(self, obj) -> bool:
         return is_below_floor(getattr(obj, "product", None), getattr(obj, "unit_price", None))

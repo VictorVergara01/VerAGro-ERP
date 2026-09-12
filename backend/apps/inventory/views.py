@@ -1,5 +1,6 @@
 from django.db.models import F
 from django.http import HttpResponse
+from drf_spectacular.utils import extend_schema
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -104,7 +105,12 @@ class ProductViewSet(viewsets.ModelViewSet):
         qs = product.movements.all()
         return Response(InventoryMovementSerializer(qs, many=True).data)
 
-    @action(detail=True, methods=["get"], url_path="cost-history")
+    @extend_schema(responses=CostHistoryEntrySerializer(many=True))
+    # pagination_class=None: la acción devuelve la lista completa sin paginar
+    # (no llama a self.paginate_queryset); sin esto, drf-spectacular hereda el
+    # paginador del ViewSet y anuncia un envoltorio {count, next, previous,
+    # results} que la respuesta real nunca tiene.
+    @action(detail=True, methods=["get"], url_path="cost-history", pagination_class=None)
     def cost_history(self, request, pk=None):
         """Historial de costos: sólo entradas, con el desglose de su compra."""
         product = self.get_object()

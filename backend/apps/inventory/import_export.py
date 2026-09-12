@@ -172,6 +172,16 @@ def _create_row(row, user):
             user=user,
         )
 
+    # apply_adjustment() opera sobre SU PROPIA instancia (select_for_update()), no
+    # sobre `product`: refrescamos para traer el average_cost/sale_price que dejó
+    # ese ajuste. Sin este refresh, el apply_margin(product) de abajo recalcularía
+    # sobre el average_cost viejo en memoria (hoy da igual porque create() no fija
+    # stock_quantity y el promedio ponderado equivale a `costo`, pero es un
+    # invariante accidental: dejaría de sostenerse en cuanto alguien inicialice
+    # stock_quantity en el create() de arriba).
+    if stock_inicial > 0:
+        product.refresh_from_db()
+
     # El precio se fija DESPUÉS del ajuste: apply_adjustment ya llama apply_margin()
     # internamente al mover el promedio, y eso pisaría un precio_venta manual si el
     # bloque de precio corriera antes. Con precio manual, este bloque tiene la

@@ -53,6 +53,7 @@ def test_lista_solo_las_lineas_bajo_el_piso():
     assert Decimal(fila["unit_price"]) == Decimal("30.00")
     assert Decimal(fila["price_floor"]) == Decimal("34.38")
     assert Decimal(fila["difference"]) == Decimal("4.38")
+    assert Decimal(fila["difference_percentage"]) == Decimal("12.74")
 
 
 @pytest.mark.django_db

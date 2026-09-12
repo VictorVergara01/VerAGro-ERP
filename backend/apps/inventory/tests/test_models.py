@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.equipment.models import EquipmentType
 from apps.inventory.models import InventoryMovement, Product, ProductCategory
@@ -11,6 +12,34 @@ def test_category_str():
     c = ProductCategory.objects.create(name="Hélices")
     assert str(c) == "Hélices"
     assert c.is_active is True
+
+
+@pytest.mark.django_db
+def test_category_clean_rechaza_minimo_mayor_que_maximo():
+    # M2: el spec pide la validación del trío de márgenes en Product.clean() Y en
+    # el serializer; sin esto, el admin de Django (o shell) puede guardar un
+    # min > max saltándose el serializer.
+    c = ProductCategory(
+        name="Categoría inválida",
+        min_margin_percentage=Decimal("50"),
+        max_margin_percentage=Decimal("10"),
+    )
+    with pytest.raises(ValidationError) as exc:
+        c.full_clean()
+    assert "min_margin_percentage" in exc.value.message_dict
+
+
+@pytest.mark.django_db
+def test_product_clean_rechaza_minimo_mayor_que_maximo():
+    p = Product(
+        sku="SKU-CLEAN",
+        name="Producto inválido",
+        min_margin_percentage=Decimal("50"),
+        max_margin_percentage=Decimal("10"),
+    )
+    with pytest.raises(ValidationError) as exc:
+        p.full_clean()
+    assert "min_margin_percentage" in exc.value.message_dict
 
 
 @pytest.mark.django_db

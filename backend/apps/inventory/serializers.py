@@ -68,6 +68,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "reserved_quantity",
             "min_sale_price",
             "max_sale_price",
+            "average_cost",
+            "last_purchase_cost",
         )
 
     def validate(self, attrs):

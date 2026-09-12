@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.models import TimeStampedModel
+from apps.inventory.validators import margin_triplet_errors
 
 
 class ProductCategory(TimeStampedModel):
@@ -24,6 +25,16 @@ class ProductCategory(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        errors = margin_triplet_errors(
+            self.min_margin_percentage,
+            self.default_margin_percentage,
+            self.max_margin_percentage,
+        )
+        if errors:
+            raise ValidationError(errors)
 
 
 class Product(TimeStampedModel):
@@ -83,6 +94,16 @@ class Product(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        errors = margin_triplet_errors(
+            self.min_margin_percentage,
+            self.default_margin_percentage,
+            self.max_margin_percentage,
+        )
+        if errors:
+            raise ValidationError(errors)
 
     @property
     def available_quantity(self):
