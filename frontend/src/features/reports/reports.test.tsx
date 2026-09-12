@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ReportsPage } from "./ReportsPage";
 
+const mockBelowFloor = vi.fn();
+
 vi.mock("./api", () => ({
   useLowStockReport: () => ({
     isLoading: false,
@@ -26,6 +28,7 @@ vi.mock("./api", () => ({
   useServiceOrdersReport: () => ({ isLoading: false, error: null, data: null }),
   useSalesReport: () => ({ isLoading: false, error: null, data: null }),
   useProfitReport: () => ({ isLoading: false, error: null, data: null }),
+  useBelowFloorSalesReport: () => mockBelowFloor(),
 }));
 
 function renderPage() {
@@ -38,10 +41,52 @@ function renderPage() {
 
 describe("ReportsPage", () => {
   it("muestra el reporte de bajo stock por defecto", () => {
+    mockBelowFloor.mockReturnValue({ isLoading: false, error: null, data: null });
     renderPage();
     expect(screen.getByText("Productos activos")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
     expect(screen.getByText("P-1")).toBeInTheDocument();
     expect(screen.getByText("Piezas bajo stock mínimo")).toBeInTheDocument();
+  });
+
+  it("muestra las ventas bajo el piso con el precio en rojo", () => {
+    mockBelowFloor.mockReturnValue({
+      isLoading: false,
+      error: null,
+      data: {
+        count: 1,
+        items: [
+          {
+            document: "FAC-000002",
+            document_type: "invoice",
+            date: "2026-06-05",
+            created_by: "Vendedor Uno",
+            product_id: 5,
+            product_sku: "HEL",
+            product_name: "Hélice",
+            quantity: "1.00",
+            unit_price: "30.00",
+            price_floor: "34.38",
+            difference: "-4.38",
+            difference_percentage: "-12.73",
+          },
+        ],
+      },
+    });
+    renderPage();
+    expect(screen.getByText("FAC-000002")).toBeInTheDocument();
+    expect(screen.getByText("HEL — Hélice")).toBeInTheDocument();
+    expect(screen.getByText("Vendedor Uno")).toBeInTheDocument();
+    expect(screen.getByText(/-12\.73/)).toBeInTheDocument();
+  });
+
+  it("muestra 'Sin acceso' en ventas bajo el piso cuando el rol no tiene acceso al financiero", () => {
+    mockBelowFloor.mockReturnValue({
+      isLoading: false,
+      error: new Error("forbidden"),
+      data: null,
+    });
+    renderPage();
+    expect(screen.getByText("Sin acceso")).toBeInTheDocument();
   });
 });

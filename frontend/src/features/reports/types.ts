@@ -64,3 +64,20 @@ export interface DateRange {
   from?: string;
   to?: string;
 }
+
+export type BelowFloorRow = {
+  document: string;
+  document_type: "invoice" | "service_order";
+  date: string | null;
+  created_by: string | null;
+  product_id: number;
+  product_sku: string;
+  product_name: string;
+  quantity: string;
+  unit_price: string;
+  price_floor: string;
+  difference: string;
+  difference_percentage: string;
+};
+
+export type BelowFloorReport = { items: BelowFloorRow[]; count: number };

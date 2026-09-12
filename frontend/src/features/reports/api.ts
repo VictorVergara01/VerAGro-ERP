@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
 import type {
+  BelowFloorReport,
   DateRange,
   LowStockReport,
   ProfitReport,
@@ -52,6 +53,20 @@ export function useSalesReport(range: DateRange) {
       });
       if (error || !data) throw reportError(response?.status);
       return data as unknown as SalesReport;
+    },
+  });
+}
+
+export function useBelowFloorSalesReport(range: DateRange) {
+  return useQuery({
+    queryKey: ["report", "below-floor-sales", range],
+    queryFn: async () => {
+      const { data, error, response } = await api.GET(
+        "/api/reports/below-floor-sales/",
+        { params: { query: rangeQuery(range) } },
+      );
+      if (error || !data) throw reportError(response?.status);
+      return data as unknown as BelowFloorReport;
     },
   });
 }

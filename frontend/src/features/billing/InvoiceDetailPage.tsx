@@ -10,6 +10,7 @@ import {
   Stack,
   Table,
   Text,
+  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
@@ -248,7 +249,17 @@ export function InvoiceDetailPage() {
                 <Table.Tr key={l.id}>
                   <Table.Td>{l.description || l.product_sku}</Table.Td>
                   <Table.Td ta="right">{l.quantity}</Table.Td>
-                  <Table.Td ta="right">{formatCurrency(l.unit_price)}</Table.Td>
+                  <Table.Td ta="right">
+                    {l.below_min_price ? (
+                      <Tooltip label={`Bajo el mínimo: piso ${formatCurrency(l.price_floor)}`}>
+                        <Text c="red" fw={600} component="span">
+                          {formatCurrency(l.unit_price)}
+                        </Text>
+                      </Tooltip>
+                    ) : (
+                      formatCurrency(l.unit_price)
+                    )}
+                  </Table.Td>
                   <Table.Td ta="right">{formatCurrency(l.total)}</Table.Td>
                 </Table.Tr>
               ))}

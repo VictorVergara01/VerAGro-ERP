@@ -11,6 +11,7 @@ import {
   Stack,
   Tabs,
   Text,
+  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
@@ -146,7 +147,20 @@ export function ServiceOrderDetailPage() {
   const partColumns: Column<ServiceOrderPart>[] = [
     { header: "Producto", render: (p) => p.product_name },
     { header: "Cant.", align: "right", render: (p) => p.quantity },
-    { header: "Precio", align: "right", render: (p) => formatCurrency(p.unit_price) },
+    {
+      header: "Precio",
+      align: "right",
+      render: (p) =>
+        p.below_min_price ? (
+          <Tooltip label={`Bajo el mínimo: piso ${formatCurrency(p.price_floor)}`}>
+            <Text c="red" fw={600} component="span">
+              {formatCurrency(p.unit_price)}
+            </Text>
+          </Tooltip>
+        ) : (
+          formatCurrency(p.unit_price)
+        ),
+    },
     { header: "Total", align: "right", render: (p) => formatCurrency(p.total_price) },
     {
       header: "Estado",

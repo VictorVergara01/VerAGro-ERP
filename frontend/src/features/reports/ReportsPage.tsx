@@ -14,14 +14,16 @@ import type { UseQueryResult } from "@tanstack/react-query";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { formatCurrency } from "../../utils/format";
+import { formatCurrency, formatDate } from "../../utils/format";
 import {
+  useBelowFloorSalesReport,
   useLowStockReport,
   useProfitReport,
   useSalesReport,
   useServiceOrdersReport,
 } from "./api";
 import type {
+  BelowFloorRow,
   DateRange,
   LowStockReport,
   ProfitReport,
@@ -273,6 +275,47 @@ function ProfitPanel({ range }: { range: DateRange }) {
   );
 }
 
+function BelowFloorPanel({ range }: { range: DateRange }) {
+  const q = useBelowFloorSalesReport(range);
+  const belowFloorColumns: Column<BelowFloorRow>[] = [
+    { header: "Documento", render: (r) => r.document },
+    { header: "Fecha", render: (r) => formatDate(r.date) },
+    { header: "Producto", render: (r) => `${r.product_sku} — ${r.product_name}` },
+    { header: "Cant.", align: "right", render: (r) => r.quantity },
+    {
+      header: "Precio vendido",
+      align: "right",
+      render: (r) => (
+        <Text c="red" fw={600} component="span">
+          {formatCurrency(r.unit_price)}
+        </Text>
+      ),
+    },
+    { header: "Piso", align: "right", render: (r) => formatCurrency(r.price_floor) },
+    {
+      header: "Diferencia",
+      align: "right",
+      render: (r) => `${formatCurrency(r.difference)} (${r.difference_percentage}%)`,
+    },
+    { header: "Creado por", render: (r) => r.created_by ?? "—" },
+  ];
+  return (
+    <Guard query={q}>
+      {(d) => (
+        <Stack>
+          <Text fw={600}>Ventas facturadas bajo el piso</Text>
+          <DataTable
+            columns={belowFloorColumns}
+            rows={d.items}
+            rowKey={(r) => `${r.document_type}-${r.document}-${r.product_id}`}
+            emptyText="Sin ventas bajo el piso en el rango."
+          />
+        </Stack>
+      )}
+    </Guard>
+  );
+}
+
 export function ReportsPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -287,6 +330,7 @@ export function ReportsPage() {
           <Tabs.Tab value="service-orders">Servicios</Tabs.Tab>
           <Tabs.Tab value="sales">Ventas</Tabs.Tab>
           <Tabs.Tab value="profit">Ganancia</Tabs.Tab>
+          <Tabs.Tab value="below-floor">Ventas bajo el piso</Tabs.Tab>
         </Tabs.List>
 
         <Group my="md">
@@ -315,6 +359,9 @@ export function ReportsPage() {
         </Tabs.Panel>
         <Tabs.Panel value="profit">
           <ProfitPanel range={range} />
+        </Tabs.Panel>
+        <Tabs.Panel value="below-floor">
+          <BelowFloorPanel range={range} />
         </Tabs.Panel>
       </Tabs>
     </Stack>
