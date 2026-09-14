@@ -115,25 +115,7 @@ def test_logout_revokes_refresh_token(user):
 
 
 @pytest.mark.django_db
-def test_refresh_does_not_rotate_by_default(user):
-    client = APIClient()
-    refresh = _login(client).data["refresh"]
-    resp = client.post("/api/auth/refresh/", {"refresh": refresh}, format="json")
-    assert resp.status_code == 200
-    assert "refresh" not in resp.data
-    # El mismo refresh sigue sirviendo (compatibilidad con el APK ya instalado).
-    again = client.post("/api/auth/refresh/", {"refresh": refresh}, format="json")
-    assert again.status_code == 200
-
-
-@pytest.mark.django_db
-def test_refresh_rotation_blacklists_previous_token_when_enabled(user, monkeypatch):
-    # simplejwt lee su configuración en un objeto creado al importar: cambiar
-    # settings.SIMPLE_JWT en el test no llega al serializer, así que se parchea
-    # ese objeto (en producción se toma de JWT_ROTATE_REFRESH_TOKENS al arrancar).
-    from rest_framework_simplejwt.serializers import api_settings as jwt_settings
-
-    monkeypatch.setattr(jwt_settings, "ROTATE_REFRESH_TOKENS", True)
+def test_refresh_rotates_by_default_and_blacklists_previous_token(user):
     client = APIClient()
     refresh = _login(client).data["refresh"]
 

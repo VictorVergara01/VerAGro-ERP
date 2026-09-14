@@ -39,16 +39,6 @@ def apply_weighted_average(locked_product, quantity_in, unit_cost):
     return locked_product.average_cost
 
 
-def _notify_if_crossed(product, before_available):
-    """Notifica stock bajo solo si esta operación cruzó el umbral hacia abajo."""
-    if product.minimum_stock <= 0:
-        return
-    if before_available >= product.minimum_stock and product.available_quantity < product.minimum_stock:
-        from apps.notifications.services import notify_low_stock
-
-        notify_low_stock(product)
-
-
 def generate_product_sku(pk):
     """SKU autogenerado: prefijo fijo + pk con relleno de ceros a 6 dígitos."""
     return f"SKU-{pk:06d}"
@@ -148,7 +138,6 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
         )
 
     locked = Product.objects.select_for_update().get(pk=product.pk)
-    before_available = locked.available_quantity
 
     if is_entry:
         # El promedio se calcula ANTES de mover el stock: usa el stock previo como peso.
@@ -169,7 +158,6 @@ def apply_adjustment(*, product, movement_type, quantity, unit_cost=0, notes="",
     locked.save(update_fields=["stock_quantity", "average_cost", "updated_at"])
     if is_entry:
         apply_margin(locked)
-    _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,
@@ -200,10 +188,8 @@ def reserve_stock(
         raise ValidationError(
             {"quantity": "No hay stock disponible suficiente para reservar."}
         )
-    before_available = locked.available_quantity
     locked.reserved_quantity = locked.reserved_quantity + quantity
     locked.save(update_fields=["reserved_quantity", "updated_at"])
-    _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,
@@ -271,13 +257,11 @@ def consume_stock(
     locked = Product.objects.select_for_update().get(pk=product.pk)
     if quantity > locked.stock_quantity:
         raise ValidationError({"quantity": "Stock insuficiente para el consumo."})
-    before_available = locked.available_quantity
     locked.stock_quantity = locked.stock_quantity - quantity
     if was_reserved:
         released = min(quantity, locked.reserved_quantity)
         locked.reserved_quantity = locked.reserved_quantity - released
     locked.save(update_fields=["stock_quantity", "reserved_quantity", "updated_at"])
-    _notify_if_crossed(locked, before_available)
 
     return InventoryMovement.objects.create(
         product=locked,

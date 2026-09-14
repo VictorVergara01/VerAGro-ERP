@@ -43,7 +43,6 @@ LOCAL_APPS = [
     "apps.fiscal",
     "apps.field_jobs",
     "apps.reports",
-    "apps.notifications",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -140,10 +139,9 @@ SPECTACULAR_SETTINGS = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    # Apagado por defecto: el APK ya instalado no guarda el refresh rotado y se
-    # le cerraría la sesión al primer refresco. Encender cuando todos los
-    # teléfonos tengan un APK compilado con el cliente que sí lo guarda.
-    "ROTATE_REFRESH_TOKENS": env.bool("JWT_ROTATE_REFRESH_TOKENS", default=False),
+    # Cada refresco entrega un refresh nuevo y el anterior queda en lista negra:
+    # un refresh robado deja de servir en cuanto el usuario legítimo refresca.
+    "ROTATE_REFRESH_TOKENS": env.bool("JWT_ROTATE_REFRESH_TOKENS", default=True),
     "BLACKLIST_AFTER_ROTATION": True,
 }
 

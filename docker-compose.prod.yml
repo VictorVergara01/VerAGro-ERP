@@ -46,8 +46,7 @@ services:
 
   web:
     # Panel web (Vite/React) servido por Nginx. VITE_API_URL se hornea en el build
-    # (se toma de .env.prod → no queda en el repo). Coloca el APK en
-    # frontend/public/downloads/veragro.apk antes de construir para el botón de descarga.
+    # (se toma de .env.prod → no queda en el repo).
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod

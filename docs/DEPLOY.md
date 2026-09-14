@@ -1,7 +1,6 @@
 # Despliegue en producción — Veragro ERP
 
-Guía para poner en producción los tres componentes: **backend** (API), **panel web** y **app móvil
-(APK)**. Reemplaza los dominios de ejemplo (`api.tudominio.com`, `erp.tudominio.com`) por los tuyos.
+Guía para poner en producción los dos componentes: **backend** (API) y **panel web**. Reemplaza los dominios de ejemplo (`api.tudominio.com`, `erp.tudominio.com`) por los tuyos.
 
 Arquitectura asumida: un **Nginx** (en Proxmox) que termina TLS y hace de reverse proxy. Detrás:
 el backend (Gunicorn) y los archivos estáticos del panel web.
@@ -121,71 +120,6 @@ docker run -d -p 8080:80 veragro-web
 
 ---
 
-## 3. App móvil — generar el APK (recomendado: EAS Build)
-
-**EAS Build** compila el APK en la nube de Expo; **no requiere Android Studio** (ideal en Windows).
-La configuración está en `mobile/eas.json` y `mobile/app.json` (`android.package = com.veragro.erp`).
-
-> **Importante:** un APK de producción NO deriva la IP del backend del host de Metro (eso es solo en
-> desarrollo). La URL se inyecta vía la variable `EXPO_PUBLIC_API_URL`. Para **no exponer tu dominio en
-> el repo**, se define como **variable de entorno de EAS** (vive en los servidores de Expo, no en git),
-> no en `eas.json`.
-
-### Una sola vez
-```bash
-npm install -g eas-cli
-eas login                      # cuenta Expo (gratuita)
-cd mobile
-eas build:configure           # vincula el proyecto (crea/usa el projectId)
-
-# Define la URL del backend como variable de EAS (no queda en git).
-# Reemplaza por tu dominio real. Hazlo para los entornos que vayas a compilar.
-eas env:create --name EXPO_PUBLIC_API_URL --value https://api.tudominio.com --environment preview --visibility plaintext
-eas env:create --name EXPO_PUBLIC_API_URL --value https://api.tudominio.com --environment production --visibility plaintext
-```
-> Alternativa rápida (sin EAS env): edita `mobile/eas.json` y añade `"env": { "EXPO_PUBLIC_API_URL":
-> "https://api.tudominio.com" }` en el perfil — pero **no lo subas a git** si el repo es público.
-
-### Generar el APK
-```bash
-cd mobile
-eas build --platform android --profile preview
-```
-- El perfil `preview` produce un **APK** instalable (sideload), no un AAB de Play Store.
-- Al terminar, EAS da una **URL de descarga** del `.apk`. Descárgalo e instálalo en el teléfono
-  (activar "instalar apps de orígenes desconocidos").
-- Para subir a otro dispositivo, comparte ese mismo link o el archivo.
-
-### Publicar el APK en el panel web (botón de descarga)
-El sidebar del web tiene un botón **"Descargar APK"** que por defecto apunta a
-`/downloads/veragro.apk` (servido por el propio web). Para que funcione:
-
-1. Descarga el `.apk` que generó EAS.
-2. Cópialo como `frontend/public/downloads/veragro.apk` **antes** de compilar el web (Vite lo copia al
-   `dist/`), o déjalo en la carpeta `downloads/` del web ya desplegado.
-
-Así cualquiera entra al panel y se baja la app desde ahí, con una URL fija que no cambia entre builds.
-(Si prefieres usar el link directo de EAS, define `VITE_APK_URL` en el `.env` del frontend.)
-
-### Subir una versión nueva
-Incrementa `expo.android.versionCode` (y opcionalmente `expo.version`) en `mobile/app.json`, vuelve a
-correr el build y reemplaza `frontend/public/downloads/veragro.apk` con el nuevo archivo.
-
-### Play Store (opcional, más adelante)
-El perfil `production` de `eas.json` produce un **AAB** (`app-bundle`) para la Play Store. El envío se
-hace con `eas submit -p android --profile production` (requiere cuenta de Google Play Console).
-
-### Build local (alternativa, requiere Android Studio)
-Si no quieres usar la nube:
-```bash
-cd mobile
-npx expo prebuild --platform android        # genera la carpeta android/ nativa
-cd android && ./gradlew assembleRelease     # APK en android/app/build/outputs/apk/release/
-```
-Requiere el SDK de Android y firmar el APK. EAS Build evita todo esto.
-
----
-
 ## Checklist de go-live
 
 - [ ] Backend: `.env.prod` con `DJANGO_SECRET_KEY` aleatorio, hosts y CORS reales.
@@ -194,5 +128,3 @@ Requiere el SDK de Android y firmar el APK. EAS Build evita todo esto.
 - [ ] Superusuario creado (`createsuperuser` → rol `super_admin`).
 - [ ] Nginx con TLS, reverse proxy a `/api/` y `/admin/`, sirviendo `/media/`, `/static/` y el `dist/` del web.
 - [ ] Web compilado con `VITE_API_URL` apuntando al dominio del backend.
-- [ ] `EXPO_PUBLIC_API_URL` (variable de EAS) = dominio real del backend.
-- [ ] APK generado con `eas build` y probado en un teléfono real contra el backend de producción.

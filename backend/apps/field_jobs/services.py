@@ -16,9 +16,6 @@ def mark_done(job, user=None):
     job.status = FieldJob.Status.DONE
     job.done_date = timezone.localdate()
     job.save(update_fields=["status", "done_date", "updated_at"])
-    from apps.notifications.services import notify_completed
-
-    notify_completed(job)
     return job
 
 

@@ -1,13 +1,4 @@
-import {
-  Box,
-  Card,
-  Group,
-  NavLink as MantineNavLink,
-  Stack,
-  Text,
-  ThemeIcon,
-} from "@mantine/core";
-import { IconDeviceMobile, IconDownload } from "@tabler/icons-react";
+import { Box, Group, NavLink as MantineNavLink, Stack, Text } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 
 import { Logo } from "../ui/Logo";
@@ -26,10 +17,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     ...group,
     items: group.items.filter((item) => canSeeNav(user?.role, item.to)),
   })).filter((group) => group.items.length > 0);
-  // APK servido junto al web (frontend/public/downloads/veragro.apk → /downloads/veragro.apk).
-  // Se puede sobreescribir con VITE_APK_URL (p. ej. un link de EAS Build).
-  const apkUrl =
-    (import.meta.env.VITE_APK_URL as string | undefined) ?? "/downloads/veragro.apk";
 
   return (
     <Stack gap="lg" h="100%">
@@ -76,39 +63,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
       </Stack>
-
-      <Card
-        component="a"
-        href={apkUrl}
-        download
-        onClick={onNavigate}
-        radius="lg"
-        p="md"
-        withBorder={false}
-        style={{
-          background:
-            "linear-gradient(135deg, var(--mantine-color-green-8), var(--mantine-color-green-6))",
-          color: "white",
-          textDecoration: "none",
-          cursor: "pointer",
-        }}
-      >
-        <ThemeIcon variant="white" color="green" radius="md" size={36} mb="xs">
-          <IconDeviceMobile size={20} />
-        </ThemeIcon>
-        <Text fw={700} size="sm">
-          App de campo
-        </Text>
-        <Text size="xs" opacity={0.9} mt={2}>
-          Descarga la app para técnicos.
-        </Text>
-        <Group gap={6} mt="sm" wrap="nowrap">
-          <IconDownload size={16} />
-          <Text size="xs" fw={700}>
-            Descargar APK
-          </Text>
-        </Group>
-      </Card>
 
       <Box>
         <Text c="dimmed" size="xs" ta="center">

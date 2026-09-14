@@ -2,8 +2,7 @@
 
 ERP modular para una operación agro-tecnológica (mantenimiento de drones/equipos, inventario de
 repuestos, proveedores, compras, clientes, órdenes de servicio con checklists, cotizaciones y
-facturación). Tres frentes: **backend** (Django + DRF), **panel web** (React + Vite) y **app móvil
-nativa** (React Native + Expo).
+facturación). Dos frentes: **backend** (Django + DRF) y **panel web** (React + Vite).
 
 Documento maestro de requisitos: [`Documento_Desarrollo_ERP_Veragro_v2_Android.md`](Documento_Desarrollo_ERP_Veragro_v2_Android.md).
 
@@ -13,13 +12,12 @@ Documento maestro de requisitos: [`Documento_Desarrollo_ERP_Veragro_v2_Android.m
 |---|---|
 | **Backend** | Python 3.12, Django 5.1, Django REST Framework, JWT (simplejwt), drf-spectacular (OpenAPI), ReportLab (PDF), PostgreSQL 16, Redis 7 |
 | **Web** | React 19, Vite, TypeScript, Mantine 9, TanStack Query v5, openapi-fetch (cliente tipado), React Router v7, Vitest + RTL |
-| **Móvil** | Expo SDK 56, React Native 0.85, React 19, React Navigation, TanStack Query, openapi-fetch, expo-secure-store |
 | **Infra** | Docker Compose (db, redis, backend, frontend). El backend expone `:8000` para un Nginx externo (Proxmox) como reverse proxy / TLS |
 
 ## Estado del proyecto
 
-**Completo y operable end-to-end.** Backend con 273 tests en verde, web con 41 tests (Vitest),
-móvil verificado con `typecheck` + `expo export`.
+**Completo y operable end-to-end** desde el panel web. Backend y web con suites de tests en verde
+(pytest y Vitest).
 
 ### Backend — 10 módulos
 
@@ -42,14 +40,6 @@ Dashboard, Clientes, Equipos, Inventario, Proveedores, Compras, Órdenes de serv
 y fotos), Cotizaciones, Facturas, Reportes y Configuración. Identidad visual Veragro, modo claro/oscuro,
 gráficas y command palette (Ctrl/⌘+K).
 
-### App móvil
-
-Login, dashboard, y paridad de lectura/escritura con el web: clientes, equipos, proveedores,
-inventario (con ajustes), compras, órdenes (transiciones, piezas, reservas, checklist, fotos),
-cotizaciones y facturas (emitir, pagar, PDF compartible, WhatsApp), reportes y configuración.
-Modo oscuro con toggle. Hoy de uso administrativo. El **despiece interactivo** está por ahora solo
-en el web.
-
 ### Catálogo técnico y despiece interactivo
 
 Capa de catálogo que estructura la relación equipo↔repuesto para el taller:
@@ -60,13 +50,15 @@ Capa de catálogo que estructura la relación equipo↔repuesto para el taller:
 - **Compatibilidad estructurada** (`ProductCompatibility`): una pieza del inventario se declara
   compatible con un modelo y un componente exacto (una pieza puede servir a varios modelos y
   posiciones). Se administra desde el web (ficha de producto) y desde el formulario de equipo.
-- **Despiece interactivo** en la orden de servicio: pestaña *Despiece* con un árbol de componentes y
-  un **diagrama SVG 2D** del equipo sincronizados en ambos sentidos; al elegir un componente se
-  muestran solo las piezas compatibles (existencia, reservado, disponible, precio, ubicación) con
-  un botón para agregarlas a la orden, guardando **en qué componente** se instala. El backend valida
-  la compatibilidad (no se confía en el filtro del frontend) y conserva el modo manual anterior.
-- **Modelos iniciales** sembrados de forma idempotente: **DJI Agras T50** y **DJI D12500iE**
-  (`manage.py seed_equipment_catalog`).
+- **Despiece** en la orden de servicio: pestaña *Despiece* que lista todas las piezas del modelo del
+  equipo, agrupadas por categoría, con buscador (nombre, SKU, N.º de pieza, categoría) y filtro por
+  categoría; cada pieza muestra existencia, reservado, precio y ubicación, con un botón para
+  agregarla a la orden guardando **en qué componente** se instala. El backend valida la
+  compatibilidad (no se confía en el filtro del frontend) y conserva el modo manual anterior.
+- **Línea DJI sembrada** por migración: todos los drones Agras (MG-1 a T100) y las plantas de
+  energía (D6000i a D14000iE), cada uno como tipo de equipo y modelo técnico. Árbol del
+  D12500iE con `manage.py seed_equipment_catalog`; piezas reales del T50 con
+  `manage.py import_agras_t50_parts <xlsx>`.
 
 ## Roles y permisos
 
@@ -89,7 +81,6 @@ backend/
     customers/  equipment/  inventory/  suppliers/  purchasing/
     service_orders/  checklists/  billing/  reports/
 frontend/          # Panel web (Vite + React + Mantine)
-mobile/            # App nativa (Expo + React Native)
 docs/
   branding/        # Identidad visual y referencias de diseño
   superpowers/
@@ -133,24 +124,12 @@ npm test             # Vitest
 npm run gen:api      # regenera el cliente tipado desde /api/schema/
 ```
 
-### App móvil
-
-```bash
-cd mobile
-npm install
-npx expo start       # abrir en Expo Go o emulador
-npm run typecheck
-```
-
-El teléfono no resuelve `localhost`: la base URL se deriva de la IP del dev
-(`Constants.expoConfig.hostUri`). En emulador Android: `adb reverse tcp:8000 tcp:8000` y
-`EXPO_PUBLIC_API_URL=http://127.0.0.1:8000` en `mobile/.env.local`. Ver [`mobile/README.md`](mobile/README.md).
-
 ## Autenticación
 
 JWT. `POST /api/auth/login/` con `{"email", "password"}` devuelve `access` y `refresh`.
 Usar `Authorization: Bearer <access>` en las peticiones. `POST /api/auth/refresh/` renueva el
-access; `GET /api/auth/me/` devuelve el usuario actual.
+access y rota el refresh (el anterior queda en lista negra); `POST /api/auth/logout/` invalida el
+refresh; `GET /api/auth/me/` devuelve el usuario actual. El login está limitado por IP.
 
 ## Notas de diseño relevantes
 
@@ -165,7 +144,7 @@ access; `GET /api/auth/me/` devuelve el usuario actual.
 
 ## Despliegue (producción)
 
-Guía completa paso a paso (backend, panel web y **APK móvil**) en **[`docs/DEPLOY.md`](docs/DEPLOY.md)**.
+Guía completa paso a paso (backend y panel web) en **[`docs/DEPLOY.md`](docs/DEPLOY.md)**.
 
 Resumen:
 - **Backend:** `config.settings.production` exige `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`,
@@ -173,9 +152,7 @@ Resumen:
   redirect) asumiendo que Nginx termina TLS. La imagen sirve la app con **Gunicorn**; servir `/media/`
   y `/static/` desde Nginx.
 - **Web:** `npm run build` con `VITE_API_URL` apuntando al dominio del backend → servir el `dist/`
-  estático desde Nginx (o el contenedor `frontend/Dockerfile.prod`).
-- **Móvil:** **EAS Build** (`eas build -p android --profile preview`) genera el APK; la URL del backend
-  se inyecta vía `EXPO_PUBLIC_API_URL` en `mobile/eas.json`.
+  estático desde Nginx (o el contenedor `frontend/Dockerfile.prod`, con cabeceras de seguridad).
 
 ## Flujo de desarrollo
 
