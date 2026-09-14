@@ -26,6 +26,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "drf_spectacular",
     "corsheaders",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 LOCAL_APPS = [
@@ -124,6 +125,9 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "PAGE_SIZE": 25,
+    "DEFAULT_THROTTLE_RATES": {
+        "login": env("LOGIN_THROTTLE_RATE", default="10/min"),
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -136,6 +140,11 @@ SPECTACULAR_SETTINGS = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    # Apagado por defecto: el APK ya instalado no guarda el refresh rotado y se
+    # le cerraría la sesión al primer refresco. Encender cuando todos los
+    # teléfonos tengan un APK compilado con el cliente que sí lo guarda.
+    "ROTATE_REFRESH_TOKENS": env.bool("JWT_ROTATE_REFRESH_TOKENS", default=False),
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])

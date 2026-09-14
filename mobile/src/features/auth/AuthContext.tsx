@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { api, onAuthExpired } from "../../lib/api/client";
+import { api, onAuthExpired, revokeSession } from "../../lib/api/client";
 import { API_BASE_URL } from "../../lib/api/baseUrl";
 import { clearTokens, getAccess, setTokens } from "../../lib/auth/tokens";
 import { registerForPush, unregisterPush } from "../notifications/push";
@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await unregisterPush();
+    await revokeSession();
     await clearTokens();
     setUser(null);
     setStatus("anonymous");

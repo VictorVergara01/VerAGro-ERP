@@ -13,7 +13,24 @@ function emitAuthExpired() {
   window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
 }
 
-async function tryRefresh(): Promise<string | null> {
+let refreshInFlight: Promise<string | null> | null = null;
+
+/**
+ * Pide un access nuevo con el refresh guardado. Si el backend rota el refresh,
+ * guarda también el nuevo. Las llamadas concurrentes comparten una sola petición:
+ * con rotación, dos refrescos en paralelo con el mismo token harían fallar al
+ * segundo (token ya en lista negra) y cerrarían la sesión.
+ */
+export function refreshAccessToken(): Promise<string | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = requestRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+async function requestRefresh(): Promise<string | null> {
   const refresh = getRefresh();
   if (!refresh) return null;
   const res = await fetch(`${API_BASE_URL}/api/auth/refresh/`, {
@@ -22,10 +39,27 @@ async function tryRefresh(): Promise<string | null> {
     body: JSON.stringify({ refresh }),
   });
   if (!res.ok) return null;
-  const data = (await res.json()) as { access: string };
-  setTokens(data.access);
+  const data = (await res.json()) as { access: string; refresh?: string };
+  setTokens(data.access, data.refresh);
   return data.access;
 }
+
+/** Invalida el refresh en el servidor. Sin red no falla: la sesión local se cierra igual. */
+export async function revokeSession(): Promise<void> {
+  const refresh = getRefresh();
+  if (!refresh) return;
+  try {
+    await fetch(`${API_BASE_URL}/api/auth/logout/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+  } catch {
+    // Sin conexión: el refresh vence solo en su plazo.
+  }
+}
+
+const tryRefresh = refreshAccessToken;
 
 const authMiddleware: Middleware = {
   onRequest({ request }) {

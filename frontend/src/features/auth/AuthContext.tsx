@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { api, AUTH_EXPIRED_EVENT } from "../../lib/api/client";
+import { api, AUTH_EXPIRED_EVENT, revokeSession } from "../../lib/api/client";
 import { clearTokens, getAccess, setTokens } from "../../lib/auth/tokens";
 
 export interface AuthUser {
@@ -45,6 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    // revokeSession lee el refresh antes de su primer await, así que el
+    // clearTokens de abajo no se lo quita.
+    void revokeSession();
     clearTokens();
     setUser(null);
     setStatus("anonymous");

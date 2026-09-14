@@ -15,7 +15,21 @@ function emitAuthExpired() {
   authExpiredListeners.forEach((fn) => fn());
 }
 
-async function tryRefresh(): Promise<string | null> {
+let refreshInFlight: Promise<string | null> | null = null;
+
+// Mismo contrato que el cliente web: guarda el refresh rotado y comparte una sola
+// petición entre llamadas concurrentes (con rotación, dos refrescos en paralelo
+// con el mismo token cerrarían la sesión).
+export function refreshAccessToken(): Promise<string | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = requestRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+async function requestRefresh(): Promise<string | null> {
   const refresh = await getRefresh();
   if (!refresh) return null;
   const res = await fetch(`${API_BASE_URL}/api/auth/refresh/`, {
@@ -24,10 +38,33 @@ async function tryRefresh(): Promise<string | null> {
     body: JSON.stringify({ refresh }),
   });
   if (!res.ok) return null;
-  const data = (await res.json()) as { access: string };
-  await setTokens(data.access);
+  const data = (await res.json()) as { access: string; refresh?: string };
+  await setTokens(data.access, data.refresh);
   return data.access;
 }
+
+// Invalida el refresh en el servidor. Con red lenta o sin red no bloquea el
+// cierre de sesión más de 5 s.
+export async function revokeSession(): Promise<void> {
+  const refresh = await getRefresh();
+  if (!refresh) return;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    await fetch(`${API_BASE_URL}/api/auth/logout/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+      signal: controller.signal,
+    });
+  } catch {
+    // Sin conexión: el refresh vence solo en su plazo.
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const tryRefresh = refreshAccessToken;
 
 const authMiddleware: Middleware = {
   async onRequest({ request }) {

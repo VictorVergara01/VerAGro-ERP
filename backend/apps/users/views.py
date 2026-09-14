@@ -6,12 +6,18 @@ from rest_framework import filters, generics, permissions, viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.core import roles
 from apps.core.permissions import role_required
 
 from .models import User
 from .serializers import ChangePasswordSerializer, UserManagementSerializer, UserSerializer
+from .throttles import LoginRateThrottle
+
+
+class LoginView(TokenObtainPairView):
+    throttle_classes = [LoginRateThrottle]
 
 
 class MeView(generics.RetrieveUpdateAPIView):
