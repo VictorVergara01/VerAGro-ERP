@@ -1,0 +1,37 @@
+# Nginx del panel web (SPA de React/Vite). La imagen oficial procesa esta
+# plantilla al arrancar y la deja en /etc/nginx/conf.d/default.conf; solo
+# sustituye variables de entorno definidas (API_ORIGIN), no las de Nginx ($uri).
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Cloudflare ya comprime en su borde; esto cubre accesos sin túnel.
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    include /etc/nginx/conf.d/security-headers.inc;
+
+    # Assets con hash en el nombre: caché de un año. Un asset que no existe da
+    # 404 en vez de devolver index.html con tipo HTML.
+    location /assets/ {
+        include /etc/nginx/conf.d/security-headers.inc;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    # index.html nunca se cachea: tras un despliegue el navegador pide los
+    # assets nuevos en vez de quedarse con la versión anterior.
+    location = /index.html {
+        include /etc/nginx/conf.d/security-headers.inc;
+        add_header Cache-Control "no-cache" always;
+    }
+
+    # SPA: cualquier ruta desconocida devuelve index.html (React Router resuelve en el cliente).
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

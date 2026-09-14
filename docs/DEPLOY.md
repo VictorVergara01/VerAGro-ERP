@@ -98,15 +98,21 @@ server {
     index index.html;
 
     location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; }
+    location = /index.html { add_header Cache-Control "no-cache"; }   # que no se quede la versión vieja
     location /        { try_files $uri $uri/ /index.html; }   # fallback SPA
 }
 ```
 El `try_files ... /index.html` es **imprescindible** para que React Router resuelva rutas profundas
 (p. ej. recargar `/customers/5` no debe dar 404).
 
+Este bloque es mínimo: **no trae las cabeceras de seguridad** (CSP, `X-Frame-Options`, etc.). Cópialas
+de `frontend/nginx/security-headers.inc.template`, cambiando `${API_ORIGIN}` por el dominio del backend,
+e inclúyelas en cada `location` que tenga su propio `add_header` (Nginx no las hereda en ese caso).
+
 ### Alternativa dockerizada
 Si prefieres un contenedor en vez de servir desde tu Nginx, hay un `frontend/Dockerfile.prod`
-(multi-stage build + `nginx:alpine`, ya incluye `frontend/nginx.conf`):
+(multi-stage build + `nginx:alpine`). Usa las plantillas de `frontend/nginx/` —caché, compresión y
+cabeceras de seguridad—; la CSP toma el origen del backend de `VITE_API_URL`:
 ```bash
 cd frontend
 docker build -f Dockerfile.prod --build-arg VITE_API_URL=https://api.tudominio.com -t veragro-web .
