@@ -1,21 +1,9 @@
-import {
-  Badge,
-  Button,
-  Card,
-  Group,
-  NumberInput,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Badge, Button, Card, Group, NumberInput, Stack, Text } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { formatCurrency } from "../../../utils/format";
-import type {
-  CompatibleProduct,
-  CompatibleProductsResponse,
-} from "../despieceTypes";
-import { ComponentBreadcrumb } from "./ComponentBreadcrumb";
+import type { CompatibleProduct } from "../despieceTypes";
 
 function stockBadge(available: number) {
   if (available <= 0)
@@ -23,19 +11,19 @@ function stockBadge(available: number) {
   return <Badge color="green" variant="light">Disponible</Badge>;
 }
 
-function ProductRow({
+export function CompatiblePartCard({
   product,
   disabled,
   onAdd,
 }: {
   product: CompatibleProduct;
   disabled: boolean;
-  onAdd: (productId: number, quantity: number) => void;
+  onAdd: (product: CompatibleProduct, quantity: number) => void;
 }) {
   const [qty, setQty] = useState<number | string>(1);
   const available = Number(product.available_quantity);
   return (
-    <Card withBorder padding="sm" radius="md">
+    <Card withBorder padding="sm" radius="md" data-part-card>
       <Group justify="space-between" wrap="nowrap" align="flex-start">
         <div style={{ minWidth: 0 }}>
           <Group gap="xs">
@@ -72,46 +60,12 @@ function ProductRow({
             size="xs"
             leftSection={<IconPlus size={14} />}
             disabled={disabled}
-            onClick={() => onAdd(product.id, Number(qty) || 1)}
+            onClick={() => onAdd(product, Number(qty) || 1)}
           >
             Agregar a la orden
           </Button>
         </Stack>
       </Group>
     </Card>
-  );
-}
-
-export function CompatibleProductsPanel({
-  data,
-  isLoading,
-  disabled,
-  onAdd,
-}: {
-  data: CompatibleProductsResponse | undefined;
-  isLoading: boolean;
-  disabled: boolean;
-  onAdd: (productId: number, quantity: number) => void;
-}) {
-  if (isLoading) return <Text c="dimmed" size="sm">Cargando piezas…</Text>;
-  if (!data)
-    return (
-      <Text c="dimmed" size="sm" ta="center" py="lg">
-        Selecciona un componente en el árbol o el diagrama para ver sus piezas.
-      </Text>
-    );
-  return (
-    <Stack gap="sm">
-      <ComponentBreadcrumb path={data.component.path} />
-      {data.products.length === 0 ? (
-        <Text c="dimmed" size="sm">
-          No hay piezas compatibles registradas para este componente.
-        </Text>
-      ) : (
-        data.products.map((p) => (
-          <ProductRow key={p.id} product={p} disabled={disabled} onAdd={onAdd} />
-        ))
-      )}
-    </Stack>
   );
 }

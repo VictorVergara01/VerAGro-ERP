@@ -300,20 +300,37 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             raise ValidationError(
                 {"detail": "El equipo de la orden no tiene un modelo técnico asignado."}
             )
+        # Sin ?component= se listan todas las piezas del modelo, cada una con su
+        # componente, para que el despiece las agrupe y filtre en el cliente.
         component_id = _int_param(request.query_params, "component")
-        if component_id is None:
-            raise ValidationError({"component": "Este parámetro es obligatorio."})
-        try:
-            component = model.components.get(id=component_id)
-        except EquipmentComponent.DoesNotExist:
-            raise ValidationError(
-                {"component": "El componente no pertenece al modelo del equipo."}
-            )
-        compat = (
-            ProductCompatibility.objects.filter(
-                equipment_model=model, component=component, product__is_active=True
-            )
-            .select_related("product")
+        component = None
+        if component_id is not None:
+            try:
+                component = model.components.get(id=component_id)
+            except EquipmentComponent.DoesNotExist:
+                raise ValidationError(
+                    {"component": "El componente no pertenece al modelo del equipo."}
+                )
+
+        # Rutas calculadas en memoria: `component.path` sube por los padres con
+        # una consulta por nivel, y aquí puede haber cientos de piezas.
+        by_id = {c.id: c for c in model.components.all()}
+
+        def path_of(comp):
+            names, node, seen = [], comp, set()
+            while node is not None and node.id not in seen:
+                seen.add(node.id)
+                names.append(node.name)
+                node = by_id.get(node.parent_id)
+            return " > ".join(reversed(names))
+
+        compat = ProductCompatibility.objects.filter(
+            equipment_model=model, product__is_active=True
+        )
+        if component is not None:
+            compat = compat.filter(component=component)
+        compat = compat.select_related("product", "component").order_by(
+            "component__sort_order", "component__name", "product__name"
         )
         products = [
             {
@@ -327,17 +344,27 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
                 "sale_price": str(c.product.sale_price),
                 "location": c.product.location,
                 "is_primary": c.is_primary,
+                "component": {
+                    "id": c.component.id,
+                    "code": c.component.code,
+                    "name": c.component.name,
+                    "path": path_of(c.component),
+                },
             }
             for c in compat
         ]
         return Response(
             {
                 "equipment_model": {"id": model.id, "name": model.name},
-                "component": {
-                    "id": component.id,
-                    "name": component.name,
-                    "path": component.path,
-                },
+                "component": (
+                    {
+                        "id": component.id,
+                        "name": component.name,
+                        "path": path_of(component),
+                    }
+                    if component is not None
+                    else None
+                ),
                 "products": products,
             }
         )

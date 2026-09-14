@@ -1,12 +1,8 @@
-export interface ComponentTreeNode {
+export interface PartComponent {
   id: number;
   code: string;
   name: string;
-  component_type: string;
-  diagram_key: string;
-  position: string;
-  sort_order: number;
-  children: ComponentTreeNode[];
+  path: string;
 }
 
 export interface CompatibleProduct {
@@ -20,10 +16,12 @@ export interface CompatibleProduct {
   sale_price: string;
   location: string;
   is_primary: boolean;
+  component: PartComponent;
 }
 
 export interface CompatibleProductsResponse {
   equipment_model: { id: number; name: string };
-  component: { id: number; name: string; path: string };
+  // null cuando se piden todas las piezas del modelo (sin ?component=).
+  component: { id: number; name: string; path: string } | null;
   products: CompatibleProduct[];
 }

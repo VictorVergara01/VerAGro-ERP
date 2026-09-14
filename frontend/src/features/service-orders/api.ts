@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import type { Paginated } from "../../lib/api/types";
 import type { ServiceOrder } from "./types";
-import type { ComponentTreeNode, CompatibleProductsResponse } from "./despieceTypes";
+import type { CompatibleProductsResponse } from "./despieceTypes";
 
 export interface SOListParams {
   search?: string;
@@ -231,39 +231,21 @@ export function useGenerateDocument(id: number | undefined) {
   });
 }
 
-export function useOrderComponentTree(orderId: number | undefined) {
-  return useQuery({
-    queryKey: ["order-component-tree", orderId],
-    enabled: orderId != null,
-    queryFn: async () => {
-      const { data, error } = await api.GET(
-        "/api/service-orders/{id}/component-tree/",
-        { params: { path: { id: orderId as number } } },
-      );
-      if (error || !data)
-        throw new Error(
-          "El equipo de la orden no tiene un modelo técnico asignado.",
-        );
-      return data as unknown as ComponentTreeNode[];
-    },
-    retry: false,
-  });
-}
-
+// Sin componentId trae todas las piezas del modelo del equipo de la orden.
 export function useCompatibleProducts(
   orderId: number | undefined,
-  componentId: number | undefined,
+  componentId?: number,
 ) {
   return useQuery({
-    queryKey: ["order-compatible", orderId, componentId],
-    enabled: orderId != null && componentId != null,
+    queryKey: ["order-compatible", orderId, componentId ?? "all"],
+    enabled: orderId != null,
     queryFn: async () => {
       const { data, error } = await api.GET(
         "/api/service-orders/{id}/compatible-products/",
         {
           params: {
             path: { id: orderId as number },
-            query: { component: componentId } as unknown as never,
+            query: (componentId != null ? { component: componentId } : {}) as unknown as never,
           },
         },
       );

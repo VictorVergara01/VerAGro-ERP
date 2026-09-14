@@ -143,3 +143,48 @@ def test_order_compatible_products(tech, scenario):
     assert resp.data["component"]["path"] == "Motor"
     assert [p["sku"] for p in resp.data["products"]] == ["MOT-1"]
     assert resp.data["products"][0]["available_quantity"] is not None
+    assert resp.data["products"][0]["component"]["id"] == comp.id
+
+
+@pytest.mark.django_db
+def test_order_compatible_products_without_component_lists_whole_model(tech, scenario):
+    _, m, comp, other_comp, _, prod, order = scenario
+    helice = Product.objects.create(sku="HEL-1", name="Hélice CW")
+    ProductCompatibility.objects.create(product=helice, equipment_model=m, component=other_comp)
+    inactivo = Product.objects.create(sku="OLD-1", name="Descontinuada", is_active=False)
+    ProductCompatibility.objects.create(product=inactivo, equipment_model=m, component=comp)
+    # Pieza de otro modelo: no debe aparecer.
+    otro = EquipmentModel.objects.create(
+        equipment_type=m.equipment_type, brand="DJI", name="Otro", model_code="T40"
+    )
+    otro_comp = EquipmentComponent.objects.create(equipment_model=otro, code="motor_m1", name="Motor")
+    ajena = Product.objects.create(sku="T40-1", name="Motor T40")
+    ProductCompatibility.objects.create(product=ajena, equipment_model=otro, component=otro_comp)
+
+    resp = tech.get(f"/api/service-orders/{order.id}/compatible-products/")
+
+    assert resp.status_code == 200, resp.data
+    assert resp.data["equipment_model"]["id"] == m.id
+    assert resp.data["component"] is None
+    by_sku = {p["sku"]: p for p in resp.data["products"]}
+    assert set(by_sku) == {"MOT-1", "HEL-1"}
+    assert by_sku["MOT-1"]["component"] == {
+        "id": comp.id, "code": "motor_m1", "name": "Motor", "path": "Motor",
+    }
+    assert by_sku["HEL-1"]["component"]["id"] == other_comp.id
+
+
+@pytest.mark.django_db
+def test_order_compatible_products_whole_model_query_count_is_flat(
+    tech, scenario, django_assert_max_num_queries
+):
+    _, m, comp, other_comp, _, _, order = scenario
+    for i in range(10):
+        p = Product.objects.create(sku=f"P-{i}", name=f"Pieza {i}")
+        ProductCompatibility.objects.create(
+            product=p, equipment_model=m, component=comp if i % 2 else other_comp
+        )
+    with django_assert_max_num_queries(8):
+        resp = tech.get(f"/api/service-orders/{order.id}/compatible-products/")
+    assert resp.status_code == 200
+    assert len(resp.data["products"]) == 11

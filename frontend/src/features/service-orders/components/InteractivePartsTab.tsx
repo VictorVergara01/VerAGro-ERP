@@ -1,55 +1,91 @@
-import { Alert, Card, Grid, Loader, Text } from "@mantine/core";
+import {
+  Alert,
+  Chip,
+  Group,
+  Loader,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { IconSearch } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 
 import type { ServiceOrder } from "../types";
-import { useAddPart, useCompatibleProducts, useOrderComponentTree } from "../api";
-import type { ComponentTreeNode } from "../despieceTypes";
-import { CompatibleProductsPanel } from "./CompatibleProductsPanel";
-import { EquipmentComponentTree } from "./EquipmentComponentTree";
-import { EquipmentDiagram } from "./EquipmentDiagram";
+import { useAddPart, useCompatibleProducts } from "../api";
+import type { CompatibleProduct, PartComponent } from "../despieceTypes";
+import { CompatiblePartCard } from "./CompatiblePartCard";
 
 const TERMINAL = ["finished", "invoiced", "delivered", "cancelled"];
 
-// Aplana el árbol en índices: id→nodo, id→códigos (propio + ancestros), code→id.
-function indexTree(nodes: ComponentTreeNode[]) {
-  const ancestorCodes = new Map<number, Set<string>>();
-  const idByCode = new Map<string, number>();
-  const walk = (node: ComponentTreeNode, parentCodes: string[]) => {
-    idByCode.set(node.code, node.id);
-    const codes = new Set([...parentCodes, node.code, node.diagram_key].filter(Boolean));
-    ancestorCodes.set(node.id, codes);
-    node.children.forEach((c) => walk(c, [...parentCodes, node.code, node.diagram_key]));
-  };
-  nodes.forEach((n) => walk(n, []));
-  return { ancestorCodes, idByCode };
+// Minúsculas y sin acentos: "Hélice" y "helice" deben coincidir.
+function fold(text: string) {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+// Incluye la categoría: los nombres del catálogo DJI vienen en inglés
+// ("Upper Propeller") y las categorías en español ("Hélices").
+function matches(product: CompatibleProduct, term: string) {
+  if (!term) return true;
+  return [product.name, product.sku, product.part_number, product.component.path].some(
+    (field) => fold(field ?? "").includes(term),
+  );
+}
+
+function ChipLabel({ name, count }: { name: string; count: number }) {
+  return (
+    <>
+      {name}
+      <Text span size="xs" ml={6} style={{ opacity: 0.7 }}>
+        {count}
+      </Text>
+    </>
+  );
 }
 
 export function InteractivePartsTab({ order }: { order: ServiceOrder }) {
   const orderId = order.id as number;
   const hasModel = order.equipment_catalog_model != null;
-  const treeQ = useOrderComponentTree(hasModel ? orderId : undefined);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const partsQ = useCompatibleProducts(hasModel ? orderId : undefined);
   const add = useAddPart(orderId);
   const terminal = TERMINAL.includes(order.status ?? "");
 
-  const tree = useMemo(() => treeQ.data ?? [], [treeQ.data]);
-  const { ancestorCodes, idByCode } = useMemo(() => indexTree(tree), [tree]);
-  const compatQ = useCompatibleProducts(orderId, selectedId ?? undefined);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
 
-  const selectedKeys = useMemo(
-    () => (selectedId != null ? ancestorCodes.get(selectedId) ?? new Set<string>() : new Set<string>()),
-    [selectedId, ancestorCodes],
-  );
+  const products = useMemo(() => partsQ.data?.products ?? [], [partsQ.data]);
 
-  const onAdd = async (productId: number, quantity: number) => {
+  // Categorías en el orden en que las entrega el backend (sort_order, nombre).
+  const categories = useMemo(() => {
+    const seen = new Map<number, PartComponent>();
+    for (const p of products) if (!seen.has(p.component.id)) seen.set(p.component.id, p.component);
+    return [...seen.values()];
+  }, [products]);
+
+  const term = fold(search.trim());
+  const searched = useMemo(() => products.filter((p) => matches(p, term)), [products, term]);
+
+  const countByCategory = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const p of searched) counts.set(p.component.id, (counts.get(p.component.id) ?? 0) + 1);
+    return counts;
+  }, [searched]);
+
+  const groups = categories
+    .filter((c) => selected.length === 0 || selected.includes(String(c.id)))
+    .map((c) => ({ component: c, items: searched.filter((p) => p.component.id === c.id) }))
+    .filter((g) => g.items.length > 0);
+
+  const onAdd = async (product: CompatibleProduct, quantity: number) => {
     try {
       await add.mutateAsync({
-        product: productId,
-        component: selectedId ?? undefined,
+        product: product.id,
+        component: product.component.id,
         quantity: String(quantity),
       });
-      notifications.show({ color: "green", message: "Pieza agregada a la orden." });
+      notifications.show({ color: "green", message: `${product.name} agregada a la orden.` });
     } catch (e) {
       notifications.show({ color: "red", message: (e as Error).message });
     }
@@ -59,61 +95,69 @@ export function InteractivePartsTab({ order }: { order: ServiceOrder }) {
     return (
       <Alert color="yellow" title="Sin modelo técnico">
         El equipo de esta orden no tiene un modelo técnico asignado. Asígnalo en la ficha
-        del equipo para usar el despiece.
+        del equipo para ver sus piezas.
       </Alert>
     );
   }
-  if (treeQ.isLoading) return <Loader />;
-  if (treeQ.error)
-    return <Alert color="red">{(treeQ.error as Error).message}</Alert>;
+  if (partsQ.isLoading) return <Loader />;
+  if (partsQ.error) return <Alert color="red">{(partsQ.error as Error).message}</Alert>;
 
-  const modelCode = deriveModelCode(order.equipment_catalog_model_name);
+  if (products.length === 0) {
+    return (
+      <Text c="dimmed" ta="center" py="lg">
+        No hay piezas registradas para {partsQ.data?.equipment_model.name ?? "este modelo"}.
+      </Text>
+    );
+  }
 
   return (
-    <Grid gap="md">
-      <Grid.Col span={{ base: 12, md: 3.5 }}>
-        <Card withBorder padding="sm" radius="md">
-          <Text fw={600} size="sm" mb="xs">Componentes</Text>
-          <EquipmentComponentTree
-            nodes={tree}
-            selectedId={selectedId}
-            onSelect={(id) => setSelectedId(id)}
-          />
-        </Card>
-      </Grid.Col>
-      <Grid.Col span={{ base: 12, md: 4.5 }}>
-        <Card withBorder padding="sm" radius="md">
-          <Text fw={600} size="sm" mb="xs">Diagrama</Text>
-          <EquipmentDiagram
-            modelCode={modelCode}
-            selectedKeys={selectedKeys}
-            onZoneSelect={(key) => {
-              const id = idByCode.get(key);
-              if (id != null) setSelectedId(id);
-            }}
-          />
-        </Card>
-      </Grid.Col>
-      <Grid.Col span={{ base: 12, md: 4 }}>
-        <Card withBorder padding="sm" radius="md">
-          <Text fw={600} size="sm" mb="xs">Piezas compatibles</Text>
-          <CompatibleProductsPanel
-            data={selectedId != null ? compatQ.data : undefined}
-            isLoading={compatQ.isLoading}
-            disabled={terminal}
-            onAdd={onAdd}
-          />
-        </Card>
-      </Grid.Col>
-    </Grid>
-  );
-}
+    <Stack gap="md">
+      <Text size="sm" c="dimmed">
+        {partsQ.data?.equipment_model.name} · {products.length} piezas
+      </Text>
 
-// Deriva el código de modelo para elegir el diagrama, desde el nombre del modelo.
-function deriveModelCode(name: string | null | undefined): string | null {
-  if (!name) return null;
-  const n = name.toLowerCase();
-  if (n.includes("t50")) return "T50";
-  if (n.includes("d12500")) return "D12500IE";
-  return null;
+      <TextInput
+        placeholder="Buscar pieza, SKU o N.º de pieza…"
+        leftSection={<IconSearch size={16} />}
+        value={search}
+        onChange={(e) => setSearch(e.currentTarget.value)}
+        aria-label="Buscar pieza"
+      />
+
+      <Group gap="xs">
+        <Chip checked={selected.length === 0} onChange={() => setSelected([])}>
+          <ChipLabel name="Todas" count={searched.length} />
+        </Chip>
+        <Chip.Group multiple value={selected} onChange={setSelected}>
+          {categories.map((c) => (
+            <Chip key={c.id} value={String(c.id)}>
+              <ChipLabel name={c.name} count={countByCategory.get(c.id) ?? 0} />
+            </Chip>
+          ))}
+        </Chip.Group>
+      </Group>
+
+      {groups.length === 0 ? (
+        <Text c="dimmed" ta="center" py="lg">
+          Ninguna pieza coincide con la búsqueda.
+        </Text>
+      ) : (
+        groups.map(({ component, items }) => (
+          <Stack key={component.id} gap="xs">
+            <Group gap="xs" align="baseline">
+              <Title order={5}>{component.path}</Title>
+              <Text size="sm" c="dimmed">
+                {items.length} {items.length === 1 ? "pieza" : "piezas"}
+              </Text>
+            </Group>
+            <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="sm">
+              {items.map((p) => (
+                <CompatiblePartCard key={p.id} product={p} disabled={terminal} onAdd={onAdd} />
+              ))}
+            </SimpleGrid>
+          </Stack>
+        ))
+      )}
+    </Stack>
+  );
 }
