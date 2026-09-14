@@ -264,7 +264,7 @@ def test_equipment_service_history(tech_client, customer):
 
 @pytest.mark.django_db
 def test_order_exposes_equipment_type(tech_client, customer):
-    etype = EquipmentType.objects.create(name="Agras T50")
+    etype, _ = EquipmentType.objects.get_or_create(name="Agras T50")  # sembrado por equipment.0005
     eq = Equipment.objects.create(
         name="Dron 1", customer=customer, equipment_type=etype
     )

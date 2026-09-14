@@ -19,7 +19,7 @@ def test_part_component_optional_and_linked():
 
     # Con componente (modo estructurado)
     t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50-TEST")
     comp = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
     p2 = ServiceOrderPart.objects.create(
         service_order=order, product=prod, quantity=Decimal("1"), component=comp

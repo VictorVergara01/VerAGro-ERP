@@ -23,7 +23,7 @@ def tech(db):
 def scenario(db):
     cli = Customer.objects.create(name="C")
     t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="DJI Agras T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="DJI Agras T50", model_code="T50-TEST")
     comp = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
     other_comp = EquipmentComponent.objects.create(equipment_model=m, code="prop_m1", name="Hélice")
     eq = Equipment.objects.create(name="T50 físico", equipment_type=t, customer=cli, catalog_model=m)
@@ -155,7 +155,7 @@ def test_order_compatible_products_without_component_lists_whole_model(tech, sce
     ProductCompatibility.objects.create(product=inactivo, equipment_model=m, component=comp)
     # Pieza de otro modelo: no debe aparecer.
     otro = EquipmentModel.objects.create(
-        equipment_type=m.equipment_type, brand="DJI", name="Otro", model_code="T40"
+        equipment_type=m.equipment_type, brand="DJI", name="Otro", model_code="T40-TEST"
     )
     otro_comp = EquipmentComponent.objects.create(equipment_model=otro, code="motor_m1", name="Motor")
     ajena = Product.objects.create(sku="T40-1", name="Motor T40")

@@ -14,7 +14,7 @@ def eqtype(db):
 @pytest.mark.django_db
 def test_equipment_model_str_and_defaults(eqtype):
     m = EquipmentModel.objects.create(
-        equipment_type=eqtype, brand="DJI", name="DJI Agras T50", model_code="T50"
+        equipment_type=eqtype, brand="DJI", name="DJI Agras T50", model_code="T50-TEST"
     )
     assert str(m) == "DJI DJI Agras T50"
     assert m.is_active is True
@@ -25,18 +25,18 @@ def test_equipment_model_str_and_defaults(eqtype):
 @pytest.mark.django_db
 def test_equipment_model_unique_brand_code_revision(eqtype):
     EquipmentModel.objects.create(
-        equipment_type=eqtype, brand="DJI", name="T50", model_code="T50"
+        equipment_type=eqtype, brand="DJI", name="T50-TEST", model_code="T50-TEST"
     )
     with pytest.raises(IntegrityError):
         EquipmentModel.objects.create(
-            equipment_type=eqtype, brand="DJI", name="T50 dup", model_code="T50"
+            equipment_type=eqtype, brand="DJI", name="T50 dup", model_code="T50-TEST"
         )
 
 
 @pytest.mark.django_db
 def test_equipment_catalog_model_link_optional(eqtype):
     m = EquipmentModel.objects.create(
-        equipment_type=eqtype, brand="DJI", name="T50", model_code="T50"
+        equipment_type=eqtype, brand="DJI", name="T50-TEST", model_code="T50-TEST"
     )
     e_sin = Equipment.objects.create(name="Viejo", equipment_type=eqtype)
     assert e_sin.catalog_model is None  # heredado sigue funcionando
@@ -46,7 +46,7 @@ def test_equipment_catalog_model_link_optional(eqtype):
     assert list(m.equipment_units.all()) == [e_con]
 
 
-def _model(eqtype, code="T50"):
+def _model(eqtype, code="T50-TEST"):
     return EquipmentModel.objects.create(
         equipment_type=eqtype, brand="DJI", name=code, model_code=code
     )
@@ -79,7 +79,7 @@ def test_component_code_unique_per_model(eqtype):
 
 @pytest.mark.django_db
 def test_component_parent_must_be_same_model(eqtype):
-    m1 = _model(eqtype, "T50")
+    m1 = _model(eqtype, "T50-TEST")
     m2 = _model(eqtype, "D125")
     p = EquipmentComponent.objects.create(equipment_model=m1, code="a", name="A")
     child = EquipmentComponent(equipment_model=m2, parent=p, code="b", name="B")

@@ -76,8 +76,10 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        drone, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-        planta, _ = EquipmentType.objects.get_or_create(name="Planta eléctrica")
+        # La migración equipment.0005 ya crea ambos modelos con su tipo propio;
+        # estos get_or_create solo actúan en una base sin esa migración.
+        drone, _ = EquipmentType.objects.get_or_create(name="Agras T50")
+        planta, _ = EquipmentType.objects.get_or_create(name="Planta D12500iE")
 
         t50, _ = EquipmentModel.objects.get_or_create(
             brand="DJI", model_code="T50", revision="",

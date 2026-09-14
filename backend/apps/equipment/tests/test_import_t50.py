@@ -20,10 +20,8 @@ def _make_xlsx(path):
 
 @pytest.fixture
 def t50(db):
-    t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-    return EquipmentModel.objects.create(
-        equipment_type=t, brand="DJI", name="DJI Agras T50", model_code="T50"
-    )
+    # Lo siembra la migración equipment.0005 (el importador busca model_code="T50").
+    return EquipmentModel.objects.get(brand="DJI", model_code="T50", revision="")
 
 
 @pytest.mark.django_db
@@ -65,8 +63,10 @@ def test_import_is_idempotent(t50, tmp_path):
 
 @pytest.mark.django_db
 def test_import_requires_model(tmp_path):
-    # Sin el modelo T50 sembrado, el comando falla claro.
+    # Sin el modelo T50 sembrado, el comando falla claro. La migración
+    # equipment.0005 lo crea, así que se quita para simular una base sin él.
     from django.core.management.base import CommandError
+    EquipmentModel.objects.filter(brand="DJI", model_code="T50").delete()
     xlsx = tmp_path / "t50.xlsx"
     _make_xlsx(str(xlsx))
     with pytest.raises(CommandError):

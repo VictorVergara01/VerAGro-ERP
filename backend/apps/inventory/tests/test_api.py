@@ -275,7 +275,7 @@ def test_create_product_with_duplicate_sku_returns_400(inv_client):
 def test_filter_by_equipment_type(inv_client):
     from apps.equipment.models import EquipmentType
 
-    t50 = EquipmentType.objects.create(name="Agras T50")
+    t50, _ = EquipmentType.objects.get_or_create(name="Agras T50")  # sembrado por equipment.0005
     gen = EquipmentType.objects.create(name="Generador D12500")
     p_t50 = Product.objects.create(sku="ET-1", name="Impeller")
     p_t50.compatible_equipment_types.add(t50)
@@ -292,7 +292,7 @@ def test_filter_by_equipment_type(inv_client):
 def test_filter_equipment_type_no_duplicates(inv_client):
     from apps.equipment.models import EquipmentType
 
-    t50 = EquipmentType.objects.create(name="Agras T50")
+    t50, _ = EquipmentType.objects.get_or_create(name="Agras T50")  # sembrado por equipment.0005
     gen = EquipmentType.objects.create(name="Generador D12500")
     p = Product.objects.create(sku="DUP-ET", name="Multi")
     p.compatible_equipment_types.add(t50, gen)
@@ -314,7 +314,7 @@ def test_filter_products_by_equipment_model_and_component(inv_client):
     from apps.inventory.models import ProductCompatibility
 
     t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50-TEST")
     c1 = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
     c2 = EquipmentComponent.objects.create(equipment_model=m, code="prop_m1", name="Hélice")
     p_motor = Product.objects.create(sku="PM-1", name="Motor")
@@ -337,7 +337,7 @@ def test_filter_products_compatible_with_equipment(inv_client):
     from apps.inventory.models import ProductCompatibility
 
     t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50-TEST")
     c1 = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
     prod = Product.objects.create(sku="EM-1", name="Motor")
     ProductCompatibility.objects.create(product=prod, equipment_model=m, component=c1)

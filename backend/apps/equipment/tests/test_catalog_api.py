@@ -29,7 +29,7 @@ def drone(db):
 def test_create_and_list_equipment_model(inv_client, drone):
     resp = inv_client.post(
         "/api/equipment/models/",
-        {"equipment_type": drone.id, "brand": "DJI", "name": "DJI Agras T50", "model_code": "T50"},
+        {"equipment_type": drone.id, "brand": "DJI", "name": "DJI Agras T50", "model_code": "T50-TEST"},
         format="json",
     )
     assert resp.status_code == 201, resp.data
@@ -41,7 +41,7 @@ def test_create_and_list_equipment_model(inv_client, drone):
 
 @pytest.mark.django_db
 def test_equipment_model_soft_delete(inv_client, drone):
-    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50-TEST")
     assert inv_client.delete(f"/api/equipment/models/{m.id}/").status_code == 204
     m.refresh_from_db()
     assert m.is_active is False
@@ -50,7 +50,7 @@ def test_equipment_model_soft_delete(inv_client, drone):
 
 @pytest.mark.django_db
 def test_component_tree_endpoint(inv_client, drone):
-    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50-TEST")
     prop = EquipmentComponent.objects.create(equipment_model=m, code="propulsion", name="Sistema de propulsión", component_type="assembly", sort_order=0)
     arm = EquipmentComponent.objects.create(equipment_model=m, parent=prop, code="arm_m1", name="Brazo M1", component_type="assembly", sort_order=0)
     EquipmentComponent.objects.create(equipment_model=m, parent=arm, code="motor_m1", name="Motor", sort_order=0)
@@ -68,7 +68,7 @@ def test_model_write_requires_role(drone):
     ro = _client("readonly")
     resp = ro.post(
         "/api/equipment/models/",
-        {"equipment_type": drone.id, "brand": "DJI", "name": "T50", "model_code": "T50"},
+        {"equipment_type": drone.id, "brand": "DJI", "name": "T50", "model_code": "T50-TEST"},
         format="json",
     )
     assert resp.status_code == 403
@@ -76,7 +76,7 @@ def test_model_write_requires_role(drone):
 
 @pytest.mark.django_db
 def test_component_crud_and_filter(inv_client, drone):
-    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=drone, brand="DJI", name="T50", model_code="T50-TEST")
     root = inv_client.post(
         "/api/equipment/components/",
         {"equipment_model": m.id, "code": "propulsion", "name": "Propulsión", "component_type": "assembly"},

@@ -19,7 +19,7 @@ def _client(role):
 def setup(db):
     inv = _client("inventory")
     t, _ = EquipmentType.objects.get_or_create(name="Drone agrícola")
-    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50")
+    m = EquipmentModel.objects.create(equipment_type=t, brand="DJI", name="T50", model_code="T50-TEST")
     comp = EquipmentComponent.objects.create(equipment_model=m, code="motor_m1", name="Motor")
     prod = Product.objects.create(sku="MOT-1", name="Motor CW")
     return inv, m, comp, prod
