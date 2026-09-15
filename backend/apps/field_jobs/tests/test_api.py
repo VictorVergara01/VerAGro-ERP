@@ -71,3 +71,58 @@ def test_update_replaces_products(admin_client, customer):
     )
     assert res.status_code == 200
     assert [p["name"] for p in res.json()["products"]] == ["Nuevo"]
+
+
+def test_enlaza_lote_del_mismo_cliente(admin_client, customer):
+    from apps.field_jobs.models import FieldPlot
+
+    plot = FieldPlot.objects.create(customer=customer, name="Potrero 1")
+    res = admin_client.post(
+        "/api/field-jobs/",
+        {"customer": customer.id, "plot": plot.id, "hectares": "10"},
+        format="json",
+    )
+    assert res.status_code == 201, res.content
+    assert res.json()["plot"] == plot.id
+    assert res.json()["plot_name"] == "Potrero 1"
+
+
+def test_rechaza_lote_de_otro_cliente(admin_client, customer):
+    from apps.field_jobs.models import FieldPlot
+
+    otro = Customer.objects.create(name="Finca Santa Rita")
+    plot = FieldPlot.objects.create(customer=otro, name="Potrero ajeno")
+    res = admin_client.post(
+        "/api/field-jobs/",
+        {"customer": customer.id, "plot": plot.id},
+        format="json",
+    )
+    assert res.status_code == 400
+    assert "plot" in res.json()
+
+
+def test_patch_parcial_valida_el_lote_contra_el_cliente_guardado(admin_client, customer):
+    """El PATCH no manda customer: se resuelve desde la instancia."""
+    from apps.field_jobs.models import FieldPlot
+
+    job = FieldJob.objects.create(customer=customer, hectares=Decimal("1"))
+    otro = Customer.objects.create(name="Finca Santa Rita")
+    ajeno = FieldPlot.objects.create(customer=otro, name="Potrero ajeno")
+    propio = FieldPlot.objects.create(customer=customer, name="Potrero 1")
+
+    assert admin_client.patch(
+        f"/api/field-jobs/{job.id}/", {"plot": ajeno.id}, format="json"
+    ).status_code == 400
+    assert admin_client.patch(
+        f"/api/field-jobs/{job.id}/", {"plot": propio.id}, format="json"
+    ).status_code == 200
+
+
+def test_no_acepta_lote_desactivado(admin_client, customer):
+    from apps.field_jobs.models import FieldPlot
+
+    plot = FieldPlot.objects.create(customer=customer, name="Potrero 1", is_active=False)
+    res = admin_client.post(
+        "/api/field-jobs/", {"customer": customer.id, "plot": plot.id}, format="json"
+    )
+    assert res.status_code == 400

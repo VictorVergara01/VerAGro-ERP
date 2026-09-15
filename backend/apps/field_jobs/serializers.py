@@ -12,6 +12,12 @@ class FieldJobProductSerializer(serializers.ModelSerializer):
 class FieldJobSerializer(serializers.ModelSerializer):
     products = FieldJobProductSerializer(many=True, required=False)
     customer_name = serializers.CharField(source="customer.name", read_only=True)
+    plot = serializers.PrimaryKeyRelatedField(
+        queryset=FieldPlot.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    plot_name = serializers.CharField(source="plot.name", read_only=True, default="")
     equipment_name = serializers.CharField(
         source="equipment.name", read_only=True, default=""
     )
@@ -37,6 +43,17 @@ class FieldJobSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Máximo 10 químicos por trabajo.")
         return value
 
+    def validate(self, attrs):
+        # El lote es un enlace informativo: debe ser del mismo cliente del trabajo.
+        # En PATCH parcial, cliente y lote se resuelven contra la instancia.
+        plot = attrs.get("plot", getattr(self.instance, "plot", None))
+        customer = attrs.get("customer", getattr(self.instance, "customer", None))
+        if plot is not None and customer is not None and plot.customer_id != customer.id:
+            raise serializers.ValidationError(
+                {"plot": "El lote no pertenece al cliente del trabajo."}
+            )
+        return attrs
+
     class Meta:
         model = FieldJob
         fields = (
@@ -48,6 +65,8 @@ class FieldJobSerializer(serializers.ModelSerializer):
             "status_display",
             "customer",
             "customer_name",
+            "plot",
+            "plot_name",
             "equipment",
             "equipment_name",
             "technician",
