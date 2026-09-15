@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Button,
   Collapse,
   Grid,
@@ -15,7 +14,6 @@ import {
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect } from "react";
 
 import { formatCurrency } from "../../utils/format";
@@ -24,10 +22,9 @@ import { useEquipmentList } from "../equipment/api";
 import { usePilots } from "../service-orders/api";
 import { useCompany } from "../settings/api";
 import { useSaveFieldJob } from "./api";
+import { ChemicalRowsEditor, type ChemicalRow } from "./ChemicalRowsEditor";
 import { SprayMixModal } from "./SprayMixModal";
-import { CROP_OPTIONS, PRODUCT_UNIT_OPTIONS, type FieldJob } from "./types";
-
-const MAX_PRODUCTS = 10;
+import { CROP_OPTIONS, type FieldJob } from "./types";
 
 interface FormValues {
   customer: string | null;
@@ -37,7 +34,7 @@ interface FormValues {
   location: string;
   crop: string;
   crop_other: string;
-  products: { name: string; dose_per_hectare: number | string; unit: string }[];
+  products: ChemicalRow[];
   hectares: number | string;
   unit_price: number | string;
   notes: string;
@@ -212,53 +209,10 @@ export function FieldJobFormModal({
           </Grid.Col>
         </Grid>
 
-        <Text fw={600} size="sm" mt="sm">Químicos a aplicar</Text>
-        {form.values.products.map((p, i) => (
-          <Group key={i} wrap="nowrap" mt={4}>
-            <TextInput
-              placeholder="Nombre del químico"
-              value={p.name}
-              onChange={(e) => form.setFieldValue(`products.${i}.name`, e.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <NumberInput
-              placeholder="Dosis/ha"
-              min={0}
-              decimalScale={4}
-              value={p.dose_per_hectare}
-              onChange={(v) => form.setFieldValue(`products.${i}.dose_per_hectare`, v as number | string)}
-              w={120}
-            />
-            <Select
-              data={PRODUCT_UNIT_OPTIONS}
-              value={p.unit}
-              onChange={(v) => form.setFieldValue(`products.${i}.unit`, v ?? "L/ha")}
-              allowDeselect={false}
-              w={100}
-            />
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              aria-label="Quitar químico"
-              onClick={() => form.removeListItem("products", i)}
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
-          </Group>
-        ))}
-        <Button
-          variant="light"
-          size="xs"
-          mt={4}
-          leftSection={<IconPlus size={16} />}
-          disabled={form.values.products.length >= MAX_PRODUCTS}
-          onClick={() => form.insertListItem("products", { name: "", dose_per_hectare: 0, unit: "L/ha" })}
-        >
-          Agregar químico
-        </Button>
-        {form.values.products.length >= MAX_PRODUCTS && (
-          <Text size="xs" c="dimmed" mt={4}>Máximo {MAX_PRODUCTS} químicos por trabajo.</Text>
-        )}
+        <ChemicalRowsEditor
+          rows={form.values.products}
+          onChange={(rows) => form.setFieldValue("products", rows)}
+        />
 
         {/* Sección colapsable: aplicación */}
         <Button variant="subtle" size="xs" mt="sm" onClick={app.toggle}>
