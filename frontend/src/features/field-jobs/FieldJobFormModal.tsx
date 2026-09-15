@@ -14,11 +14,13 @@ import {
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { formatCurrency } from "../../utils/format";
 import { useCustomers } from "../customers/api";
 import { useEquipmentList } from "../equipment/api";
+import { useFieldPlots } from "../field-plots/api";
+import type { FieldPlot } from "../field-plots/types";
 import { usePilots } from "../service-orders/api";
 import { useCompany } from "../settings/api";
 import { useSaveFieldJob } from "./api";
@@ -28,6 +30,7 @@ import { CROP_OPTIONS, type FieldJob } from "./types";
 
 interface FormValues {
   customer: string | null;
+  plot: string | null;
   equipment: string | null;
   technician: string | null;
   scheduled_date: string;
@@ -44,6 +47,7 @@ interface FormValues {
 
 const EMPTY: FormValues = {
   customer: null,
+  plot: null,
   equipment: null,
   technician: null,
   scheduled_date: "",
@@ -83,6 +87,10 @@ export function FieldJobFormModal({
     validate: { customer: (v) => (v ? null : "Selecciona un cliente.") },
   });
 
+  const [plotLoaded, setPlotLoaded] = useState(false);
+  const customerId = form.values.customer ? Number(form.values.customer) : undefined;
+  const plots = useFieldPlots({ customer: customerId }, customerId != null);
+
   useEffect(() => {
     if (opened) {
       const c = company.data as Record<string, string> | undefined;
@@ -94,6 +102,7 @@ export function FieldJobFormModal({
         ...(job
           ? {
               customer: job.customer ? String(job.customer) : null,
+              plot: job.plot ? String(job.plot) : null,
               equipment: job.equipment ? String(job.equipment) : null,
               technician: job.technician ? String(job.technician) : null,
               scheduled_date: job.scheduled_date ?? "",
@@ -113,6 +122,8 @@ export function FieldJobFormModal({
             }
           : {}),
       } as FormValues);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reinicia el aviso de lote al abrir el modal
+      setPlotLoaded(false);
       form.clearErrors();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,6 +137,7 @@ export function FieldJobFormModal({
       id: job?.id,
       job_type: "fumigation",
       customer: Number(values.customer),
+      plot: values.plot ? Number(values.plot) : null,
       equipment: values.equipment ? Number(values.equipment) : null,
       technician: values.technician ? Number(values.technician) : null,
       scheduled_date: values.scheduled_date || undefined,
@@ -150,6 +162,29 @@ export function FieldJobFormModal({
     }
   });
 
+  const applyPlot = (value: string | null) => {
+    form.setFieldValue("plot", value);
+    const plot = (plots.data ?? []).find((p: FieldPlot) => String(p.id) === value);
+    if (!plot) {
+      setPlotLoaded(false);
+      return;
+    }
+    form.setFieldValue("location", plot.location ?? "");
+    form.setFieldValue("crop", plot.crop ?? "rice");
+    form.setFieldValue("crop_other", plot.crop_other ?? "");
+    form.setFieldValue("hectares", plot.hectares ?? 1);
+    form.setFieldValue("water_per_hectare", plot.water_per_hectare ?? "");
+    form.setFieldValue(
+      "products",
+      (plot.products ?? []).map((p) => ({
+        name: p.name,
+        dose_per_hectare: p.dose_per_hectare ?? "",
+        unit: p.unit ?? "L/ha",
+      })),
+    );
+    setPlotLoaded(true);
+  };
+
   return (
     <Modal opened={opened} onClose={onClose} title={editing ? "Editar trabajo" : "Nuevo trabajo de campo"} size="lg">
       <form onSubmit={submit}>
@@ -161,8 +196,32 @@ export function FieldJobFormModal({
               data={(customers.data?.results ?? []).map((c) => ({ value: String(c.id), label: c.name }))}
               searchable
               {...form.getInputProps("customer")}
+              onChange={(v) => {
+                form.setFieldValue("customer", v);
+                form.setFieldValue("plot", null);
+                setPlotLoaded(false);
+              }}
             />
           </Grid.Col>
+          {form.values.customer && (
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <Select
+                label="Lote"
+                placeholder="Sin lote"
+                data={(plots.data ?? []).map((p: FieldPlot) => ({
+                  value: String(p.id),
+                  label: p.name,
+                }))}
+                searchable
+                clearable
+                value={form.values.plot}
+                onChange={applyPlot}
+              />
+              {plotLoaded && (
+                <Text size="xs" c="teal" mt={4}>Datos del lote cargados</Text>
+              )}
+            </Grid.Col>
+          )}
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
               label="Dron"

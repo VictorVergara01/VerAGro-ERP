@@ -83,6 +83,7 @@ export function FieldJobDetailPage() {
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Piloto" value={job.technician_name || "Sin asignar"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Cultivo" value={cropLabel} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Finca" value={job.location || "—"} /></Grid.Col>
+          <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Lote" value={job.plot_name || "—"} /></Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Programado" value={formatDate(job.scheduled_date)} /></Grid.Col>
           {job.done_date && (
             <Grid.Col span={{ base: 6, sm: 3 }}><Field label="Hecho" value={formatDate(job.done_date)} /></Grid.Col>

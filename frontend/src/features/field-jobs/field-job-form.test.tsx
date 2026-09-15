@@ -8,7 +8,26 @@ vi.mock("./api", () => ({
   useSaveFieldJob: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCalculateMix: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
-vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
+vi.mock("../customers/api", () => ({
+  useCustomers: () => ({ data: { results: [{ id: 7, name: "Finca La Esperanza" }] } }),
+}));
+vi.mock("../field-plots/api", () => ({
+  useFieldPlots: () => ({
+    data: [
+      {
+        id: 3,
+        name: "Potrero 1",
+        hectares: "15.0000",
+        crop: "corn",
+        crop_other: "",
+        location: "Entrada norte",
+        water_per_hectare: "20.00",
+        products: [{ id: 1, name: "Glifosato", dose_per_hectare: "10.0000", unit: "L/ha" }],
+      },
+    ],
+    isLoading: false,
+  }),
+}));
 vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results: [] } }) }));
 vi.mock("../service-orders/api", () => ({ usePilots: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({
@@ -52,5 +71,28 @@ describe("FieldJobFormModal", () => {
     for (let i = 0; i < 10; i++) fireEvent.click(addBtn);
     expect(addBtn).toBeDisabled();
     expect(screen.getByText(/máximo 10 químicos/i)).toBeInTheDocument();
+  });
+
+  it("no muestra el selector de lote sin cliente elegido", () => {
+    renderForm();
+    expect(screen.queryByLabelText(/^lote$/i)).not.toBeInTheDocument();
+  });
+
+  it("al elegir un lote copia sus datos y avisa", async () => {
+    renderForm();
+    // Mantine Select es un input con listbox; se elige por texto de la opción.
+    // getByLabelText matchea también el listbox (aria-labelledby apunta al mismo label),
+    // así que para abrir el combobox se usa getByRole con el nombre accesible del input.
+    fireEvent.click(screen.getByRole("combobox", { name: /^cliente$/i }));
+    fireEvent.click(await screen.findByText("Finca La Esperanza"));
+
+    fireEvent.click(screen.getByRole("combobox", { name: /^lote$/i }));
+    fireEvent.click(await screen.findByText("Potrero 1"));
+
+    expect(screen.getByText(/datos del lote cargados/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/finca \/ ubicación/i)).toHaveValue("Entrada norte");
+    // NumberInput normaliza los decimales: se compara con regex, no con "15".
+    expect(screen.getByLabelText(/hectáreas/i)).toHaveDisplayValue(/^15/);
+    expect(screen.getByDisplayValue("Glifosato")).toBeInTheDocument();
   });
 });
