@@ -49,6 +49,8 @@ describe("FieldPlotsTab", () => {
     role.current = "piloto";
     renderTab();
     expect(screen.getByRole("button", { name: /nuevo lote/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/editar lote/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/eliminar lote/i)).toBeInTheDocument();
   });
 
   it("oculta las acciones a un rol de solo lectura", () => {
@@ -56,5 +58,6 @@ describe("FieldPlotsTab", () => {
     renderTab();
     expect(screen.queryByRole("button", { name: /nuevo lote/i })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/editar lote/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/eliminar lote/i)).not.toBeInTheDocument();
   });
 });
