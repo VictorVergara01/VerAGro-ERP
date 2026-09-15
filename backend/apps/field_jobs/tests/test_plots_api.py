@@ -71,6 +71,29 @@ def test_rechaza_nombre_repetido_del_mismo_cliente(admin_client, customer):
     assert "name" in res.json()
 
 
+def test_rechaza_nombre_repetido_mismo_case_con_mensaje_especifico(admin_client, customer):
+    # Regresión: DRF auto-generaba un UniqueTogetherValidator (customer, name) que hacía
+    # match exacto por case-sensitivity y disparaba antes que validate(), tapando el
+    # mensaje de negocio con uno genérico bajo non_field_errors. Con el mismo case
+    # (el caso más común en uso real) es donde el bug se manifestaba.
+    FieldPlot.objects.create(customer=customer, name="Potrero 1")
+    res = admin_client.post(
+        PLOTS_URL, {"customer": customer.id, "name": "Potrero 1"}, format="json"
+    )
+    assert res.status_code == 400
+    assert res.json() == {
+        "name": ["Ya existe un lote activo con ese nombre para este cliente."]
+    }
+
+
+def test_permite_nombre_que_solo_choca_con_lote_inactivo_via_api(admin_client, customer):
+    FieldPlot.objects.create(customer=customer, name="Potrero 1", is_active=False)
+    res = admin_client.post(
+        PLOTS_URL, {"customer": customer.id, "name": "Potrero 1"}, format="json"
+    )
+    assert res.status_code == 201, res.content
+
+
 def test_editar_reemplaza_los_quimicos(admin_client, customer):
     plot = FieldPlot.objects.create(customer=customer, name="Potrero 1")
     FieldPlotProduct.objects.create(plot=plot, name="Viejo", dose_per_hectare=1)

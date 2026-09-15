@@ -148,6 +148,12 @@ class FieldPlotSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = ("id", "is_active", "created_at", "updated_at")
+        # Sin esto, DRF auto-genera un UniqueTogetherValidator (customer, name) a partir
+        # del UniqueConstraint condicional del modelo: hace match exacto por case-sensitivity
+        # y dispara antes que validate() de abajo, tapando su mensaje con uno genérico bajo
+        # non_field_errors. validate() ya cubre esta regla mejor (case-insensitive, solo
+        # activos, excluye la instancia en edición), así que es la única fuente de verdad.
+        validators = []
 
     def validate_products(self, value):
         if len(value) > 10:
