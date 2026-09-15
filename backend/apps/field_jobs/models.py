@@ -33,6 +33,13 @@ class FieldJob(TimeStampedModel):
     customer = models.ForeignKey(
         "customers.Customer", on_delete=models.PROTECT, related_name="field_jobs"
     )
+    plot = models.ForeignKey(
+        "FieldPlot",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="field_jobs",
+    )
     equipment = models.ForeignKey(
         "equipment.Equipment",
         on_delete=models.PROTECT,
@@ -96,6 +103,64 @@ class FieldJobProduct(TimeStampedModel):
     name = models.CharField(max_length=150)
     dose_per_hectare = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     unit = models.CharField(max_length=10, choices=Unit.choices, default=Unit.L_HA)
+
+    class Meta:
+        ordering = ("id",)
+
+    def __str__(self):
+        return f"{self.name} ({self.dose_per_hectare} {self.unit})"
+
+
+class FieldPlot(TimeStampedModel):
+    """Lote (potrero/talhão) de un cliente: los datos estables de un terreno.
+
+    Guarda además la receta habitual (tasa de aplicación y químicos) para
+    autollenar el Trabajo de campo. El trabajo copia los valores al crearse:
+    editar el lote después no reescribe trabajos ya capturados.
+    """
+
+    customer = models.ForeignKey(
+        "customers.Customer", on_delete=models.PROTECT, related_name="plots"
+    )
+    name = models.CharField(max_length=150)
+    hectares = models.DecimalField(max_digits=10, decimal_places=4, default=1)
+    crop = models.CharField(
+        max_length=20, choices=FieldJob.Crop.choices, default=FieldJob.Crop.RICE
+    )
+    crop_other = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    # Mismo nombre que en FieldJob para que la copia sea campo a campo.
+    water_per_hectare = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("customer", "name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["customer", "name"],
+                condition=models.Q(is_active=True),
+                name="uniq_active_plot_name_per_customer",
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class FieldPlotProduct(TimeStampedModel):
+    plot = models.ForeignKey(
+        FieldPlot, on_delete=models.CASCADE, related_name="products"
+    )
+    name = models.CharField(max_length=150)
+    dose_per_hectare = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    unit = models.CharField(
+        max_length=10,
+        choices=FieldJobProduct.Unit.choices,
+        default=FieldJobProduct.Unit.L_HA,
+    )
 
     class Meta:
         ordering = ("id",)
