@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
+import { userErrorMessage } from "../../lib/api/errors";
 import type { FieldPlot } from "./types";
 
 export interface FieldPlotListParams {
@@ -40,13 +41,13 @@ export function useSaveFieldPlot() {
           params: { path: { id } },
           body: body as FieldPlot,
         });
-        if (error) throw new Error("No se pudo guardar el lote.");
+        if (error) throw new Error(userErrorMessage(error, "No se pudo guardar el lote."));
         return data as FieldPlot;
       }
       const { data, error } = await api.POST("/api/field-plots/", {
         body: body as FieldPlot,
       });
-      if (error) throw new Error("No se pudo crear el lote.");
+      if (error) throw new Error(userErrorMessage(error, "No se pudo crear el lote."));
       return data as FieldPlot;
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["field-plots"] }),

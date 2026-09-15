@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, API_BASE_URL } from "../../lib/api/client";
+import { userErrorMessage } from "../../lib/api/errors";
 import { getAccess } from "../../lib/auth/tokens";
 import type { Paginated, Schemas } from "../../lib/api/types";
 
@@ -250,17 +251,6 @@ export interface UserInput {
   role: string;
   is_active: boolean;
   password?: string;
-}
-
-function userErrorMessage(error: unknown, fallback: string): string {
-  const body = error as Record<string, unknown> | undefined;
-  if (body && typeof body === "object") {
-    if (typeof body.detail === "string") return body.detail;
-    const first = Object.values(body)[0];
-    if (Array.isArray(first) && typeof first[0] === "string") return first[0];
-    if (typeof first === "string") return first;
-  }
-  return fallback;
 }
 
 export function useUsers(params: { search?: string; includeInactive?: boolean }) {

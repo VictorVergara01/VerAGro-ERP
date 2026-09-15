@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
+import { userErrorMessage } from "../../lib/api/errors";
 import type { Paginated } from "../../lib/api/types";
 import type { FieldJob, SprayMixProduct, SprayMixResult } from "./types";
 
@@ -61,13 +62,13 @@ export function useSaveFieldJob() {
           params: { path: { id } },
           body: body as FieldJob,
         });
-        if (error) throw new Error("No se pudo guardar el trabajo.");
+        if (error) throw new Error(userErrorMessage(error, "No se pudo guardar el trabajo."));
         return data as FieldJob;
       }
       const { data, error } = await api.POST("/api/field-jobs/", {
         body: body as FieldJob,
       });
-      if (error) throw new Error("No se pudo crear el trabajo.");
+      if (error) throw new Error(userErrorMessage(error, "No se pudo crear el trabajo."));
       return data as FieldJob;
     },
     onSuccess: () => {
