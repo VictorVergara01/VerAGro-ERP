@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
-from .models import FieldJob
-from .serializers import FieldJobSerializer
+from .models import FieldJob, FieldPlot
+from .serializers import FieldJobSerializer, FieldPlotSerializer
 from .services import calculate_mix, cancel_job, mark_done
 
 FieldJobWrite = RoleWriteOrReadOnly(*roles.FIELD_JOBS_WRITE)
@@ -133,3 +133,27 @@ class FieldJobViewSet(viewsets.ModelViewSet):
             products=data.get("products") or [],
         )
         return Response(result)
+
+
+class FieldPlotViewSet(viewsets.ModelViewSet):
+    """Lotes de un cliente. Sin paginación: alimenta el selector del trabajo."""
+
+    serializer_class = FieldPlotSerializer
+    permission_classes = [FieldJobWrite]
+    pagination_class = None
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "location"]
+
+    def get_queryset(self):
+        qs = FieldPlot.objects.select_related("customer").prefetch_related("products")
+        include_inactive = self.request.query_params.get("include_inactive", "")
+        if include_inactive.lower() not in ("1", "true", "yes", "on"):
+            qs = qs.filter(is_active=True)
+        customer = _int_param(self.request.query_params, "customer")
+        if customer is not None:
+            qs = qs.filter(customer_id=customer)
+        return qs
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=["is_active", "updated_at"])
