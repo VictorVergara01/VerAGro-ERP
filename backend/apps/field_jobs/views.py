@@ -44,7 +44,7 @@ class FieldJobViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = FieldJob.objects.select_related(
-            "customer", "equipment", "technician"
+            "customer", "plot", "equipment", "technician"
         ).prefetch_related("invoices", "products")
         user = self.request.user
         if user.is_authenticated and user.role == roles.PILOTO:

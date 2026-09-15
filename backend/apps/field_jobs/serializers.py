@@ -13,7 +13,7 @@ class FieldJobSerializer(serializers.ModelSerializer):
     products = FieldJobProductSerializer(many=True, required=False)
     customer_name = serializers.CharField(source="customer.name", read_only=True)
     plot = serializers.PrimaryKeyRelatedField(
-        queryset=FieldPlot.objects.filter(is_active=True),
+        queryset=FieldPlot.objects.all(),
         required=False,
         allow_null=True,
     )
@@ -51,6 +51,15 @@ class FieldJobSerializer(serializers.ModelSerializer):
         if plot is not None and customer is not None and plot.customer_id != customer.id:
             raise serializers.ValidationError(
                 {"plot": "El lote no pertenece al cliente del trabajo."}
+            )
+        # Desactivar un lote no debe congelar los trabajos que ya lo referencian:
+        # solo se rechaza un lote inactivo cuando el pedido intenta enlazarlo de nuevo
+        # (crear, o cambiar el lote de un trabajo existente), no cuando el trabajo
+        # simplemente re-envía el lote que ya tenía.
+        previous_plot = getattr(self.instance, "plot", None) if self.instance else None
+        if plot is not None and plot != previous_plot and not plot.is_active:
+            raise serializers.ValidationError(
+                {"plot": "No se puede enlazar un lote desactivado."}
             )
         return attrs
 
