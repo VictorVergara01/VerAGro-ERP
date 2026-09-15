@@ -14,6 +14,7 @@ import { DataTable, type Column } from "../../components/ui/DataTable";
 import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { FieldPlotsTab } from "../field-plots/FieldPlotsTab";
 import {
   useCustomer,
   useCustomerInvoices,
@@ -107,6 +108,7 @@ export function CustomerDetailPage() {
         <Tabs.List>
           <Tabs.Tab value="orders">Órdenes de servicio</Tabs.Tab>
           <Tabs.Tab value="invoices">Facturas</Tabs.Tab>
+          <Tabs.Tab value="plots">Lotes</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="orders" pt="md">
           <DataTable
@@ -125,6 +127,9 @@ export function CustomerDetailPage() {
             rowKey={(i) => i.id}
             emptyText="Sin facturas."
           />
+        </Tabs.Panel>
+        <Tabs.Panel value="plots" pt="md">
+          {customerId != null && <FieldPlotsTab customerId={customerId} />}
         </Tabs.Panel>
       </Tabs>
     </Stack>
