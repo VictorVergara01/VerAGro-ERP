@@ -185,6 +185,22 @@ export function FieldJobFormModal({
     setPlotLoaded(true);
   };
 
+  // Si el lote enlazado al trabajo ya no está activo, no aparece en plots.data
+  // (que solo trae lotes activos) y el Select quedaría en blanco. El propio job
+  // trae su id y nombre (plot / plot_name), así que se agrega esa opción sin
+  // pedirla de nuevo al backend.
+  const plotOptions = (plots.data ?? []).map((p: FieldPlot) => ({
+    value: String(p.id),
+    label: p.name,
+  }));
+  if (
+    job?.plot != null &&
+    String(job.plot) === form.values.plot &&
+    !plotOptions.some((o) => o.value === String(job.plot))
+  ) {
+    plotOptions.push({ value: String(job.plot), label: job.plot_name || "" });
+  }
+
   return (
     <Modal opened={opened} onClose={onClose} title={editing ? "Editar trabajo" : "Nuevo trabajo de campo"} size="lg">
       <form onSubmit={submit}>
@@ -208,10 +224,7 @@ export function FieldJobFormModal({
               <Select
                 label="Lote"
                 placeholder="Sin lote"
-                data={(plots.data ?? []).map((p: FieldPlot) => ({
-                  value: String(p.id),
-                  label: p.name,
-                }))}
+                data={plotOptions}
                 searchable
                 clearable
                 value={form.values.plot}

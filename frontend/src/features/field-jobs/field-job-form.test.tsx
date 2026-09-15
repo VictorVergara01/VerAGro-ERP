@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { FieldJobFormModal } from "./FieldJobFormModal";
+import type { FieldJob } from "./types";
 
 vi.mock("./api", () => ({
   useSaveFieldJob: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -37,10 +38,10 @@ vi.mock("../settings/api", () => ({
   }),
 }));
 
-function renderForm() {
+function renderForm(job: Partial<FieldJob> | null = null) {
   return render(
     <MantineProvider>
-      <FieldJobFormModal opened onClose={() => {}} job={null} />
+      <FieldJobFormModal opened onClose={() => {}} job={job as FieldJob | null} />
     </MantineProvider>,
   );
 }
@@ -94,5 +95,20 @@ describe("FieldJobFormModal", () => {
     // NumberInput normaliza los decimales: se compara con regex, no con "15".
     expect(screen.getByLabelText(/hectáreas/i)).toHaveDisplayValue(/^15/);
     expect(screen.getByDisplayValue("Glifosato")).toBeInTheDocument();
+  });
+
+  it("muestra el lote ya enlazado aunque esté desactivado (no en la lista de activos)", () => {
+    // El mock de useFieldPlots solo trae el lote id 3 (activo). Este trabajo apunta
+    // a un lote id 5 que ya no está activo: el Select no debe quedar en blanco.
+    renderForm({
+      id: 1,
+      customer: 7,
+      plot: 5,
+      plot_name: "Potrero desactivado",
+    } as unknown as Partial<FieldJob>);
+
+    expect(screen.getByRole("combobox", { name: /^lote$/i })).toHaveValue(
+      "Potrero desactivado",
+    );
   });
 });
