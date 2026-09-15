@@ -40,6 +40,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/logout/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Takes a token and blacklists it. Must be used with the
+         *     `rest_framework_simplejwt.token_blacklist` app installed.
+         */
+        post: operations["auth_logout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/me/": {
         parameters: {
             query?: never;
@@ -591,6 +611,44 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/field-plots/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Lotes de un cliente. Sin paginación: alimenta el selector del trabajo. */
+        get: operations["field_plots_list"];
+        put?: never;
+        /** @description Lotes de un cliente. Sin paginación: alimenta el selector del trabajo. */
+        post: operations["field_plots_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-plots/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Lotes de un cliente. Sin paginación: alimenta el selector del trabajo. */
+        get: operations["field_plots_retrieve"];
+        /** @description Lotes de un cliente. Sin paginación: alimenta el selector del trabajo. */
+        put: operations["field_plots_update"];
+        post?: never;
+        /** @description Lotes de un cliente. Sin paginación: alimenta el selector del trabajo. */
+        delete: operations["field_plots_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Lotes de un cliente. Sin paginación: alimenta el selector del trabajo. */
+        patch: operations["field_plots_partial_update"];
         trace?: never;
     };
     "/api/inventory/adjustments/": {
@@ -1146,38 +1204,6 @@ export interface paths {
         put?: never;
         post: operations["purchase_orders_send_create"];
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/push/register/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["push_register_create"];
-        delete: operations["push_register_destroy"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/push/unregister/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["push_unregister_create"];
-        delete: operations["push_unregister_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2269,6 +2295,9 @@ export interface components {
             readonly status_display: string;
             customer: number;
             readonly customer_name: string;
+            plot?: number | null;
+            /** @default  */
+            readonly plot_name: string;
             equipment?: number | null;
             /** @default  */
             readonly equipment_name: string;
@@ -2317,6 +2346,34 @@ export interface components {
          * @enum {string}
          */
         FieldJobStatusEnum: "scheduled" | "done" | "invoiced" | "cancelled";
+        FieldPlot: {
+            readonly id: number;
+            customer: number;
+            readonly customer_name: string;
+            name: string;
+            /** Format: decimal */
+            hectares?: string;
+            crop?: components["schemas"]["CropEnum"];
+            readonly crop_display: string;
+            crop_other?: string;
+            location?: string;
+            /** Format: decimal */
+            water_per_hectare?: string | null;
+            notes?: string;
+            products?: components["schemas"]["FieldPlotProduct"][];
+            readonly is_active: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        FieldPlotProduct: {
+            readonly id: number;
+            name: string;
+            /** Format: decimal */
+            dose_per_hectare?: string;
+            unit?: components["schemas"]["UnitEnum"];
+        };
         /**
          * @description * `cedula` - Cédula
          *     * `ruc` - RUC
@@ -2922,6 +2979,9 @@ export interface components {
             readonly status_display?: string;
             customer?: number;
             readonly customer_name?: string;
+            plot?: number | null;
+            /** @default  */
+            readonly plot_name: string;
             equipment?: number | null;
             /** @default  */
             readonly equipment_name: string;
@@ -2950,6 +3010,27 @@ export interface components {
             notes?: string;
             readonly invoice_number?: string;
             readonly created_by?: number | null;
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
+        };
+        PatchedFieldPlot: {
+            readonly id?: number;
+            customer?: number;
+            readonly customer_name?: string;
+            name?: string;
+            /** Format: decimal */
+            hectares?: string;
+            crop?: components["schemas"]["CropEnum"];
+            readonly crop_display?: string;
+            crop_other?: string;
+            location?: string;
+            /** Format: decimal */
+            water_per_hectare?: string | null;
+            notes?: string;
+            products?: components["schemas"]["FieldPlotProduct"][];
+            readonly is_active?: boolean;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -3848,6 +3929,9 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        TokenBlacklist: {
+            refresh: string;
+        };
         TokenObtainPair: {
             email: string;
             password: string;
@@ -3940,6 +4024,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenObtainPair"];
+                };
+            };
+        };
+    };
+    auth_logout_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenBlacklist"];
+                "application/x-www-form-urlencoded": components["schemas"]["TokenBlacklist"];
+                "multipart/form-data": components["schemas"]["TokenBlacklist"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenBlacklist"];
                 };
             };
         };
@@ -5499,6 +5608,152 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_plots_list: {
+        parameters: {
+            query?: {
+                /** @description A search term. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPlot"][];
+                };
+            };
+        };
+    };
+    field_plots_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldPlot"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldPlot"];
+                "multipart/form-data": components["schemas"]["FieldPlot"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPlot"];
+                };
+            };
+        };
+    };
+    field_plots_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field plot. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPlot"];
+                };
+            };
+        };
+    };
+    field_plots_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field plot. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldPlot"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldPlot"];
+                "multipart/form-data": components["schemas"]["FieldPlot"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPlot"];
+                };
+            };
+        };
+    };
+    field_plots_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field plot. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    field_plots_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field plot. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFieldPlot"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFieldPlot"];
+                "multipart/form-data": components["schemas"]["PatchedFieldPlot"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPlot"];
                 };
             };
         };
@@ -7108,78 +7363,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PurchaseOrder"];
                 };
-            };
-        };
-    };
-    push_register_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    push_register_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    push_unregister_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    push_unregister_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
