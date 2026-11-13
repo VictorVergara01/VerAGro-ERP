@@ -6,7 +6,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
-from apps.billing.models import Invoice, InvoiceLine, Quote, QuoteLine
+from apps.billing.models import Invoice, InvoiceLine
 from apps.customers.models import Customer
 from apps.inventory.models import Product
 from apps.service_orders.models import ServiceOrder, ServiceOrderPart
@@ -219,31 +219,3 @@ def test_camino_feliz_factura_emitida_y_pieza_usada_aparecen():
     filas = client.get("/api/reports/below-floor-sales/").json()["items"]
     skus = {fila["product_sku"] for fila in filas}
     assert skus == {"PF", "PP"}
-
-
-@pytest.mark.django_db
-def test_cotizacion_bajo_el_piso_no_aparece():
-    client = _client()
-    customer = Customer.objects.create(name="Cliente")
-    producto_cotizado = Product.objects.create(
-        sku="PQ", name="Cotizado", min_sale_price=Decimal("50.00")
-    )
-    producto_facturado = Product.objects.create(
-        sku="PFC", name="Facturado", min_sale_price=Decimal("50.00")
-    )
-    # Cotización con línea bajo el piso: propuesta, no venta. No debe aparecer.
-    quote = Quote.objects.create(customer=customer)
-    QuoteLine.objects.create(
-        quote=quote, product=producto_cotizado, quantity=Decimal("1"),
-        unit_price=Decimal("10.00"),
-    )
-    # Factura comparable, sí es una venta: debe aparecer.
-    invoice = Invoice.objects.create(customer=customer, status=Invoice.Status.ISSUED)
-    InvoiceLine.objects.create(
-        invoice=invoice, product=producto_facturado, quantity=Decimal("1"),
-        unit_price=Decimal("10.00"),
-    )
-
-    filas = client.get("/api/reports/below-floor-sales/").json()["items"]
-    skus = {fila["product_sku"] for fila in filas}
-    assert skus == {"PFC"}

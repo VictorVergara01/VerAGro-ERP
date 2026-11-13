@@ -9,6 +9,7 @@ from apps.inventory.services import (
     release_reservation,
     reserve_stock,
 )
+from apps.inventory.models import Product
 
 from .models import ServiceOrder, ServiceOrderPart
 
@@ -58,8 +59,13 @@ def reserve_parts(order, user=None):
     Devuelve un resumen {"reserved": [...], "pending": [...]}. Si queda alguna pieza
     pendiente de compra, la orden pasa a waiting_parts.
     """
+    order = ServiceOrder.objects.select_for_update().get(pk=order.pk)
     reserved, pending = [], []
-    for part in order.parts.filter(status=ServiceOrderPart.Status.REQUIRED):
+    for part in order.parts.select_for_update().filter(
+        status__in=[ServiceOrderPart.Status.REQUIRED, ServiceOrderPart.Status.PENDING_PURCHASE],
+        inventory_source=ServiceOrderPart.InventorySource.INVENTORY,
+    ):
+        part.product = Product.objects.select_for_update().get(pk=part.product_id)
         if part.product.available_quantity >= part.quantity:
             reserve_stock(
                 product=part.product,
@@ -86,10 +92,15 @@ def reserve_parts(order, user=None):
 @transaction.atomic
 def finish_order(order, user=None):
     """Finaliza la orden: consume las piezas reservadas (service_out) → usadas."""
+    ServiceOrder.objects.select_for_update().get(pk=order.pk)
+    order.refresh_from_db()
     if order.status != ServiceOrder.Status.IN_PROGRESS:
         raise ValidationError(
             {"status": "Solo se puede finalizar una orden en proceso (in_progress)."}
         )
+    summary = reserve_parts(order, user=user)
+    if summary["pending"]:
+        raise ValidationError({"parts": "Hay piezas sin stock. Regístralas como pendientes de inventario para continuar o recibe la compra."})
     for part in order.parts.filter(status=ServiceOrderPart.Status.RESERVED):
         consume_stock(
             product=part.product,
@@ -117,6 +128,41 @@ def finish_order(order, user=None):
     if not has_invoice:
         create_invoice_from_service_order(order=order, user=user)
     return order
+
+
+@transaction.atomic
+def reconcile_part(*, part, source, product=None, user=None):
+    # Serialize with finishing/reserving the same order before locking its part.
+    ServiceOrder.objects.select_for_update().get(pk=part.service_order_id)
+    part = ServiceOrderPart.objects.select_for_update().get(pk=part.pk)
+    if source == "pending" and part.status in (ServiceOrderPart.Status.REQUIRED, ServiceOrderPart.Status.PENDING_PURCHASE):
+        if part.service_order.status in ("finished", "invoiced", "delivered", "cancelled"):
+            raise ValidationError({"status": "La orden ya está cerrada."})
+        part.inventory_source = "pending"
+        part.status = ServiceOrderPart.Status.PENDING_INVENTORY
+        part.save(update_fields=["inventory_source", "status", "updated_at"])
+        return part
+    if part.status != ServiceOrderPart.Status.PENDING_INVENTORY:
+        raise ValidationError({"status": "Esta pieza no está pendiente de inventario."})
+    if source not in ("inventory", "customer", "external", "counted"):
+        raise ValidationError({"source": "Selecciona el origen de la pieza."})
+    if source in ("inventory", "counted"):
+        product = product or part.product
+        if product is None or not product.is_active:
+            raise ValidationError({"product": "Selecciona un producto activo."})
+        if source == "inventory":
+            consume_stock(
+                product=product, quantity=part.quantity, unit_cost=part.unit_cost,
+                reference_type=REFERENCE_TYPE, reference_id=part.service_order_id,
+                notes=f"Conciliación de pieza {part.id}", user=user,
+            )
+        part.product = product
+    part.inventory_source = source
+    part.status = ServiceOrderPart.Status.USED
+    part.reconciled_at = timezone.now()
+    part.reconciled_by = user
+    part.save(update_fields=["product", "inventory_source", "status", "reconciled_at", "reconciled_by", "updated_at"])
+    return part
 
 
 @transaction.atomic

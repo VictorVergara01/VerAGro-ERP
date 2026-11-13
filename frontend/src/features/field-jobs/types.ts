@@ -2,6 +2,22 @@ import type { Schemas } from "../../lib/api/types";
 
 export type FieldJob = Schemas["FieldJob"];
 
+export const JOB_TYPE_OPTIONS = [
+  { value: "fumigation", label: "Pulverización" },
+  { value: "spreading", label: "Aplicación de sólidos" },
+];
+export const JOB_TYPE_LABEL: Record<string, string> = Object.fromEntries(JOB_TYPE_OPTIONS.map((o) => [o.value, o.label]));
+export const SOLID_UNIT_OPTIONS = [
+  { value: "qq/ha", label: "qq/ha" },
+  { value: "kg/ha", label: "kg/ha" },
+  { value: "g/ha", label: "g/ha" },
+];
+
+export const BILLING_UNIT_OPTIONS = [
+  { value: "ha", label: "Por hectárea" },
+  { value: "qq", label: "Por quintal (qq)" },
+];
+
 export const FJ_STATUS_OPTIONS = [
   { value: "scheduled", label: "Programado" },
   { value: "done", label: "Hecho" },

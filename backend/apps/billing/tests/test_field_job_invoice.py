@@ -18,6 +18,7 @@ def _done_job(**kwargs):
         job_type=FieldJob.JobType.FUMIGATION,
         status=FieldJob.Status.DONE,
         hectares=Decimal("12.5"),
+        actual_hectares=Decimal("12.5"),
         unit_price=Decimal("20"),
         location="Finca La Esperanza",
     )
@@ -42,7 +43,7 @@ def test_invoice_fumigation_line_and_number_and_status():
     line = invoice.lines.get()
     assert line.quantity == Decimal("12.50")
     assert line.unit_price == Decimal("20.00")
-    assert "Fumigación" in line.description
+    assert "Pulverización" in line.description
     assert "ha" in line.description
     assert line.line_type == "service"
     job.refresh_from_db()
@@ -50,15 +51,17 @@ def test_invoice_fumigation_line_and_number_and_status():
 
 
 @pytest.mark.django_db
-def test_invoice_spreading_raises_not_implemented():
+def test_invoice_spreading_uses_hectares_and_marks_invoiced():
     job = _done_job(
         job_type=FieldJob.JobType.SPREADING,
         unit_price=Decimal("10"),
         location="Finca Los Naranjos",
     )
-    with pytest.raises(ValidationError) as excinfo:
-        create_invoice_from_field_job(job=job)
-    assert "job_type" in excinfo.value.detail
+    invoice = create_invoice_from_field_job(job=job)
+    assert invoice.total == Decimal("125.00")
+    assert "Aplicación de sólidos" in invoice.lines.get().description
+    job.refresh_from_db()
+    assert job.status == FieldJob.Status.INVOICED
 
 
 @pytest.mark.django_db

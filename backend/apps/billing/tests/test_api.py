@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from apps.billing.models import Invoice, Quote
+from apps.billing.models import Invoice
 from apps.customers.models import Customer
 from apps.inventory.models import Product
 from apps.service_orders.models import ServiceOrder, ServiceOrderPart
@@ -36,35 +36,61 @@ def _product(sku, **kwargs):
 
 
 @pytest.mark.django_db
-def test_create_quote_with_lines(sales_client, customer):
-    resp = sales_client.post(
-        "/api/quotes/",
-        {
-            "customer": customer.id,
-            "lines": [
-                {"description": "Mano de obra", "quantity": "1", "unit_price": "80",
-                 "line_type": "labor"},
-                {"description": "Pieza", "quantity": "2", "unit_price": "10"},
-            ],
-        },
-        format="json",
-    )
-    assert resp.status_code == 201, resp.data
-    assert resp.data["quote_number"].startswith("COT-")
-    assert Decimal(resp.data["total"]) == Decimal("100.00")
+def test_draft_can_be_shared_and_edited_before_issue(sales_client, customer):
+    from apps.inventory.models import InventoryMovement
+
+    product = _product("DRAFT-SALE", stock_quantity=5, average_cost=10)
+    response = sales_client.post("/api/invoices/", {
+        "customer": customer.pk,
+        "invoice_type": "product_sale",
+        "lines": [{"product": product.pk, "quantity": "2", "unit_price": "20", "line_type": "product"}],
+    }, format="json")
+    assert response.status_code == 201
+    invoice_id = response.data["id"]
+    assert response.data["status"] == "draft"
+    assert sales_client.get(f"/api/invoices/{invoice_id}/pdf/").status_code == 200
+    assert not InventoryMovement.objects.filter(product=product).exists()
+    product.refresh_from_db()
+    assert product.stock_quantity == 5
+    updated = sales_client.patch(f"/api/invoices/{invoice_id}/", {
+        "lines": [{"product": product.pk, "quantity": "3", "unit_price": "20", "line_type": "product"}],
+    }, format="json")
+    assert updated.status_code == 200
+    assert Decimal(updated.data["total"]) == 60
+    issued = sales_client.post(f"/api/invoices/{invoice_id}/issue/")
+    assert issued.status_code == 200
+    product.refresh_from_db()
+    assert product.stock_quantity == 2
+    assert InventoryMovement.objects.filter(product=product).count() == 1
+
+
+def test_quote_routes_are_removed():
+    from django.urls import Resolver404, resolve
+
+    for path in ("/api/quotes/", "/api/quote-lines/", "/api/service-orders/1/generate-quote/"):
+        with pytest.raises(Resolver404):
+            resolve(path)
 
 
 @pytest.mark.django_db
-def test_quote_approve_convert(sales_client, customer):
-    q = Quote.objects.create(customer=customer)
-    from apps.billing.models import QuoteLine
+def test_invoice_filters_reject_non_numeric_values(sales_client):
+    for key in ("customer", "service_order"):
+        assert sales_client.get("/api/invoices/", {key: "invalid"}).status_code == 400
 
-    QuoteLine.objects.create(quote=q, description="A", quantity=1, unit_price=100)
-    sales_client.post(f"/api/quotes/{q.id}/approve/")
-    resp = sales_client.post(f"/api/quotes/{q.id}/convert-to-invoice/")
-    assert resp.status_code == 201
-    assert resp.data["invoice_number"].startswith("FAC-")
-    assert resp.data["quote"] == q.id
+
+@pytest.mark.django_db
+def test_generate_invoice_from_finished_order(customer):
+    client = _client("technician")
+    order = ServiceOrder.objects.create(customer=customer, labor_cost=50)
+    url = f"/api/service-orders/{order.pk}/generate-invoice/"
+    assert client.post(url).status_code == 400
+    order.status = ServiceOrder.Status.FINISHED
+    order.save()
+    response = client.post(url)
+    assert response.status_code == 201
+    assert response.data["status"] == "draft"
+    assert Decimal(response.data["total"]) == 50
+    assert client.post(url).status_code == 400
 
 
 @pytest.mark.django_db
@@ -156,25 +182,6 @@ def test_product_sale_deducts_on_issue(sales_client, customer):
 
 
 @pytest.mark.django_db
-def test_pdf_endpoints(sales_client, customer):
-    # Factura y cotización generan PDF real.
-    q = Quote.objects.create(customer=customer)
-    inv = Invoice.objects.create(customer=customer)
-    q_resp = sales_client.get(f"/api/quotes/{q.id}/pdf/")
-    assert q_resp.status_code == 200
-    assert q_resp["Content-Type"] == "application/pdf"
-    inv_resp = sales_client.get(f"/api/invoices/{inv.id}/pdf/")
-    assert inv_resp.status_code == 200
-    assert inv_resp["Content-Type"] == "application/pdf"
-
-
-@pytest.mark.django_db
-def test_filters_non_numeric_400(sales_client):
-    assert sales_client.get("/api/quotes/?customer=abc").status_code == 400
-    assert sales_client.get("/api/invoices/?customer=abc").status_code == 400
-
-
-@pytest.mark.django_db
 def test_permissions(customer, db):
     payload = {"customer": customer.id}
     assert APIClient().post("/api/invoices/", payload, format="json").status_code == 401
@@ -188,28 +195,6 @@ def test_permissions(customer, db):
     assert _client("super_admin").post(
         "/api/invoices/", payload, format="json"
     ).status_code == 201
-
-
-@pytest.mark.django_db
-def test_generate_quote_and_invoice_from_order(customer):
-    tech = _client("technician")
-    # Cotización: orden no terminal (en diagnóstico).
-    quoting = ServiceOrder.objects.create(
-        customer=customer,
-        status=ServiceOrder.Status.IN_DIAGNOSTIC,
-        labor_cost=Decimal("50"),
-    )
-    gq = tech.post(f"/api/service-orders/{quoting.id}/generate-quote/")
-    assert gq.status_code == 201
-    assert Decimal(gq.data["total"]) == Decimal("50.00")
-
-    # Factura: exige la orden finalizada.
-    order = ServiceOrder.objects.create(
-        customer=customer, status=ServiceOrder.Status.FINISHED, labor_cost=Decimal("50")
-    )
-    gi = tech.post(f"/api/service-orders/{order.id}/generate-invoice/")
-    assert gi.status_code == 201
-    assert gi.data["invoice_type"] == "service_invoice"
 
 
 @pytest.mark.django_db

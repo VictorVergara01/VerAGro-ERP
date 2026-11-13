@@ -1,6 +1,6 @@
-from django.db.models import F
+from django.db.models import F, Count, Q
 from django.http import HttpResponse
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -21,7 +21,11 @@ from .serializers import (
     ProductCategorySerializer,
     ProductCompatibilitySerializer,
     ProductSerializer,
+    InitialStockCountInputSerializer,
+    InitialStockCountSerializer,
+    CountProgressSerializer,
 )
+from .services import record_initial_count
 
 InventoryWrite = RoleWriteOrReadOnly(*roles.INVENTORY_WRITE)
 
@@ -38,25 +42,35 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [InventoryWrite]
     filter_backends = [filters.SearchFilter]
-    search_fields = ["sku", "name", "barcode", "brand", "model"]
+    search_fields = ["sku", "aliases__sku", "name", "part_number", "barcode", "brand", "model"]
 
     def get_queryset(self):
-        qs = Product.objects.prefetch_related("compatible_equipment_types")
+        qs = Product.objects.select_related("initial_count").prefetch_related("compatible_equipment_types", "catalog_categories", "aliases")
         params = self.request.query_params
+        count_status = params.get("count_status")
+        if count_status == "uncounted":
+            qs = qs.filter(initial_count__isnull=True)
+        elif count_status == "counted":
+            qs = qs.filter(initial_count__isnull=False)
+        elif count_status == "zero":
+            qs = qs.filter(initial_count__counted_quantity=0)
+        elif count_status:
+            raise ValidationError({"count_status": "Usa uncounted, counted o zero."})
         include_inactive = params.get("include_inactive", "")
         if include_inactive.lower() not in ("1", "true", "yes", "on"):
             qs = qs.filter(is_active=True)
         category = params.get("category")
         if category:
             try:
-                qs = qs.filter(category_id=int(category))
+                qs = qs.filter(Q(category_id=int(category)) | Q(catalog_categories__id=int(category))).distinct()
             except (TypeError, ValueError):
                 raise ValidationError({"category": "Debe ser un id numérico."})
         equipment_type = params.get("equipment_type")
         if equipment_type:
             try:
                 qs = qs.filter(
-                    compatible_equipment_types__id=int(equipment_type)
+                    Q(compatible_equipment_types__id=int(equipment_type))
+                    | Q(compatibilities__equipment_model__equipment_type_id=int(equipment_type))
                 ).distinct()
             except (TypeError, ValueError):
                 raise ValidationError(
@@ -98,6 +112,35 @@ class ProductViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         instance.is_active = False
         instance.save(update_fields=["is_active", "updated_at"])
+
+    @extend_schema(methods=["post"], request=InitialStockCountInputSerializer, responses=InitialStockCountSerializer)
+    @extend_schema(methods=["get"], responses=InitialStockCountSerializer)
+    @action(detail=True, methods=["get", "post"], url_path="initial-count")
+    def initial_count(self, request, pk=None):
+        product = self.get_object()
+        if request.method == "GET":
+            from .models import InitialStockCount
+            from django.shortcuts import get_object_or_404
+            count = get_object_or_404(InitialStockCount.objects.select_related("created_by"), product=product)
+        else:
+            data = InitialStockCountInputSerializer(data=request.data)
+            data.is_valid(raise_exception=True)
+            count = record_initial_count(product=product, user=request.user, **data.validated_data)
+        return Response(InitialStockCountSerializer(count).data, status=201 if request.method == "POST" else 200)
+
+    @extend_schema(responses=CountProgressSerializer, parameters=[
+        OpenApiParameter("search", str), OpenApiParameter("category", int), OpenApiParameter("equipment_type", int), OpenApiParameter("equipment_model", int),
+    ])
+    @action(detail=False, methods=["get"], url_path="count-progress", pagination_class=None)
+    def count_progress(self, request):
+        qs = self.filter_queryset(self.get_queryset())
+        progress = qs.aggregate(
+            total=Count("pk", distinct=True),
+            counted=Count("pk", filter=Q(initial_count__isnull=False), distinct=True),
+            counted_zero=Count("pk", filter=Q(initial_count__counted_quantity=0), distinct=True),
+        )
+        progress["uncounted"] = progress["total"] - progress["counted"]
+        return Response(progress)
 
     @action(detail=True, methods=["get"])
     def movements(self, request, pk=None):
@@ -157,12 +200,14 @@ class LowStockListView(ListAPIView):
     def get_queryset(self):
         return (
             Product.objects.filter(is_active=True, minimum_stock__gt=0)
-            .prefetch_related("compatible_equipment_types")
+            .select_related("initial_count")
+            .prefetch_related("compatible_equipment_types", "catalog_categories", "aliases")
             .annotate(available=F("stock_quantity") - F("reserved_quantity"))
             .filter(available__lte=F("minimum_stock"))
         )
 
 
+@extend_schema_view(list=extend_schema(parameters=[OpenApiParameter("equipment_model", int)]))
 class CategoryViewSet(viewsets.ModelViewSet):
     """CRUD de categorías (lookup). Lectura para todos; escritura admin/inventory.
 
@@ -175,6 +220,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = ProductCategory.objects.all()
+        model_id = self.request.query_params.get("equipment_model")
+        if model_id:
+            try:
+                model_id = int(model_id)
+            except (TypeError, ValueError):
+                raise ValidationError({"equipment_model": "Debe ser un id numérico."})
+            qs = qs.filter(
+                Q(products__is_active=True, products__compatibilities__equipment_model_id=model_id)
+                | Q(catalog_products__is_active=True, catalog_products__compatibilities__equipment_model_id=model_id)
+            ).distinct()
         include_inactive = self.request.query_params.get("include_inactive", "")
         if include_inactive.lower() not in ("1", "true", "yes", "on"):
             qs = qs.filter(is_active=True)

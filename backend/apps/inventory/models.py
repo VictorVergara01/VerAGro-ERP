@@ -50,6 +50,7 @@ class Product(TimeStampedModel):
         blank=True,
         related_name="products",
     )
+    catalog_categories = models.ManyToManyField(ProductCategory, blank=True, related_name="catalog_products")
     brand = models.CharField(max_length=100, blank=True)
     model = models.CharField(max_length=100, blank=True)
     unit_of_measure = models.CharField(max_length=50, blank=True)
@@ -108,6 +109,29 @@ class Product(TimeStampedModel):
     @property
     def available_quantity(self):
         return self.stock_quantity - self.reserved_quantity
+
+
+class ProductAlias(TimeStampedModel):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="aliases")
+    sku = models.CharField(max_length=50, unique=True)
+    original_product_id = models.PositiveBigIntegerField(null=True, blank=True)
+    original_name = models.CharField(max_length=255, blank=True)
+
+
+class InitialStockCount(TimeStampedModel):
+    product = models.OneToOneField(Product, on_delete=models.PROTECT, related_name="initial_count")
+    quantity_before = models.DecimalField(max_digits=12, decimal_places=2)
+    counted_quantity = models.DecimalField(max_digits=12, decimal_places=2)
+    reserved_quantity = models.DecimalField(max_digits=12, decimal_places=2)
+    average_cost_before = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    movement = models.OneToOneField("InventoryMovement", on_delete=models.SET_NULL, null=True, blank=True, related_name="initial_count")
+
+    class Meta:
+        ordering = ("-created_at",)
 
 
 class InventoryMovement(TimeStampedModel):

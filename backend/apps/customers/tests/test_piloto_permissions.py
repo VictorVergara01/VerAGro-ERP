@@ -17,15 +17,14 @@ def _client_for_role(role):
     return client
 
 
-def test_piloto_role_exists():
-    assert User.Role.PILOTO == "piloto"
-    assert User.Role.PILOTO.label == "Piloto"
+def test_piloto_is_not_a_login_role():
+    assert "piloto" not in User.Role.values
 
 
-def test_piloto_can_create_customer():
+def test_retired_pilot_role_cannot_create_customer():
     client = _client_for_role("piloto")
     res = client.post(CUSTOMERS_URL, {"name": "Finca del Piloto"}, format="json")
-    assert res.status_code == 201, res.content
+    assert res.status_code == 403, res.content
 
 
 def test_readonly_still_cannot_create_customer():

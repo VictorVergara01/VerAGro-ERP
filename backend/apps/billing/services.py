@@ -11,8 +11,6 @@ from .models import (
     InvoiceLine,
     LineType,
     Payment,
-    Quote,
-    QuoteLine,
 )
 
 CENT = Decimal("0.01")
@@ -20,31 +18,6 @@ CENT = Decimal("0.01")
 
 def _q(value):
     return Decimal(value).quantize(CENT, rounding=ROUND_HALF_UP)
-
-
-def recalculate_quote(quote):
-    subtotal = Decimal("0")
-    # Consulta fresca (evita la caché de prefetch_related ya cargada en la vista).
-    for line in QuoteLine.objects.filter(quote=quote):
-        line_base = line.quantity * line.unit_price
-        line.total = _q(line_base - line.discount_amount + line.tax_amount)
-        line.save(update_fields=["total", "updated_at"])
-        subtotal += line_base
-    quote.subtotal = _q(subtotal)
-    quote.discount_amount = _q(subtotal * quote.discount_percentage / Decimal("100"))
-    taxable = quote.subtotal - quote.discount_amount
-    quote.tax_amount = _q(taxable * quote.tax_percentage / Decimal("100"))
-    quote.total = _q(quote.subtotal - quote.discount_amount + quote.tax_amount)
-    quote.save(
-        update_fields=[
-            "subtotal",
-            "discount_amount",
-            "tax_amount",
-            "total",
-            "updated_at",
-        ]
-    )
-    return quote
 
 
 def recalculate_invoice(invoice):
@@ -123,7 +96,7 @@ def _service_order_lines(order):
         lines.append(
             {
                 "product": part.product,
-                "description": part.product.name,
+                "description": part.description or (part.product.name if part.product_id else "Pieza manual"),
                 "quantity": part.quantity,
                 "unit_price": part.unit_price,
                 "unit_cost": part.unit_cost,
@@ -131,28 +104,6 @@ def _service_order_lines(order):
             }
         )
     return lines
-
-
-@transaction.atomic
-def create_quote_from_service_order(*, order, user=None):
-    quote = Quote.objects.create(
-        customer=order.customer,
-        service_order=order,
-        discount_percentage=order.discount_percentage,
-        tax_percentage=order.tax_percentage,
-        created_by=user,
-    )
-    for data in _service_order_lines(order):
-        QuoteLine.objects.create(
-            quote=quote,
-            product=data.get("product"),
-            description=data.get("description", ""),
-            quantity=data["quantity"],
-            unit_price=data["unit_price"],
-            line_type=data["line_type"],
-        )
-    recalculate_quote(quote)
-    return quote
 
 
 @transaction.atomic
@@ -188,70 +139,31 @@ def create_invoice_from_service_order(*, order, user=None):
 
 
 @transaction.atomic
-def convert_quote_to_invoice(*, quote, user=None):
-    if quote.status != Quote.Status.APPROVED:
-        raise ValidationError(
-            {"status": "Solo se convierte una cotización aprobada."}
-        )
-    # Evita doble facturación: si la cotización viene de una orden que ya tiene
-    # factura (p.ej. la automática al finalizar), no se crea otra.
-    if (
-        quote.service_order is not None
-        and quote.service_order.invoices.exclude(
-            status=Invoice.Status.CANCELLED
-        ).exists()
-    ):
-        raise ValidationError(
-            {"detail": "La orden de servicio de esta cotización ya tiene una factura."}
-        )
-    invoice = Invoice.objects.create(
-        invoice_type=Invoice.InvoiceType.FINAL,
-        customer=quote.customer,
-        service_order=quote.service_order,
-        quote=quote,
-        discount_percentage=quote.discount_percentage,
-        tax_percentage=quote.tax_percentage,
-        created_by=user,
-    )
-    for line in quote.lines.all():
-        InvoiceLine.objects.create(
-            invoice=invoice,
-            product=line.product,
-            description=line.description,
-            quantity=line.quantity,
-            unit_price=line.unit_price,
-            unit_cost=line.product.average_cost if line.product else 0,
-            discount_amount=line.discount_amount,
-            tax_amount=line.tax_amount,
-            line_type=line.line_type,
-        )
-    quote.status = Quote.Status.CONVERTED
-    quote.save(update_fields=["status", "updated_at"])
-    recalculate_invoice(invoice)
-    return invoice
-
-
-@transaction.atomic
 def create_invoice_from_field_job(*, job, user=None):
     from apps.field_jobs.models import FieldJob
 
-    if job.status != FieldJob.Status.DONE:
+    FieldJob.objects.select_for_update().get(pk=job.pk)
+    job.refresh_from_db()
+
+    if job.status not in (FieldJob.Status.DONE, FieldJob.Status.INVOICED):
         raise ValidationError(
             {"status": "Solo se factura un trabajo de campo hecho (done)."}
         )
     if job.invoices.exclude(status=Invoice.Status.CANCELLED).exists():
         raise ValidationError({"detail": "El trabajo ya tiene una factura."})
 
-    if job.job_type != FieldJob.JobType.FUMIGATION:
-        raise ValidationError(
-            {"job_type": "La facturación de esparcido aún no está implementada."}
-        )
-    quantity = job.hectares
-    unit_word = "ha"
-    type_word = "Fumigación"
+    if not job.actual_hectares:
+        raise ValidationError({"actual_hectares": "Registra el área realmente trabajada antes de facturar."})
+    if job.billing_unit == "qq" and (job.job_type != FieldJob.JobType.SPREADING or not job.applied_quintals or job.applied_quintals <= 0):
+        raise ValidationError({"applied_quintals": "Registra los qq realmente aplicados antes de facturar."})
+    quantity = job.billable_quantity
+    unit_word = job.billing_unit
+    type_word = "Aplicación de sólidos" if job.job_type == FieldJob.JobType.SPREADING else "Pulverización"
     description = (
         f"{type_word} {quantity:.2f} {unit_word} @ ${job.unit_price:.2f}/{unit_word}"
     )
+    if job.job_type == FieldJob.JobType.SPREADING and job.applied_quintals:
+        description += f" ({job.actual_hectares:g} ha trabajadas; {job.applied_quintals:g} qq aplicados; {job.actual_quintals_per_hectare:g} qq/ha)"
     if job.location:
         description += f" — {job.location}"
 
@@ -259,6 +171,7 @@ def create_invoice_from_field_job(*, job, user=None):
         invoice_type=Invoice.InvoiceType.FIELD_JOB,
         customer=job.customer,
         field_job=job,
+        due_date=job.due_date,
         created_by=user,
     )
     InvoiceLine.objects.create(
@@ -269,13 +182,21 @@ def create_invoice_from_field_job(*, job, user=None):
         line_type=LineType.SERVICE,
     )
     recalculate_invoice(invoice)
+    from apps.field_jobs.collections import attach_collections
+    attach_collections(job, invoice)
     job.status = FieldJob.Status.INVOICED
-    job.save(update_fields=["status", "updated_at"])
+    job.total = invoice.total
+    job.save(update_fields=["status", "total", "updated_at"])
     return invoice
 
 
 @transaction.atomic
 def issue_invoice(*, invoice, user=None):
+    if invoice.field_job_id:
+        from apps.field_jobs.models import FieldJob
+        FieldJob.objects.select_for_update().get(pk=invoice.field_job_id)
+    Invoice.objects.select_for_update().get(pk=invoice.pk)
+    invoice.refresh_from_db()
     if invoice.status != Invoice.Status.DRAFT:
         raise ValidationError({"status": "Solo se emite una factura en borrador."})
 
@@ -328,7 +249,19 @@ def record_payment(
     reference_number="",
     notes="",
     user=None,
+    request_id=None,
 ):
+    if invoice.field_job_id:
+        import uuid
+        from django.utils import timezone
+        from apps.field_jobs.collections import record_collection
+        if invoice.status not in (Invoice.Status.ISSUED, Invoice.Status.PARTIALLY_PAID):
+            raise ValidationError({'status': 'Solo se registran pagos de facturas emitidas.'})
+        receipt = record_collection(job=invoice.field_job, data={
+            'amount': amount, 'method': method, 'payment_date': payment_date or timezone.localdate(),
+            'reference': reference_number or '', 'notes': notes or '', 'request_id': request_id or uuid.uuid4(),
+        }, user=user, invoice=invoice)
+        return receipt.invoice_payment
     if invoice.status not in (Invoice.Status.ISSUED, Invoice.Status.PARTIALLY_PAID):
         raise ValidationError(
             {"status": "Solo se registran pagos de facturas emitidas."}

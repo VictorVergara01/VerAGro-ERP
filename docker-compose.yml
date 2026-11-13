@@ -46,6 +46,7 @@ services:
       - "5173:5173"
     environment:
       VITE_API_URL: http://localhost:8000
+      DOCKER_POLLING: "true"
     depends_on:
       - backend
 

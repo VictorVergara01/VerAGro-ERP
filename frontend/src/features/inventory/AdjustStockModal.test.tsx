@@ -15,6 +15,10 @@ vi.mock("./api", () => ({
 let adjustMutate: (...args: unknown[]) => unknown = vi.fn();
 
 const PRODUCT: Product = {
+  sku_aliases: [],
+  catalog_categories: [],
+  initial_counted_at: null,
+  initial_counted_quantity: null,
   id: 7,
   available_quantity: "10.00",
   created_at: "2026-01-01T00:00:00Z",

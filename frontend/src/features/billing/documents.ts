@@ -76,6 +76,13 @@ export function normalizePhone(raw: string | null | undefined): string {
 }
 
 export function buildWhatsappMessage(invoice: Invoice): string {
+  if (invoice.status === "draft") {
+    return [
+      `Hola ${invoice.customer_name ?? ""}`.trim() + ",",
+      `Le compartimos la factura en borrador *${invoice.invoice_number}* por un total de ${formatCurrency(invoice.total)} para su revisión y aceptación.`,
+      "La factura está sin emitir. Adjuntamos el PDF.",
+    ].join("\n");
+  }
   const tipo = INVOICE_TYPE_LABEL[invoice.invoice_type ?? "service_invoice"] ?? "factura";
   const total = formatCurrency(invoice.total);
   const saldo = formatCurrency(invoice.balance_due);

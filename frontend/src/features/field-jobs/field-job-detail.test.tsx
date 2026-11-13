@@ -1,5 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
@@ -15,11 +15,12 @@ vi.mock("./api", () => ({
   useFieldJob: () => ({ data: job, isLoading: false, error: null }),
   useFieldJobAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSaveFieldJob: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCompleteFieldJob: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
 vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results: [] } }) }));
 vi.mock("../field-plots/api", () => ({ useFieldPlots: () => ({ data: [], isLoading: false }) }));
-vi.mock("../service-orders/api", () => ({ useTechnicians: () => ({ data: [] }), usePilots: () => ({ data: [] }) }));
+vi.mock("../field-finance/api", () => ({ useTechnicians: () => ({ data: [] }), usePilots: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({ useCompany: () => ({ data: {} }) }));
 vi.mock("../auth/useAuth", () => ({ useAuth: () => ({ user: { role: "super_admin" } }) }));
 vi.mock("react-router-dom", async (orig) => ({
@@ -28,6 +29,12 @@ vi.mock("react-router-dom", async (orig) => ({
 }));
 
 describe("FieldJobDetailPage", () => {
+  it("abre el cierre para registrar lo realizado antes de facturar", () => {
+    render(<MantineProvider><MemoryRouter><FieldJobDetailPage /></MemoryRouter></MantineProvider>);
+    fireEvent.click(screen.getByRole("button", { name: /marcar hecho/i }));
+    expect(screen.getByText("Registrar trabajo realizado")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Hectáreas realmente trabajadas/)).toHaveDisplayValue("");
+  });
   it("muestra el trabajo y el botón Marcar hecho en estado programado", () => {
     render(
       <MantineProvider>

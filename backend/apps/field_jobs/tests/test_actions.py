@@ -38,7 +38,7 @@ def test_mark_done_then_generate_invoice(admin_client, customer):
     )
     job.recalculate_total()
     job.save()
-    assert admin_client.post(f"/api/field-jobs/{job.id}/mark-done/").status_code == 200
+    assert admin_client.post(f"/api/field-jobs/{job.id}/mark-done/", {"actual_hectares": "10"}).status_code == 200
     res = admin_client.post(f"/api/field-jobs/{job.id}/generate-invoice/")
     assert res.status_code == 201, res.content
     job.refresh_from_db()

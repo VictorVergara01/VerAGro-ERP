@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from apps.billing.models import InvoiceLine, QuoteLine
+from apps.billing.models import InvoiceLine
 from apps.checklists.models import ServiceChecklistItem
 from apps.inventory.models import InventoryMovement, Product
 from apps.purchasing.models import PurchaseOrderLine
@@ -16,6 +16,10 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--all-products", action="store_true",
+            help="Vacía el catálogo de productos conservando categorías, modelos y componentes. Las referencias comerciales siguen protegidas.",
+        )
         parser.add_argument("--prefix", default="SKU-", help="Prefijo de SKU a purgar.")
         parser.add_argument(
             "--dry-run",
@@ -33,7 +37,7 @@ class Command(BaseCommand):
             action="store_true",
             help=(
                 "Permite borrar aunque deje referencias sin producto "
-                "(facturas, cotizaciones o checklists, SET_NULL)."
+                "(facturas o checklists, SET_NULL)."
             ),
         )
 
@@ -62,12 +66,12 @@ class Command(BaseCommand):
                 "Usa un prefijo más específico."
             )
 
-        products = Product.objects.filter(sku__startswith=prefix)
+        products = Product.objects.all() if options["all_products"] else Product.objects.filter(sku__startswith=prefix)
         product_ids = list(products.values_list("id", flat=True))
 
         movements = InventoryMovement.objects.filter(product_id__in=product_ids)
 
-        self.stdout.write(f"Prefijo: {prefix}")
+        self.stdout.write("Alcance: todos los productos" if options["all_products"] else f"Prefijo: {prefix}")
         self.stdout.write(f"Productos a borrar: {len(product_ids)}")
         for sku in products.values_list("sku", flat=True)[:20]:
             self.stdout.write(f"  - {sku}")
@@ -113,9 +117,6 @@ class Command(BaseCommand):
         invoice_lines = InvoiceLine.objects.filter(
             product_id__in=product_ids
         ).select_related("invoice")
-        quote_lines = QuoteLine.objects.filter(
-            product_id__in=product_ids
-        ).select_related("quote")
         checklist_items = ServiceChecklistItem.objects.filter(
             recommended_product_id__in=product_ids
         ).select_related("service_checklist")
@@ -126,14 +127,6 @@ class Command(BaseCommand):
                 invoice_lines,
                 lambda line: (
                     f"factura {line.invoice.invoice_number}: "
-                    f"{line.description or line.product_id}"
-                ),
-            ),
-            (
-                "líneas de cotización",
-                quote_lines,
-                lambda line: (
-                    f"cotización {line.quote.quote_number}: "
                     f"{line.description or line.product_id}"
                 ),
             ),

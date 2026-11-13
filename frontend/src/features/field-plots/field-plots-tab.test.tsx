@@ -46,7 +46,7 @@ describe("FieldPlotsTab", () => {
   });
 
   it("muestra el botón de alta a quien puede escribir", () => {
-    role.current = "piloto";
+    role.current = "technician";
     renderTab();
     expect(screen.getByRole("button", { name: /nuevo lote/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/editar lote/i)).toBeInTheDocument();

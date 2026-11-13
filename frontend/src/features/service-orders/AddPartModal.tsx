@@ -9,12 +9,15 @@ import {
   Switch,
   Text,
   TextInput,
+  SegmentedControl,
+  Alert,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useMemo, useState } from "react";
 
 import { useEquipmentTypes } from "../equipment/api";
 import { useCategories, useProducts } from "../inventory/api";
+import { productCategoryIds } from "../inventory/types";
 import { useAddPart } from "./api";
 
 export function AddPartModal({
@@ -41,6 +44,11 @@ export function AddPartModal({
   const [quantity, setQuantity] = useState<number | string>(1);
   const [unitPrice, setUnitPrice] = useState<number | string>("");
   const [notes, setNotes] = useState("");
+  const [mode, setMode] = useState("inventory");
+  const [description, setDescription] = useState("");
+  const [partNumber, setPartNumber] = useState("");
+  const [unitCost, setUnitCost] = useState<number | string>("");
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     if (opened) {
@@ -51,12 +59,17 @@ export function AddPartModal({
       setQuantity(1);
       setUnitPrice("");
       setNotes("");
+      setMode("inventory");
+      setDescription("");
+      setPartNumber("");
+      setUnitCost("");
+      setPending(false);
     }
   }, [opened, equipmentType]);
 
   // Una sola consulta por modelo; categorías y piezas se filtran en memoria.
   const filterType = showAll || !modelType ? undefined : Number(modelType);
-  const products = useProducts({ equipmentType: filterType, pageSize: 200 });
+  const products = useProducts({ equipmentType: filterType, pageSize: 10000 });
   const productList = useMemo(() => products.data?.results ?? [], [products.data]);
 
   const categoryName = useMemo(() => {
@@ -68,7 +81,7 @@ export function AddPartModal({
   const categoryChips = useMemo(() => {
     const ids = new Set<number>();
     for (const p of productList) {
-      if (p.category != null) ids.add(p.category as number);
+      productCategoryIds(p).forEach((id) => ids.add(id));
     }
     return [...ids]
       .map((id) => ({ id, name: categoryName.get(id) ?? `#${id}` }))
@@ -76,17 +89,29 @@ export function AddPartModal({
   }, [productList, categoryName]);
 
   const filteredProducts = categoryId
-    ? productList.filter((p) => String(p.category) === categoryId)
+    ? productList.filter((p) => productCategoryIds(p).some((id) => String(id) === categoryId))
     : productList;
 
   const submit = async () => {
-    if (!product) {
+    if (mode === "inventory" && !product) {
       notifications.show({ color: "red", message: "Selecciona una pieza." });
+      return;
+    }
+    if (mode !== "inventory" && !description.trim()) {
+      notifications.show({ color: "red", message: "Escribe el nombre de la pieza." });
+      return;
+    }
+    if (Number(quantity) <= 0) {
+      notifications.show({ color: "red", message: "La cantidad debe ser mayor que cero." });
       return;
     }
     try {
       await add.mutateAsync({
-        product: Number(product),
+        product: mode === "inventory" ? Number(product) : undefined,
+        inventory_source: mode === "manual" || pending ? "pending" : mode,
+        description: mode === "inventory" ? undefined : description.trim(),
+        part_number: partNumber,
+        unit_cost: unitCost === "" ? undefined : String(unitCost),
         quantity: String(quantity || 0),
         unit_price: unitPrice !== "" ? String(unitPrice) : undefined,
         notes,
@@ -100,7 +125,17 @@ export function AddPartModal({
 
   return (
     <Modal opened={opened} onClose={onClose} title="Agregar pieza" size="lg">
+      <SegmentedControl fullWidth mb="md" value={mode} onChange={(v) => { setMode(String(v)); setPending(false); }} data={[
+        { value: "inventory", label: "Del inventario" },
+        { value: "manual", label: "Pieza manual" },
+        { value: "customer", label: "Del cliente" },
+        { value: "external", label: "Compra directa" },
+      ]} />
+      {mode !== "inventory" && <Alert mb="sm" color="blue">
+        {mode === "manual" ? "Puedes continuar el trabajo. Esta pieza quedará pendiente de conciliar con inventario, sin modificar existencias." : "Esta pieza se registra en la reparación sin descontar tus existencias."}
+      </Alert>}
       <Grid>
+        {mode === "inventory" && <>
         <Grid.Col span={{ base: 12, sm: 8 }}>
           <Select
             label="Modelo"
@@ -171,13 +206,30 @@ export function AddPartModal({
             placeholder="Busca la pieza"
             data={filteredProducts.map((p) => ({
               value: String(p.id),
-              label: `${p.sku} · ${p.name}`,
+              label: `${p.sku} · ${p.name}${p.part_number ? ` · ${p.part_number}` : ""}`,
             }))}
             searchable
+            filter={({ options, search }) => options.filter((option) => {
+              if (!("value" in option)) return false;
+              const p = filteredProducts.find((item) => String(item.id) === String(option.value));
+              const text = [option.label, ...(p?.sku_aliases ?? [])].join(" ").toLocaleLowerCase();
+              return text.includes(search.trim().toLocaleLowerCase());
+            })}
             value={product}
             onChange={(v) => setProduct(v)}
           />
         </Grid.Col>
+        <Grid.Col span={12}>
+          <Switch label="Mi inventario aún no está actualizado" checked={pending}
+            onChange={(e) => setPending(e.currentTarget.checked)} />
+          {pending && <Text size="sm" c="dimmed">Quedará pendiente de conciliar; no reservará ni descontará existencias.</Text>}
+        </Grid.Col>
+        </>}
+        {mode !== "inventory" && <>
+          <Grid.Col span={12}><TextInput label="Nombre de la pieza" required value={description} onChange={(e) => setDescription(e.currentTarget.value)} /></Grid.Col>
+          <Grid.Col span={6}><TextInput label="Número de pieza (opcional)" value={partNumber} onChange={(e) => setPartNumber(e.currentTarget.value)} /></Grid.Col>
+          <Grid.Col span={6}><NumberInput label="Costo unitario (opcional)" min={0} decimalScale={2} value={unitCost} onChange={(v) => setUnitCost(v as number | string)} /></Grid.Col>
+        </>}
 
         <Grid.Col span={6}>
           <NumberInput

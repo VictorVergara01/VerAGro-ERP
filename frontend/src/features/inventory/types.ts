@@ -3,6 +3,10 @@ import type { Schemas } from "../../lib/api/types";
 export type Product = Schemas["Product"];
 export type ProductCategory = Schemas["ProductCategory"];
 
+export function productCategoryIds(product: { category?: number | null; catalog_categories?: number[] }): number[] {
+  return [...new Set([...(product.category ? [product.category] : []), ...(product.catalog_categories ?? [])])];
+}
+
 // El endpoint de movimientos no declara serializer en el schema; tipo local
 // que refleja InventoryMovementSerializer del backend.
 export interface InventoryMovement {

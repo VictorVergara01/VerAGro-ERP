@@ -151,7 +151,7 @@ export function InvoiceDetailPage() {
         }
         actions={
           <>
-          {canIssue && canWriteBilling(user?.role) && (
+          {canIssue && !invoice.field_job && canWriteBilling(user?.role) && (
             <Button
               variant="default"
               leftSection={<IconEdit size={18} />}
@@ -331,6 +331,13 @@ export function InvoiceDetailPage() {
         </Card>
       )}
 
+      {canIssue && (
+        <Alert color="blue" title="Factura en borrador">
+          {invoice.field_job
+            ? "Esta factura corresponde a un trabajo de campo realizado. Los abonos del trabajo se conservan en este documento aunque todavía no se haya emitido."
+            : "Puedes compartir el PDF con el cliente para su aceptación. Emite la factura cuando confirme la compra."}
+        </Alert>
+      )}
       <Grid>
         <Grid.Col span={{ base: 12, md: 7 }}>
           <Card>

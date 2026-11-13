@@ -517,6 +517,182 @@ export interface paths {
         patch: operations["equipment_types_partial_update"];
         trace?: never;
     };
+    "/api/field-accounts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_accounts_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-accounts/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_accounts_retrieve_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-accounts/{id}/collect/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_accounts_collect_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-accounts/{id}/terms/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_accounts_terms_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-assistant-days/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_assistant_days_list"];
+        put?: never;
+        post: operations["field_assistant_days_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-assistant-days/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["field_assistant_days_update"];
+        post?: never;
+        delete: operations["field_assistant_days_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["field_assistant_days_partial_update"];
+        trace?: never;
+    };
+    "/api/field-assistants/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_assistants_list"];
+        put?: never;
+        post: operations["field_assistants_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-assistants/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["field_assistants_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["field_assistants_partial_update"];
+        trace?: never;
+    };
+    "/api/field-expenses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_expenses_list"];
+        put?: never;
+        post: operations["field_expenses_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-expenses/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["field_expenses_update"];
+        post?: never;
+        delete: operations["field_expenses_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["field_expenses_partial_update"];
+        trace?: never;
+    };
+    "/api/field-expenses/{id}/pay/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_expenses_pay_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/field-jobs/": {
         parameters: {
             query?: never;
@@ -611,6 +787,134 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/field-payments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_payments_list"];
+        put?: never;
+        post: operations["field_payments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-payments/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_payments_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-pilot-earnings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_pilot_earnings_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-pilot-earnings/assign/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["field_pilot_earnings_assign_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-pilot-rates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_pilot_rates_list"];
+        put?: never;
+        post: operations["field_pilot_rates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-pilot-rates/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["field_pilot_rates_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["field_pilot_rates_partial_update"];
+        trace?: never;
+    };
+    "/api/field-pilots/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["field_pilots_list"];
+        put?: never;
+        post: operations["field_pilots_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/field-pilots/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["field_pilots_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["field_pilots_partial_update"];
         trace?: never;
     };
     "/api/field-plots/": {
@@ -838,6 +1142,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/inventory/products/{id}/initial-count/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CRUD de productos. stock/reserved son read-only: cambian vía ajustes/movimientos. */
+        get: operations["inventory_products_initial_count_retrieve"];
+        put?: never;
+        /** @description CRUD de productos. stock/reserved son read-only: cambian vía ajustes/movimientos. */
+        post: operations["inventory_products_initial_count_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/inventory/products/{id}/movements/": {
         parameters: {
             query?: never;
@@ -847,6 +1169,23 @@ export interface paths {
         };
         /** @description CRUD de productos. stock/reserved son read-only: cambian vía ajustes/movimientos. */
         get: operations["inventory_products_movements_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inventory/products/count-progress/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CRUD de productos. stock/reserved son read-only: cambian vía ajustes/movimientos. */
+        get: operations["inventory_products_count_progress_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1209,134 +1548,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/quote-lines/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["quote_lines_list"];
-        put?: never;
-        post: operations["quote_lines_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/quote-lines/{id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["quote_lines_retrieve"];
-        put: operations["quote_lines_update"];
-        post?: never;
-        delete: operations["quote_lines_destroy"];
-        options?: never;
-        head?: never;
-        patch: operations["quote_lines_partial_update"];
-        trace?: never;
-    };
-    "/api/quotes/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["quotes_list"];
-        put?: never;
-        post: operations["quotes_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/quotes/{id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["quotes_retrieve"];
-        put: operations["quotes_update"];
-        post?: never;
-        delete: operations["quotes_destroy"];
-        options?: never;
-        head?: never;
-        patch: operations["quotes_partial_update"];
-        trace?: never;
-    };
-    "/api/quotes/{id}/approve/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["quotes_approve_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/quotes/{id}/convert-to-invoice/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["quotes_convert_to_invoice_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/quotes/{id}/pdf/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["quotes_pdf_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/quotes/{id}/reject/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["quotes_reject_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/reports/below-floor-sales/": {
         parameters: {
             query?: never;
@@ -1347,8 +1558,7 @@ export interface paths {
         /**
          * @description Líneas vendidas por debajo del piso de precio vigente del producto.
          *
-         *     Las cotizaciones quedan fuera: son propuestas, no ventas, y meterían
-         *     negociaciones que nunca se cerraron en la cifra.
+         *     Los borradores quedan fuera porque aún no representan ventas confirmadas.
          */
         get: operations["reports_below_floor_sales_retrieve"];
         put?: never;
@@ -1383,6 +1593,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["reports_equipment_history_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/field-finance/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_field_finance_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/field-jobs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports_field_jobs_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1585,6 +1827,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["service_order_parts_partial_update"];
+        trace?: never;
+    };
+    "/api/service-order-parts/{id}/reconcile/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["service_order_parts_reconcile_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/service-order-photos/": {
@@ -1800,22 +2058,6 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["service_orders_generate_invoice_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/service-orders/{id}/generate-quote/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["service_orders_generate_quote_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2054,6 +2296,15 @@ export interface components {
          * @enum {string}
          */
         AllocationMethodEnum: "proportional_by_value" | "manual";
+        AssignPilotInput: {
+            job: number;
+            pilot: number;
+        };
+        Assistant: {
+            readonly id: number;
+            name: string;
+            is_active?: boolean;
+        };
         /** @description Una línea vendida bajo el piso de precio vigente del producto. */
         BelowFloorSaleItem: {
             document: string;
@@ -2073,8 +2324,24 @@ export interface components {
             items: components["schemas"]["BelowFloorSaleItem"][];
             count: number;
         };
+        /**
+         * @description * `ha` - Por hectárea
+         *     * `qq` - Por quintal
+         * @enum {string}
+         */
+        BillingUnitEnum: "ha" | "qq";
         /** @enum {unknown} */
         BlankEnum: "";
+        /**
+         * @description * `fuel` - Combustible
+         *     * `parts` - Repuestos
+         *     * `maintenance` - Mantenimiento
+         *     * `transport` - Transporte
+         *     * `food` - Alimentación y viáticos
+         *     * `other` - Otros
+         * @enum {string}
+         */
+        CategoryEnum: "fuel" | "parts" | "maintenance" | "transport" | "food" | "other";
         ChangePassword: {
             current_password: string;
             new_password: string;
@@ -2103,6 +2370,33 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        Collection: {
+            readonly id: number;
+            /** Format: decimal */
+            readonly amount: string;
+            /** Format: date */
+            readonly payment_date: string;
+            readonly method: components["schemas"]["Method4f5Enum"];
+            readonly reference: string;
+            readonly notes: string;
+            /** Format: uuid */
+            readonly request_id: string;
+            /** @default  */
+            readonly recorded_by: string;
+        };
+        CollectionInput: {
+            /** Format: decimal */
+            amount: string;
+            /** Format: date */
+            payment_date?: string;
+            method: components["schemas"]["Method4f5Enum"];
+            reference?: string;
+            notes?: string;
+            /** Format: uuid */
+            request_id: string;
+            /** Format: decimal */
+            expected_balance?: string;
+        };
         CompanyProfile: {
             name?: string;
             legal_name?: string;
@@ -2121,6 +2415,8 @@ export interface components {
             fumigation_price_per_hectare?: string;
             /** Format: decimal */
             spreading_price_per_quintal?: string;
+            /** Format: decimal */
+            spreading_price_per_hectare?: string;
             /** Format: decimal */
             drone_tank_volume_liters?: string;
             /** Format: decimal */
@@ -2171,6 +2467,12 @@ export interface components {
          * @enum {string}
          */
         CostHistoryEntryMovementTypeEnum: "purchase_in" | "service_out" | "sale_out" | "reservation" | "reservation_release" | "adjustment_in" | "adjustment_out" | "return_in" | "damaged_out";
+        CountProgress: {
+            total: number;
+            counted: number;
+            uncounted: number;
+            counted_zero: number;
+        };
         /**
          * @description * `rice` - Arroz
          *     * `corn` - Maíz
@@ -2207,6 +2509,24 @@ export interface components {
          * @enum {string}
          */
         CustomerTypeEnum: "person" | "company";
+        Day: {
+            readonly id: number;
+            assistant: number;
+            readonly assistant_name: string;
+            /** Format: date */
+            date?: string;
+            /** Format: time */
+            end_time?: string;
+            /** Format: decimal */
+            readonly base_rate: string;
+            /** Format: decimal */
+            readonly overtime_rate: string;
+            readonly overtime_minutes: number;
+            /** Format: decimal */
+            readonly amount: string;
+            notes?: string;
+            readonly payment: number | null;
+        };
         /**
          * @description * `svg` - SVG
          *     * `image` - Imagen
@@ -2219,6 +2539,24 @@ export interface components {
          * @enum {string}
          */
         DocumentTypeEnum: "invoice" | "service_order";
+        Earning: {
+            readonly id: number;
+            readonly job: number;
+            readonly job_number: string;
+            readonly customer_name: string;
+            readonly pilot: number;
+            readonly pilot_name: string;
+            /** Format: date */
+            readonly earned_date: string;
+            /** Format: decimal */
+            readonly hectares: string;
+            /** Format: decimal */
+            readonly rate_per_hectare: string;
+            /** Format: decimal */
+            readonly amount: string;
+            readonly payment: number | null;
+            readonly actuals_from_legacy: boolean;
+        };
         Equipment: {
             readonly id: number;
             readonly customer_name: string;
@@ -2286,6 +2624,30 @@ export interface components {
             name: string;
             is_active?: boolean;
         };
+        Expense: {
+            readonly id: number;
+            /** Format: date */
+            date?: string;
+            category: components["schemas"]["CategoryEnum"];
+            description: string;
+            payee?: string;
+            /** Format: decimal */
+            amount: string;
+            equipment?: number | null;
+            /** @default  */
+            readonly equipment_name: string;
+            receipt_reference?: string;
+            /** Format: date */
+            readonly payment_date: string | null;
+            readonly payment_method: components["schemas"]["PaymentMethodEnum"];
+            readonly payment_reference: string;
+        };
+        ExpensePaymentInput: {
+            /** Format: date */
+            payment_date?: string;
+            method: components["schemas"]["Method3c9Enum"];
+            reference?: string;
+        };
         FieldJob: {
             readonly id: number;
             readonly number: string;
@@ -2301,13 +2663,15 @@ export interface components {
             equipment?: number | null;
             /** @default  */
             readonly equipment_name: string;
-            technician?: number | null;
+            pilot?: number | null;
             /** @default  */
-            readonly technician_name: string;
+            readonly pilot_name: string;
             /** Format: date */
             scheduled_date?: string;
             /** Format: date */
             readonly done_date: string | null;
+            /** Format: date */
+            due_date?: string | null;
             location?: string;
             crop?: components["schemas"]["CropEnum"];
             readonly crop_display: string;
@@ -2315,6 +2679,26 @@ export interface components {
             products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
+            billing_unit?: components["schemas"]["BillingUnitEnum"];
+            /** Format: decimal */
+            quintals_per_hectare?: string | null;
+            /** Format: decimal */
+            planned_quintals?: string | null;
+            /** Format: decimal */
+            readonly actual_hectares: string | null;
+            readonly actuals_from_legacy: boolean;
+            /** Format: decimal */
+            readonly applied_quintals: string | null;
+            /** Format: decimal */
+            readonly estimated_quintals: string;
+            /** Format: decimal */
+            readonly estimated_total: string;
+            /** Format: decimal */
+            readonly actual_quintals_per_hectare: string | null;
+            /** Format: decimal */
+            readonly total_quintals: string;
+            /** Format: decimal */
+            readonly billable_quantity: string;
             /** Format: decimal */
             unit_price?: string;
             /** Format: decimal */
@@ -2331,6 +2715,16 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        FieldJobCompletion: {
+            /** Format: decimal */
+            actual_hectares: string;
+            /** Format: decimal */
+            applied_quintals?: string | null;
+            /** Format: date */
+            done_date?: string;
+            /** Format: date */
+            due_date?: string;
+        };
         FieldJobProduct: {
             readonly id: number;
             name: string;
@@ -2346,6 +2740,34 @@ export interface components {
          * @enum {string}
          */
         FieldJobStatusEnum: "scheduled" | "done" | "invoiced" | "cancelled";
+        FieldPayment: {
+            readonly id: number;
+            readonly kind: components["schemas"]["FieldPaymentKindEnum"];
+            readonly beneficiary: string;
+            /** Format: date */
+            readonly payment_date: string;
+            readonly method: components["schemas"]["Method3c9Enum"];
+            readonly reference: string;
+            readonly notes: string;
+            /** Format: decimal */
+            readonly amount: string;
+            readonly pilot_earnings: components["schemas"]["Earning"][];
+            readonly assistant_days: components["schemas"]["Day"][];
+        };
+        /**
+         * @description * `pilot` - Piloto
+         *     * `assistant` - Asistente
+         * @enum {string}
+         */
+        FieldPaymentKindEnum: "pilot" | "assistant";
+        FieldPilot: {
+            readonly id: number;
+            name: string;
+            phone?: string;
+            is_active?: boolean;
+            /** Format: decimal */
+            rate_per_hectare?: string;
+        };
         FieldPlot: {
             readonly id: number;
             customer: number;
@@ -2382,6 +2804,51 @@ export interface components {
          * @enum {string}
          */
         IdentificationTypeEnum: "cedula" | "ruc" | "passport" | "other";
+        InitialStockCount: {
+            readonly id: number;
+            /** @default  */
+            readonly counted_by_name: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: decimal */
+            quantity_before: string;
+            /** Format: decimal */
+            counted_quantity: string;
+            /** Format: decimal */
+            reserved_quantity: string;
+            /** Format: decimal */
+            average_cost_before: string;
+            /** Format: decimal */
+            unit_cost?: string | null;
+            location?: string;
+            notes?: string;
+            product: number;
+            created_by?: number | null;
+            movement?: number | null;
+        };
+        InitialStockCountInput: {
+            /** Format: decimal */
+            quantity: string;
+            /** Format: decimal */
+            unit_cost?: string | null;
+            /** @default  */
+            location: string;
+            /** @default  */
+            notes: string;
+            /** Format: date-time */
+            expected_updated_at: string;
+        };
+        /**
+         * @description * `inventory` - Inventario
+         *     * `pending` - Pendiente de inventario
+         *     * `customer` - Aportada por el cliente
+         *     * `external` - Compra para esta reparación
+         *     * `counted` - Ya considerada en conteo físico
+         * @enum {string}
+         */
+        InventorySourceEnum: "inventory" | "pending" | "customer" | "external" | "counted";
         Invoice: {
             readonly id: number;
             readonly invoice_number: string;
@@ -2391,7 +2858,7 @@ export interface components {
             readonly customer_phone: string;
             readonly customer_whatsapp: string;
             service_order?: number | null;
-            quote?: number | null;
+            readonly field_job: number | null;
             readonly status: components["schemas"]["InvoiceStatusEnum"];
             /** Format: date */
             issue_date?: string;
@@ -2492,12 +2959,20 @@ export interface components {
          * @description * `cash` - Efectivo
          *     * `bank_transfer` - Transferencia
          *     * `yappy` - Yappy
+         *     * `other` - Otro
+         * @enum {string}
+         */
+        Method3c9Enum: "cash" | "bank_transfer" | "yappy" | "other";
+        /**
+         * @description * `cash` - Efectivo
+         *     * `bank_transfer` - Transferencia
+         *     * `yappy` - Yappy
          *     * `ach` - ACH
          *     * `card` - Tarjeta
          *     * `other` - Otro
          * @enum {string}
          */
-        MethodEnum: "cash" | "bank_transfer" | "yappy" | "ach" | "card" | "other";
+        Method4f5Enum: "cash" | "bank_transfer" | "yappy" | "ach" | "card" | "other";
         /** @description Datos mínimos para dar de alta un producto desde una línea de OC. */
         NewProduct: {
             name: string;
@@ -2691,36 +3166,6 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["PurchaseOrder"][];
         };
-        PaginatedQuoteLineList: {
-            /** @example 123 */
-            count: number;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=4
-             */
-            next?: string | null;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=2
-             */
-            previous?: string | null;
-            results: components["schemas"]["QuoteLine"][];
-        };
-        PaginatedQuoteList: {
-            /** @example 123 */
-            count: number;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=4
-             */
-            next?: string | null;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?page=2
-             */
-            previous?: string | null;
-            results: components["schemas"]["Quote"][];
-        };
         PaginatedServiceChecklistItemList: {
             /** @example 123 */
             count: number;
@@ -2841,6 +3286,11 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["UserManagement"][];
         };
+        PatchedAssistant: {
+            readonly id?: number;
+            name?: string;
+            is_active?: boolean;
+        };
         PatchedChecklistTemplate: {
             readonly id?: number;
             name?: string;
@@ -2884,6 +3334,8 @@ export interface components {
             /** Format: decimal */
             spreading_price_per_quintal?: string;
             /** Format: decimal */
+            spreading_price_per_hectare?: string;
+            /** Format: decimal */
             drone_tank_volume_liters?: string;
             /** Format: decimal */
             default_water_per_hectare?: string;
@@ -2911,6 +3363,24 @@ export interface components {
             district?: string;
             notes?: string;
             readonly is_active?: boolean;
+        };
+        PatchedDay: {
+            readonly id?: number;
+            assistant?: number;
+            readonly assistant_name?: string;
+            /** Format: date */
+            date?: string;
+            /** Format: time */
+            end_time?: string;
+            /** Format: decimal */
+            readonly base_rate?: string;
+            /** Format: decimal */
+            readonly overtime_rate?: string;
+            readonly overtime_minutes?: number;
+            /** Format: decimal */
+            readonly amount?: string;
+            notes?: string;
+            readonly payment?: number | null;
         };
         PatchedEquipment: {
             readonly id?: number;
@@ -2970,6 +3440,24 @@ export interface components {
             name?: string;
             is_active?: boolean;
         };
+        PatchedExpense: {
+            readonly id?: number;
+            /** Format: date */
+            date?: string;
+            category?: components["schemas"]["CategoryEnum"];
+            description?: string;
+            payee?: string;
+            /** Format: decimal */
+            amount?: string;
+            equipment?: number | null;
+            /** @default  */
+            readonly equipment_name: string;
+            receipt_reference?: string;
+            /** Format: date */
+            readonly payment_date?: string | null;
+            readonly payment_method?: components["schemas"]["PaymentMethodEnum"];
+            readonly payment_reference?: string;
+        };
         PatchedFieldJob: {
             readonly id?: number;
             readonly number?: string;
@@ -2985,13 +3473,15 @@ export interface components {
             equipment?: number | null;
             /** @default  */
             readonly equipment_name: string;
-            technician?: number | null;
+            pilot?: number | null;
             /** @default  */
-            readonly technician_name: string;
+            readonly pilot_name: string;
             /** Format: date */
             scheduled_date?: string;
             /** Format: date */
             readonly done_date?: string | null;
+            /** Format: date */
+            due_date?: string | null;
             location?: string;
             crop?: components["schemas"]["CropEnum"];
             readonly crop_display?: string;
@@ -2999,6 +3489,26 @@ export interface components {
             products?: components["schemas"]["FieldJobProduct"][];
             /** Format: decimal */
             hectares?: string;
+            billing_unit?: components["schemas"]["BillingUnitEnum"];
+            /** Format: decimal */
+            quintals_per_hectare?: string | null;
+            /** Format: decimal */
+            planned_quintals?: string | null;
+            /** Format: decimal */
+            readonly actual_hectares?: string | null;
+            readonly actuals_from_legacy?: boolean;
+            /** Format: decimal */
+            readonly applied_quintals?: string | null;
+            /** Format: decimal */
+            readonly estimated_quintals?: string;
+            /** Format: decimal */
+            readonly estimated_total?: string;
+            /** Format: decimal */
+            readonly actual_quintals_per_hectare?: string | null;
+            /** Format: decimal */
+            readonly total_quintals?: string;
+            /** Format: decimal */
+            readonly billable_quantity?: string;
             /** Format: decimal */
             unit_price?: string;
             /** Format: decimal */
@@ -3014,6 +3524,14 @@ export interface components {
             readonly created_at?: string;
             /** Format: date-time */
             readonly updated_at?: string;
+        };
+        PatchedFieldPilot: {
+            readonly id?: number;
+            name?: string;
+            phone?: string;
+            is_active?: boolean;
+            /** Format: decimal */
+            rate_per_hectare?: string;
         };
         PatchedFieldPlot: {
             readonly id?: number;
@@ -3045,7 +3563,7 @@ export interface components {
             readonly customer_phone?: string;
             readonly customer_whatsapp?: string;
             service_order?: number | null;
-            quote?: number | null;
+            readonly field_job?: number | null;
             readonly status?: components["schemas"]["InvoiceStatusEnum"];
             /** Format: date */
             issue_date?: string;
@@ -3112,6 +3630,11 @@ export interface components {
         };
         PatchedProduct: {
             readonly id?: number;
+            readonly sku_aliases?: string[];
+            /** Format: date-time */
+            readonly initial_counted_at?: string | null;
+            /** Format: decimal */
+            readonly initial_counted_quantity?: string | null;
             /** Format: decimal */
             readonly available_quantity?: string;
             sku?: string;
@@ -3153,6 +3676,7 @@ export interface components {
             is_active?: boolean;
             category?: number | null;
             main_supplier?: number | null;
+            readonly catalog_categories?: number[];
             compatible_equipment_types?: number[];
         };
         PatchedProductCategory: {
@@ -3244,66 +3768,12 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
-        PatchedQuote: {
+        PatchedRate: {
             readonly id?: number;
-            readonly quote_number?: string;
-            customer?: number;
-            readonly customer_name?: string;
-            service_order?: number | null;
-            readonly status?: components["schemas"]["QuoteStatusEnum"];
-            /** Format: date */
-            issue_date?: string;
-            /** Format: date */
-            expiration_date?: string | null;
+            pilot?: number;
+            readonly pilot_name?: string;
             /** Format: decimal */
-            readonly subtotal?: string;
-            /** Format: decimal */
-            discount_percentage?: string;
-            /** Format: decimal */
-            tax_percentage?: string;
-            /** Format: decimal */
-            readonly discount_amount?: string;
-            /** Format: decimal */
-            readonly tax_amount?: string;
-            /** Format: decimal */
-            readonly total?: string;
-            notes?: string;
-            terms?: string;
-            readonly created_by?: number | null;
-            lines?: components["schemas"]["QuoteLine"][];
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
-        };
-        /**
-         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
-         *
-         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
-         */
-        PatchedQuoteLine: {
-            readonly id?: number;
-            quote?: number;
-            product?: number | null;
-            readonly product_sku?: string;
-            description?: string;
-            /** Format: decimal */
-            quantity?: string;
-            /** Format: decimal */
-            unit_price?: string;
-            readonly price_floor?: string;
-            readonly below_min_price?: boolean;
-            /** Format: decimal */
-            discount_amount?: string;
-            /** Format: decimal */
-            tax_amount?: string;
-            /** Format: decimal */
-            readonly total?: string;
-            line_type?: components["schemas"]["LineTypeEnum"];
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
+            rate_per_hectare?: string;
         };
         PatchedServiceChecklist: {
             readonly id?: number;
@@ -3392,9 +3862,16 @@ export interface components {
         PatchedServiceOrderPart: {
             readonly id?: number;
             service_order?: number;
-            product?: number;
-            readonly product_sku?: string;
+            product?: number | null;
+            /** @default  */
+            readonly product_sku: string;
             readonly product_name?: string;
+            description?: string;
+            part_number?: string;
+            inventory_source?: components["schemas"]["InventorySourceEnum"];
+            /** Format: date-time */
+            readonly reconciled_at?: string | null;
+            readonly reconciled_by?: number | null;
             component?: number | null;
             readonly component_name?: string;
             readonly component_code?: string;
@@ -3482,13 +3959,38 @@ export interface components {
             payment_date?: string;
             /** Format: decimal */
             amount: string;
-            method?: components["schemas"]["MethodEnum"];
+            method?: components["schemas"]["Method4f5Enum"];
             reference_number?: string;
             notes?: string;
             readonly created_by: number | null;
             /** Format: date-time */
             readonly created_at: string;
         };
+        PaymentInput: {
+            kind: components["schemas"]["PaymentInputKindEnum"];
+            items: number[];
+            /** Format: decimal */
+            expected_amount: string;
+            /** Format: date */
+            payment_date?: string;
+            method: components["schemas"]["Method3c9Enum"];
+            reference?: string;
+            notes?: string;
+        };
+        /**
+         * @description * `pilot` - pilot
+         *     * `assistant` - assistant
+         * @enum {string}
+         */
+        PaymentInputKindEnum: "pilot" | "assistant";
+        /**
+         * @description * `cash` - Efectivo
+         *     * `bank_transfer` - Transferencia
+         *     * `yappy` - Yappy
+         *     * `other` - Otro
+         * @enum {string}
+         */
+        PaymentMethodEnum: "cash" | "bank_transfer" | "yappy" | "other";
         /**
          * @description * `low` - Baja
          *     * `medium` - Media
@@ -3499,6 +4001,11 @@ export interface components {
         PriorityEnum: "low" | "medium" | "high" | "critical";
         Product: {
             readonly id: number;
+            readonly sku_aliases: string[];
+            /** Format: date-time */
+            readonly initial_counted_at: string | null;
+            /** Format: decimal */
+            readonly initial_counted_quantity: string | null;
             /** Format: decimal */
             readonly available_quantity: string;
             sku?: string;
@@ -3540,6 +4047,7 @@ export interface components {
             is_active?: boolean;
             category?: number | null;
             main_supplier?: number | null;
+            readonly catalog_categories: number[];
             compatible_equipment_types?: number[];
         };
         ProductCategory: {
@@ -3640,89 +4148,28 @@ export interface components {
          * @enum {string}
          */
         PurchaseOrderStatusEnum: "draft" | "sent" | "partially_received" | "received" | "cancelled";
-        Quote: {
+        Rate: {
             readonly id: number;
-            readonly quote_number: string;
-            customer: number;
-            readonly customer_name: string;
-            service_order?: number | null;
-            readonly status: components["schemas"]["QuoteStatusEnum"];
-            /** Format: date */
-            issue_date?: string;
-            /** Format: date */
-            expiration_date?: string | null;
+            pilot: number;
+            readonly pilot_name: string;
             /** Format: decimal */
-            readonly subtotal: string;
-            /** Format: decimal */
-            discount_percentage?: string;
-            /** Format: decimal */
-            tax_percentage?: string;
-            /** Format: decimal */
-            readonly discount_amount: string;
-            /** Format: decimal */
-            readonly tax_amount: string;
-            /** Format: decimal */
-            readonly total: string;
-            notes?: string;
-            terms?: string;
-            readonly created_by: number | null;
-            lines?: components["schemas"]["QuoteLine"][];
-            /** Format: date-time */
-            readonly created_at: string;
-            /** Format: date-time */
-            readonly updated_at: string;
+            rate_per_hectare: string;
         };
-        /**
-         * @description Aporta price_floor y below_min_price a una línea con product y unit_price.
-         *
-         *     No bloquea la venta: sólo informa, para que la UI pueda marcar la línea.
-         */
-        QuoteLine: {
-            readonly id: number;
-            quote?: number;
-            product?: number | null;
-            readonly product_sku: string;
-            description?: string;
-            /** Format: decimal */
-            quantity?: string;
-            /** Format: decimal */
-            unit_price?: string;
-            readonly price_floor: string;
-            readonly below_min_price: boolean;
-            /** Format: decimal */
-            discount_amount?: string;
-            /** Format: decimal */
-            tax_amount?: string;
-            /** Format: decimal */
-            readonly total: string;
-            line_type?: components["schemas"]["LineTypeEnum"];
-            /** Format: date-time */
-            readonly created_at: string;
-            /** Format: date-time */
-            readonly updated_at: string;
+        ReconcilePart: {
+            source: components["schemas"]["SourceEnum"];
+            product?: number;
         };
-        /**
-         * @description * `draft` - Borrador
-         *     * `sent` - Enviada
-         *     * `approved` - Aprobada
-         *     * `rejected` - Rechazada
-         *     * `expired` - Expirada
-         *     * `converted_to_invoice` - Convertida en factura
-         * @enum {string}
-         */
-        QuoteStatusEnum: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted_to_invoice";
         /**
          * @description * `super_admin` - Super Administrador
          *     * `general_admin` - Administrador General
          *     * `sales` - Facturación / Ventas
          *     * `technician` - Técnico
-         *     * `piloto` - Piloto
          *     * `inventory` - Inventario
          *     * `accounting` - Contabilidad
          *     * `readonly` - Consulta
          * @enum {string}
          */
-        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "piloto" | "inventory" | "accounting" | "readonly";
+        RoleEnum: "super_admin" | "general_admin" | "sales" | "technician" | "inventory" | "accounting" | "readonly";
         ServiceChecklist: {
             readonly id: number;
             readonly service_order: number;
@@ -3819,9 +4266,16 @@ export interface components {
         ServiceOrderPart: {
             readonly id: number;
             service_order?: number;
-            product: number;
+            product?: number | null;
+            /** @default  */
             readonly product_sku: string;
             readonly product_name: string;
+            description?: string;
+            part_number?: string;
+            inventory_source?: components["schemas"]["InventorySourceEnum"];
+            /** Format: date-time */
+            readonly reconciled_at: string | null;
+            readonly reconciled_by: number | null;
             component?: number | null;
             readonly component_name: string;
             readonly component_code: string;
@@ -3849,9 +4303,10 @@ export interface components {
          *     * `used` - Usada
          *     * `pending_purchase` - Pendiente de compra
          *     * `returned` - Devuelta
+         *     * `pending_inventory` - Pendiente de inventario
          * @enum {string}
          */
-        ServiceOrderPartStatusEnum: "required" | "reserved" | "used" | "pending_purchase" | "returned";
+        ServiceOrderPartStatusEnum: "required" | "reserved" | "used" | "pending_purchase" | "returned" | "pending_inventory";
         ServiceOrderPhoto: {
             readonly id: number;
             service_order: number;
@@ -3865,7 +4320,7 @@ export interface components {
         /**
          * @description * `received` - Recibida
          *     * `in_diagnostic` - En diagnóstico
-         *     * `quoted` - Cotizada
+         *     * `quoted` - Pendiente de aprobación
          *     * `approved` - Aprobada
          *     * `in_progress` - En proceso
          *     * `waiting_parts` - Esperando piezas
@@ -3887,6 +4342,15 @@ export interface components {
          * @enum {string}
          */
         ServiceTypeEnum: "diagnostic" | "preventive_maintenance" | "corrective_maintenance" | "repair" | "cleaning" | "calibration" | "other";
+        /**
+         * @description * `inventory` - Inventario
+         *     * `pending` - Pendiente de inventario
+         *     * `customer` - Aportada por el cliente
+         *     * `external` - Compra para esta reparación
+         *     * `counted` - Ya considerada en conteo físico
+         * @enum {string}
+         */
+        SourceEnum: "inventory" | "pending" | "customer" | "external" | "counted";
         Supplier: {
             readonly id: number;
             /** Format: date-time */
@@ -3929,6 +4393,10 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        TermsInput: {
+            /** Format: date */
+            due_date: string | null;
+        };
         TokenBlacklist: {
             refresh: string;
         };
@@ -3947,9 +4415,10 @@ export interface components {
          *     * `cc/ha` - cc/ha
          *     * `kg/ha` - kg/ha
          *     * `g/ha` - g/ha
+         *     * `qq/ha` - qq/ha
          * @enum {string}
          */
-        UnitEnum: "L/ha" | "cc/ha" | "kg/ha" | "g/ha";
+        UnitEnum: "L/ha" | "cc/ha" | "kg/ha" | "g/ha" | "qq/ha";
         User: {
             readonly id: number;
             /** Format: email */
@@ -5353,6 +5822,479 @@ export interface operations {
             };
         };
     };
+    field_accounts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    field_accounts_retrieve_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    field_accounts_collect_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["CollectionInput"];
+                "multipart/form-data": components["schemas"]["CollectionInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+        };
+    };
+    field_accounts_terms_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field job. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TermsInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["TermsInput"];
+                "multipart/form-data": components["schemas"]["TermsInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    field_assistant_days_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Day"][];
+                };
+            };
+        };
+    };
+    field_assistant_days_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Day"];
+                "application/x-www-form-urlencoded": components["schemas"]["Day"];
+                "multipart/form-data": components["schemas"]["Day"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Day"];
+                };
+            };
+        };
+    };
+    field_assistant_days_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this assistant day. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Day"];
+                "application/x-www-form-urlencoded": components["schemas"]["Day"];
+                "multipart/form-data": components["schemas"]["Day"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Day"];
+                };
+            };
+        };
+    };
+    field_assistant_days_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this assistant day. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    field_assistant_days_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this assistant day. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDay"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDay"];
+                "multipart/form-data": components["schemas"]["PatchedDay"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Day"];
+                };
+            };
+        };
+    };
+    field_assistants_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assistant"][];
+                };
+            };
+        };
+    };
+    field_assistants_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Assistant"];
+                "application/x-www-form-urlencoded": components["schemas"]["Assistant"];
+                "multipart/form-data": components["schemas"]["Assistant"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assistant"];
+                };
+            };
+        };
+    };
+    field_assistants_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field assistant. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Assistant"];
+                "application/x-www-form-urlencoded": components["schemas"]["Assistant"];
+                "multipart/form-data": components["schemas"]["Assistant"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assistant"];
+                };
+            };
+        };
+    };
+    field_assistants_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field assistant. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAssistant"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAssistant"];
+                "multipart/form-data": components["schemas"]["PatchedAssistant"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assistant"];
+                };
+            };
+        };
+    };
+    field_expenses_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"][];
+                };
+            };
+        };
+    };
+    field_expenses_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Expense"];
+                "application/x-www-form-urlencoded": components["schemas"]["Expense"];
+                "multipart/form-data": components["schemas"]["Expense"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+        };
+    };
+    field_expenses_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field expense. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Expense"];
+                "application/x-www-form-urlencoded": components["schemas"]["Expense"];
+                "multipart/form-data": components["schemas"]["Expense"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+        };
+    };
+    field_expenses_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field expense. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    field_expenses_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field expense. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedExpense"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedExpense"];
+                "multipart/form-data": components["schemas"]["PatchedExpense"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+        };
+    };
+    field_expenses_pay_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field expense. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpensePaymentInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["ExpensePaymentInput"];
+                "multipart/form-data": components["schemas"]["ExpensePaymentInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+        };
+    };
     field_jobs_list: {
         parameters: {
             query?: {
@@ -5571,9 +6513,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["FieldJob"];
-                "application/x-www-form-urlencoded": components["schemas"]["FieldJob"];
-                "multipart/form-data": components["schemas"]["FieldJob"];
+                "application/json": components["schemas"]["FieldJobCompletion"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldJobCompletion"];
+                "multipart/form-data": components["schemas"]["FieldJobCompletion"];
             };
         };
         responses: {
@@ -5608,6 +6550,316 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FieldJob"];
+                };
+            };
+        };
+    };
+    field_payments_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPayment"][];
+                };
+            };
+        };
+    };
+    field_payments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PaymentInput"];
+                "multipart/form-data": components["schemas"]["PaymentInput"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPayment"];
+                };
+            };
+        };
+    };
+    field_payments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field payment. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPayment"];
+                };
+            };
+        };
+    };
+    field_pilot_earnings_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Earning"][];
+                };
+            };
+        };
+    };
+    field_pilot_earnings_assign_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignPilotInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssignPilotInput"];
+                "multipart/form-data": components["schemas"]["AssignPilotInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Earning"];
+                };
+            };
+        };
+    };
+    field_pilot_rates_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Rate"][];
+                };
+            };
+        };
+    };
+    field_pilot_rates_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Rate"];
+                "application/x-www-form-urlencoded": components["schemas"]["Rate"];
+                "multipart/form-data": components["schemas"]["Rate"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Rate"];
+                };
+            };
+        };
+    };
+    field_pilot_rates_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this pilot rate. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Rate"];
+                "application/x-www-form-urlencoded": components["schemas"]["Rate"];
+                "multipart/form-data": components["schemas"]["Rate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Rate"];
+                };
+            };
+        };
+    };
+    field_pilot_rates_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this pilot rate. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedRate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedRate"];
+                "multipart/form-data": components["schemas"]["PatchedRate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Rate"];
+                };
+            };
+        };
+    };
+    field_pilots_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPilot"][];
+                };
+            };
+        };
+    };
+    field_pilots_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldPilot"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldPilot"];
+                "multipart/form-data": components["schemas"]["FieldPilot"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPilot"];
+                };
+            };
+        };
+    };
+    field_pilots_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field pilot. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldPilot"];
+                "application/x-www-form-urlencoded": components["schemas"]["FieldPilot"];
+                "multipart/form-data": components["schemas"]["FieldPilot"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPilot"];
+                };
+            };
+        };
+    };
+    field_pilots_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this field pilot. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFieldPilot"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFieldPilot"];
+                "multipart/form-data": components["schemas"]["PatchedFieldPilot"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldPilot"];
                 };
             };
         };
@@ -5785,7 +7037,9 @@ export interface operations {
     };
     inventory_categories_list: {
         parameters: {
-            query?: never;
+            query?: {
+                equipment_model?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6268,6 +7522,56 @@ export interface operations {
             };
         };
     };
+    inventory_products_initial_count_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InitialStockCount"];
+                };
+            };
+        };
+    };
+    inventory_products_initial_count_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this product. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InitialStockCountInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["InitialStockCountInput"];
+                "multipart/form-data": components["schemas"]["InitialStockCountInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InitialStockCount"];
+                };
+            };
+        };
+    };
     inventory_products_movements_retrieve: {
         parameters: {
             query?: never;
@@ -6286,6 +7590,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    inventory_products_count_progress_retrieve: {
+        parameters: {
+            query?: {
+                category?: number;
+                equipment_model?: number;
+                equipment_type?: number;
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountProgress"];
                 };
             };
         };
@@ -7366,410 +8694,6 @@ export interface operations {
             };
         };
     };
-    quote_lines_list: {
-        parameters: {
-            query?: {
-                /** @description A page number within the paginated result set. */
-                page?: number;
-                /** @description Number of results to return per page. */
-                page_size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaginatedQuoteLineList"];
-                };
-            };
-        };
-    };
-    quote_lines_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["QuoteLine"];
-                "application/x-www-form-urlencoded": components["schemas"]["QuoteLine"];
-                "multipart/form-data": components["schemas"]["QuoteLine"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QuoteLine"];
-                };
-            };
-        };
-    };
-    quote_lines_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote line. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QuoteLine"];
-                };
-            };
-        };
-    };
-    quote_lines_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote line. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["QuoteLine"];
-                "application/x-www-form-urlencoded": components["schemas"]["QuoteLine"];
-                "multipart/form-data": components["schemas"]["QuoteLine"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QuoteLine"];
-                };
-            };
-        };
-    };
-    quote_lines_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote line. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    quote_lines_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote line. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PatchedQuoteLine"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedQuoteLine"];
-                "multipart/form-data": components["schemas"]["PatchedQuoteLine"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QuoteLine"];
-                };
-            };
-        };
-    };
-    quotes_list: {
-        parameters: {
-            query?: {
-                /** @description A page number within the paginated result set. */
-                page?: number;
-                /** @description Number of results to return per page. */
-                page_size?: number;
-                /** @description A search term. */
-                search?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaginatedQuoteList"];
-                };
-            };
-        };
-    };
-    quotes_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Quote"];
-                "application/x-www-form-urlencoded": components["schemas"]["Quote"];
-                "multipart/form-data": components["schemas"]["Quote"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Quote"];
-                "application/x-www-form-urlencoded": components["schemas"]["Quote"];
-                "multipart/form-data": components["schemas"]["Quote"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    quotes_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PatchedQuote"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedQuote"];
-                "multipart/form-data": components["schemas"]["PatchedQuote"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_approve_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Quote"];
-                "application/x-www-form-urlencoded": components["schemas"]["Quote"];
-                "multipart/form-data": components["schemas"]["Quote"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_convert_to_invoice_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Quote"];
-                "application/x-www-form-urlencoded": components["schemas"]["Quote"];
-                "multipart/form-data": components["schemas"]["Quote"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_pdf_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
-    quotes_reject_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this quote. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Quote"];
-                "application/x-www-form-urlencoded": components["schemas"]["Quote"];
-                "multipart/form-data": components["schemas"]["Quote"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Quote"];
-                };
-            };
-        };
-    };
     reports_below_floor_sales_retrieve: {
         parameters: {
             query?: never;
@@ -7831,6 +8755,54 @@ export interface operations {
             };
         };
     };
+    reports_field_finance_retrieve: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    reports_field_jobs_retrieve: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     reports_low_stock_retrieve: {
         parameters: {
             query?: never;
@@ -7854,7 +8826,11 @@ export interface operations {
     };
     reports_profit_retrieve: {
         parameters: {
-            query?: never;
+            query?: {
+                from?: string;
+                segment?: "field" | "workshop";
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7875,7 +8851,11 @@ export interface operations {
     };
     reports_sales_retrieve: {
         parameters: {
-            query?: never;
+            query?: {
+                from?: string;
+                segment?: "field" | "workshop";
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8310,6 +9290,34 @@ export interface operations {
                 "application/json": components["schemas"]["PatchedServiceOrderPart"];
                 "application/x-www-form-urlencoded": components["schemas"]["PatchedServiceOrderPart"];
                 "multipart/form-data": components["schemas"]["PatchedServiceOrderPart"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderPart"];
+                };
+            };
+        };
+    };
+    service_order_parts_reconcile_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service order part. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconcilePart"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReconcilePart"];
+                "multipart/form-data": components["schemas"]["ReconcilePart"];
             };
         };
         responses: {
@@ -8777,34 +9785,6 @@ export interface operations {
         };
     };
     service_orders_generate_invoice_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description A unique integer value identifying this service order. */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ServiceOrder"];
-                "application/x-www-form-urlencoded": components["schemas"]["ServiceOrder"];
-                "multipart/form-data": components["schemas"]["ServiceOrder"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ServiceOrder"];
-                };
-            };
-        };
-    };
-    service_orders_generate_quote_create: {
         parameters: {
             query?: never;
             header?: never;

@@ -35,6 +35,7 @@ import { PAGE_SIZE } from "../../lib/api/types";
 import { formatCurrency } from "../../utils/format";
 import { canWriteInventory } from "../auth/roles";
 import { useAuth } from "../auth/useAuth";
+import { useEquipmentModels } from "../equipment/api";
 import { AdjustStockModal } from "./AdjustStockModal";
 import {
   useCategories,
@@ -47,12 +48,13 @@ import { ImportModal } from "./ImportModal";
 import { downloadProductsCsv } from "./importExport";
 import { ProductCompatibilityModal } from "./ProductCompatibilityModal";
 import { ProductFormModal } from "./ProductFormModal";
-import type { Product } from "./types";
+import { productCategoryIds, type Product } from "./types";
 
 export function InventoryPage() {
   const [search, setSearch] = useState("");
   const [debounced] = useDebouncedValue(search, 300);
   const [category, setCategory] = useState<string | null>(null);
+  const [equipmentModel, setEquipmentModel] = useState<string | null>(null);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [page, setPage] = useState(1);
@@ -67,7 +69,8 @@ export function InventoryPage() {
   const { user } = useAuth();
   const canWrite = canWriteInventory(user?.role);
 
-  const categories = useCategories();
+  const categories = useCategories({ equipmentModel: equipmentModel ? Number(equipmentModel) : undefined });
+  const models = useEquipmentModels();
   const catName = useMemo(() => {
     const m = new Map<number, string>();
     (categories.data ?? []).forEach((c) => m.set(c.id, c.name));
@@ -77,6 +80,7 @@ export function InventoryPage() {
   const list = useProducts({
     search: debounced,
     category: category ? Number(category) : undefined,
+    equipmentModel: equipmentModel ? Number(equipmentModel) : undefined,
     includeInactive,
     page,
   });
@@ -194,15 +198,17 @@ export function InventoryPage() {
     },
     { header: "SKU", render: (p) => p.sku },
     { header: "Nombre", render: (p) => p.name },
+    { header: "Conteo inicial", render: (p) => <Badge color={p.initial_counted_at ? "green" : "orange"}>{p.initial_counted_at ? Number(p.initial_counted_quantity) === 0 ? "Contado en cero" : "Contado" : "Sin contar"}</Badge> },
     {
       header: "Categoría",
-      render: (p) => (p.category ? (catName.get(p.category) ?? "—") : "—"),
+      render: (p) => productCategoryIds(p).map((id) => catName.get(id) ?? `#${id}`).join(", ") || "—",
     },
-    { header: "Stock", align: "right", render: (p) => p.stock_quantity },
+    { header: "Stock", align: "right", render: (p) => p.initial_counted_at ? p.stock_quantity : "Sin contar" },
     {
       header: "Disp.",
       align: "right",
       render: (p) => {
+        if (!p.initial_counted_at) return "Sin contar";
         const available = p.available_quantity ?? p.stock_quantity;
         return isLow(p) ? (
           <Text component="span" c="red" fw={700}>
@@ -279,6 +285,7 @@ export function InventoryPage() {
         action={
           canWrite ? (
             <Group gap="xs">
+              <Button variant="light" onClick={() => navigate("/inventory/count")}>Conteo físico inicial</Button>
               {selected.size > 0 && (
                 <Button
                   color="red"
@@ -354,6 +361,8 @@ export function InventoryPage() {
                     disabled={lowStockOnly}
                     w={200}
                   />
+                  <Select placeholder="Modelo de dron / equipo" aria-label="Modelo de dron / equipo" data={(models.data ?? []).map((m) => ({ value: String(m.id), label: `${m.brand} ${m.name}` }))} value={equipmentModel}
+                    onChange={(value) => { setEquipmentModel(value); setCategory(null); setPage(1); setSelected(new Set()); }} searchable clearable disabled={lowStockOnly} w={240} />
                 </Group>
                 <Group>
                   <Switch

@@ -17,10 +17,14 @@ import { DetailHeader } from "../../components/ui/DetailHeader";
 import { Field } from "../../components/ui/Field";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AdjustStockModal } from "./AdjustStockModal";
-import { useProduct, useProductCostHistory, useProductMovements } from "./api";
+import { InitialCountModal } from "./InitialCountModal";
+import { useAuth } from "../auth/useAuth";
+import { canWriteInventory } from "../auth/roles";
+import { useProduct, useProductCostHistory, useProductMovements, useCategories } from "./api";
 import {
   MOVEMENT_COLOR,
   MOVEMENT_LABEL,
+  productCategoryIds,
   type CostHistoryEntry,
   type InventoryMovement,
 } from "./types";
@@ -77,7 +81,10 @@ export function ProductDetailPage() {
   const { data: product, isLoading, error } = useProduct(productId);
   const movements = useProductMovements(productId);
   const costHistory = useProductCostHistory(productId);
+  const categories = useCategories();
   const [adjustOpen, { open, close }] = useDisclosure(false);
+  const [countOpen, { open: openCount, close: closeCount }] = useDisclosure(false);
+  const { user } = useAuth();
 
   if (isLoading) return <Loader />;
   if (error || !product)
@@ -95,9 +102,10 @@ export function ProductDetailPage() {
           </Badge>
         }
         actions={
-          <Button leftSection={<IconAdjustments size={18} />} onClick={open}>
-            Ajustar stock
-          </Button>
+          <>
+            {(product.initial_counted_at || canWriteInventory(user?.role)) && <Button variant="light" onClick={openCount}>{product.initial_counted_at ? "Ver conteo inicial" : "Registrar conteo inicial"}</Button>}
+            {product.initial_counted_at && canWriteInventory(user?.role) && <Button leftSection={<IconAdjustments size={18} />} onClick={open}>Ajustar stock</Button>}
+          </>
         }
       />
 
@@ -105,6 +113,12 @@ export function ProductDetailPage() {
         <Grid>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="SKU" value={product.sku} />
+          </Grid.Col>
+          <Grid.Col span={12}>
+            <Field label="Referencias anteriores" value={product.sku_aliases?.join(", ") || "—"} />
+          </Grid.Col>
+          <Grid.Col span={12}>
+            <Field label="Categorías / secciones" value={productCategoryIds(product).map((id) => categories.data?.find((c) => c.id === id)?.name ?? `#${id}`).join(", ") || "—"} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Marca / Modelo" value={`${product.brand || "—"} ${product.model || ""}`} />
@@ -116,13 +130,13 @@ export function ProductDetailPage() {
             <Field label="Unidad" value={product.unit_of_measure} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <Field label="Stock" value={product.stock_quantity} />
+            <Field label="Stock" value={product.initial_counted_at ? product.stock_quantity : "Sin contar"} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Reservado" value={product.reserved_quantity} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
-            <Field label="Disponible" value={product.available_quantity} />
+            <Field label="Disponible" value={product.initial_counted_at ? product.available_quantity : "Pendiente de conteo"} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <Field label="Stock mínimo" value={product.minimum_stock} />
@@ -176,6 +190,7 @@ export function ProductDetailPage() {
       </Tabs>
 
       <AdjustStockModal opened={adjustOpen} onClose={close} product={product} />
+      {countOpen && <InitialCountModal product={product} onClose={closeCount} />}
     </Stack>
   );
 }

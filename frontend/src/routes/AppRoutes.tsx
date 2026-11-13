@@ -26,6 +26,9 @@ const EquipmentDetailPage = lazy(() =>
 const InventoryPage = lazy(() =>
   import("../features/inventory/InventoryPage").then((m) => ({ default: m.InventoryPage })),
 );
+const InitialCountPage = lazy(() =>
+  import("../features/inventory/InitialCountPage").then((m) => ({ default: m.InitialCountPage })),
+);
 const ProductDetailPage = lazy(() =>
   import("../features/inventory/ProductDetailPage").then((m) => ({ default: m.ProductDetailPage })),
 );
@@ -50,14 +53,14 @@ const ServiceOrderDetailPage = lazy(() =>
 const FieldJobsPage = lazy(() =>
   import("../features/field-jobs/FieldJobsPage").then((m) => ({ default: m.FieldJobsPage })),
 );
+const FieldFinancePage = lazy(() =>
+  import("../features/field-finance/FieldFinancePage").then((m) => ({ default: m.FieldFinancePage })),
+);
+const FieldCollectionsPage = lazy(() =>
+  import("../features/field-collections/FieldCollectionsPage").then((m) => ({ default: m.FieldCollectionsPage })),
+);
 const FieldJobDetailPage = lazy(() =>
   import("../features/field-jobs/FieldJobDetailPage").then((m) => ({ default: m.FieldJobDetailPage })),
-);
-const QuotesPage = lazy(() =>
-  import("../features/billing/QuotesPage").then((m) => ({ default: m.QuotesPage })),
-);
-const QuoteDetailPage = lazy(() =>
-  import("../features/billing/QuoteDetailPage").then((m) => ({ default: m.QuoteDetailPage })),
 );
 const InvoicesPage = lazy(() =>
   import("../features/billing/InvoicesPage").then((m) => ({ default: m.InvoicesPage })),
@@ -84,6 +87,7 @@ export function AppRoutes() {
           <Route path="/equipment" element={<EquipmentPage />} />
           <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/inventory/count" element={<InitialCountPage />} />
           <Route path="/inventory/:id" element={<ProductDetailPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/suppliers/:id" element={<SupplierDetailPage />} />
@@ -92,9 +96,9 @@ export function AppRoutes() {
           <Route path="/service-orders" element={<ServiceOrdersPage />} />
           <Route path="/service-orders/:id" element={<ServiceOrderDetailPage />} />
           <Route path="/field-jobs" element={<FieldJobsPage />} />
+          <Route path="/field-finance" element={<FieldFinancePage />} />
+          <Route path="/field-collections" element={<FieldCollectionsPage />} />
           <Route path="/field-jobs/:id" element={<FieldJobDetailPage />} />
-          <Route path="/quotes" element={<QuotesPage />} />
-          <Route path="/quotes/:id" element={<QuoteDetailPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
           <Route path="/reports" element={<ReportsPage />} />

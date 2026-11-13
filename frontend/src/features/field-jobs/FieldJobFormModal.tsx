@@ -21,18 +21,22 @@ import { useCustomers } from "../customers/api";
 import { useEquipmentList } from "../equipment/api";
 import { useFieldPlots } from "../field-plots/api";
 import type { FieldPlot } from "../field-plots/types";
-import { usePilots } from "../service-orders/api";
+import { usePilots } from "../field-finance/api";
 import { useCompany } from "../settings/api";
 import { useSaveFieldJob } from "./api";
 import { ChemicalRowsEditor, type ChemicalRow } from "./ChemicalRowsEditor";
 import { SprayMixModal } from "./SprayMixModal";
-import { CROP_OPTIONS, type FieldJob } from "./types";
+import { CROP_OPTIONS, JOB_TYPE_OPTIONS, SOLID_UNIT_OPTIONS, PRODUCT_UNIT_OPTIONS, BILLING_UNIT_OPTIONS, type FieldJob } from "./types";
 
 interface FormValues {
+  job_type: string;
+  billing_unit: string;
+  quintals_per_hectare: number | string;
+  planned_quintals: number | string;
   customer: string | null;
   plot: string | null;
   equipment: string | null;
-  technician: string | null;
+  pilot: string | null;
   scheduled_date: string;
   location: string;
   crop: string;
@@ -46,10 +50,14 @@ interface FormValues {
 }
 
 const EMPTY: FormValues = {
+  job_type: "fumigation",
+  billing_unit: "ha",
+  quintals_per_hectare: "",
+  planned_quintals: "",
   customer: null,
   plot: null,
   equipment: null,
-  technician: null,
+  pilot: null,
   scheduled_date: "",
   location: "",
   crop: "rice",
@@ -78,13 +86,19 @@ export function FieldJobFormModal({
   const equipment = useEquipmentList({});
   const pilots = usePilots();
   const company = useCompany();
+  const solidRate = (unit: string) => unit === "qq"
+    ? company.data?.spreading_price_per_quintal ?? "15"
+    : company.data?.spreading_price_per_hectare ?? "25";
   const editing = Boolean(job?.id);
   const [appOpen, app] = useDisclosure(false);
   const [mixOpen, mix] = useDisclosure(false);
 
   const form = useForm<FormValues>({
     initialValues: EMPTY,
-    validate: { customer: (v) => (v ? null : "Selecciona un cliente.") },
+    validate: {
+      customer: (v) => (v ? null : "Selecciona un cliente."),
+      quintals_per_hectare: (v, values) => values.billing_unit === "qq" && !(Number(v) > 0) && !(Number(values.planned_quintals) > 0) ? "Indica los qq totales previstos o la dosis por hectárea." : null,
+    },
   });
 
   const [plotLoaded, setPlotLoaded] = useState(false);
@@ -102,15 +116,19 @@ export function FieldJobFormModal({
         ...(job
           ? {
               customer: job.customer ? String(job.customer) : null,
+              job_type: job.job_type ?? "fumigation",
+              billing_unit: job.billing_unit ?? "ha",
+              quintals_per_hectare: job.quintals_per_hectare ?? "",
+              planned_quintals: job.planned_quintals ?? "",
               plot: job.plot ? String(job.plot) : null,
               equipment: job.equipment ? String(job.equipment) : null,
-              technician: job.technician ? String(job.technician) : null,
+              pilot: job.pilot ? String(job.pilot) : null,
               scheduled_date: job.scheduled_date ?? "",
               location: job.location ?? "",
               crop: job.crop ?? "rice",
               crop_other: job.crop_other ?? "",
               hectares: job.hectares ?? 1,
-              unit_price: job.unit_price ?? "20",
+              unit_price: job.unit_price ?? (job.job_type === "spreading" ? solidRate(job.billing_unit ?? "ha") : c?.fumigation_price_per_hectare ?? "20"),
               notes: job.notes ?? "",
               tank_volume_liters: job.tank_volume_liters ?? "",
               water_per_hectare: job.water_per_hectare ?? "",
@@ -129,17 +147,21 @@ export function FieldJobFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, job]);
 
-  const liveTotal =
-    (Number(form.values.hectares) || 0) * (Number(form.values.unit_price) || 0);
+  const totalQuintals = form.values.planned_quintals !== "" ? Number(form.values.planned_quintals) : Number(((Number(form.values.hectares) || 0) * (Number(form.values.quintals_per_hectare) || 0)).toFixed(2));
+  const billableQuantity = form.values.billing_unit === "qq" ? totalQuintals : Number(Number(form.values.hectares || 0).toFixed(2));
+  const liveTotal = billableQuantity * (Number(form.values.unit_price) || 0);
 
   const submit = form.onSubmit(async (values) => {
     const payload = {
       id: job?.id,
-      job_type: "fumigation",
+      job_type: values.job_type,
+      billing_unit: values.job_type === "spreading" ? values.billing_unit : "ha",
+      quintals_per_hectare: values.job_type === "spreading" ? numOrNull(values.quintals_per_hectare) : null,
+      planned_quintals: values.job_type === "spreading" ? numOrNull(values.planned_quintals) : null,
       customer: Number(values.customer),
       plot: values.plot ? Number(values.plot) : null,
       equipment: values.equipment ? Number(values.equipment) : null,
-      technician: values.technician ? Number(values.technician) : null,
+      pilot: values.pilot ? Number(values.pilot) : null,
       scheduled_date: values.scheduled_date || undefined,
       location: values.location,
       crop: values.crop,
@@ -150,8 +172,8 @@ export function FieldJobFormModal({
       hectares: String(values.hectares || 0),
       unit_price: String(values.unit_price || 0),
       notes: values.notes,
-      tank_volume_liters: numOrNull(values.tank_volume_liters),
-      water_per_hectare: numOrNull(values.water_per_hectare),
+      tank_volume_liters: values.job_type === "spreading" ? null : numOrNull(values.tank_volume_liters),
+      water_per_hectare: values.job_type === "spreading" ? null : numOrNull(values.water_per_hectare),
     };
     try {
       await save.mutateAsync(payload as unknown as Partial<FieldJob> & { id?: number });
@@ -178,8 +200,8 @@ export function FieldJobFormModal({
       "products",
       (plot.products ?? []).map((p) => ({
         name: p.name,
-        dose_per_hectare: p.dose_per_hectare ?? "",
-        unit: p.unit ?? "L/ha",
+        unit: form.values.job_type === "spreading" ? "kg/ha" : (p.unit ?? "L/ha"),
+        dose_per_hectare: form.values.job_type === "spreading" ? "" : (p.dose_per_hectare ?? ""),
       })),
     );
     setPlotLoaded(true);
@@ -205,6 +227,19 @@ export function FieldJobFormModal({
     <Modal opened={opened} onClose={onClose} title={editing ? "Editar trabajo" : "Nuevo trabajo de campo"} size="lg">
       <form onSubmit={submit}>
         <Grid>
+          <Grid.Col span={12}>
+            <Select label="Tipo de aplicación" data={JOB_TYPE_OPTIONS} value={form.values.job_type} allowDeselect={false}
+              onChange={(value) => {
+                form.setFieldValue("job_type", value ?? "fumigation");
+                form.setFieldValue("billing_unit", "ha");
+                form.setFieldValue("quintals_per_hectare", "");
+                form.setFieldValue("planned_quintals", "");
+                form.setFieldValue("unit_price", value === "spreading" ? solidRate("ha") : company.data?.fumigation_price_per_hectare ?? "20");
+                // Una dosis líquida no se convierte automáticamente en masa.
+                form.setFieldValue("products", []);
+                mix.close();
+              }} />
+          </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
               label="Cliente"
@@ -249,10 +284,10 @@ export function FieldJobFormModal({
             <Select
               label="Piloto"
               placeholder="Sin asignar"
-              data={(pilots.data ?? []).map((t) => ({ value: String(t.id), label: t.full_name }))}
+              data={(pilots.data ?? []).filter((t) => t.is_active || t.id === job?.pilot).map((t) => ({ value: String(t.id), label: t.name }))}
               searchable
               clearable
-              {...form.getInputProps("technician")}
+              {...form.getInputProps("pilot")}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
@@ -271,23 +306,41 @@ export function FieldJobFormModal({
           )}
 
           <Grid.Col span={{ base: 6, sm: 4 }}>
-            <NumberInput label="Hectáreas" min={0} decimalScale={4} {...form.getInputProps("hectares")} />
+            <NumberInput label="Hectáreas programadas" min={0} decimalScale={4} {...form.getInputProps("hectares")} />
           </Grid.Col>
+          {form.values.job_type === "spreading" && <>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <Select label="Modalidad de cobro" data={BILLING_UNIT_OPTIONS} value={form.values.billing_unit} allowDeselect={false}
+                description={form.values.billing_unit === "qq" ? "Habitual para urea: tarifa por cada qq aplicado." : "Habitual para semilla de pasto: tarifa por hectárea."}
+                onChange={(v) => { form.setFieldValue("billing_unit", v ?? "ha"); form.setFieldValue("unit_price", solidRate(String(v ?? "ha"))); }} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <NumberInput label="Dosis prevista (qq/ha)" description="Opcional si indicas los qq totales previstos." min={0} decimalScale={4} {...form.getInputProps("quintals_per_hectare")} />
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, sm: 4 }}>
+              <NumberInput label="Quintales totales previstos (qq)" description="Cantidad directa; tiene prioridad sobre la dosis prevista." min={0} decimalScale={2} {...form.getInputProps("planned_quintals")} />
+            </Grid.Col>
+            <Grid.Col span={12}><Text size="sm">Cantidad total prevista: <b>{totalQuintals} qq</b></Text></Grid.Col>
+          </>}
           <Grid.Col span={{ base: 6, sm: 4 }}>
-            <NumberInput label="Precio/ha ($)" min={0} decimalScale={2} {...form.getInputProps("unit_price")} />
+            <NumberInput label={form.values.billing_unit === "qq" ? "Precio/qq ($)" : "Precio/ha ($)"} min={0} decimalScale={2} {...form.getInputProps("unit_price")} />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 4 }}>
-            <Text size="sm" c="dimmed" mt={28}>Total estimado: <b>{formatCurrency(liveTotal)}</b></Text>
+            <Text size="sm" c="dimmed" mt={28}>Total estimado: <b>{formatCurrency(liveTotal)}</b> · {billableQuantity} {form.values.billing_unit}</Text>
           </Grid.Col>
         </Grid>
 
         <ChemicalRowsEditor
+          solid={form.values.job_type === "spreading"}
+          maxNote={form.values.job_type === "spreading" ? "Máximo 10 productos sólidos por trabajo." : undefined}
+          title={form.values.job_type === "spreading" ? "Productos sólidos a aplicar" : "Químicos a aplicar"}
+          unitOptions={form.values.job_type === "spreading" ? SOLID_UNIT_OPTIONS : PRODUCT_UNIT_OPTIONS}
           rows={form.values.products}
           onChange={(rows) => form.setFieldValue("products", rows)}
         />
 
         {/* Sección colapsable: aplicación */}
-        <Button variant="subtle" size="xs" mt="sm" onClick={app.toggle}>
+        {form.values.job_type === "fumigation" && <><Button variant="subtle" size="xs" mt="sm" onClick={app.toggle}>
           {appOpen ? "− " : "+ "}Detalles de aplicación
         </Button>
         <Collapse expanded={appOpen}>
@@ -303,6 +356,7 @@ export function FieldJobFormModal({
             </Grid.Col>
           </Grid>
         </Collapse>
+        </>}
 
         <Textarea label="Notas" autosize minRows={2} mt="sm" {...form.getInputProps("notes")} />
 

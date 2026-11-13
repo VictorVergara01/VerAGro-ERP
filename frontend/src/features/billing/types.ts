@@ -1,7 +1,5 @@
 import type { Schemas } from "../../lib/api/types";
 
-export type Quote = Schemas["Quote"];
-export type QuoteLine = Schemas["QuoteLine"];
 export type Invoice = Schemas["Invoice"];
 export type InvoiceLine = Schemas["InvoiceLine"];
 export type Payment = Schemas["Payment"];
@@ -22,26 +20,6 @@ export interface FiscalInfo {
 export function invoiceFiscal(invoice: Invoice): FiscalInfo | null {
   return (invoice.fiscal as unknown as FiscalInfo | null) ?? null;
 }
-
-export const QUOTE_STATUS_OPTIONS = [
-  { value: "draft", label: "Borrador" },
-  { value: "sent", label: "Enviada" },
-  { value: "approved", label: "Aprobada" },
-  { value: "rejected", label: "Rechazada" },
-  { value: "expired", label: "Expirada" },
-  { value: "converted_to_invoice", label: "Convertida" },
-];
-export const QUOTE_STATUS_LABEL: Record<string, string> = Object.fromEntries(
-  QUOTE_STATUS_OPTIONS.map((o) => [o.value, o.label]),
-);
-export const QUOTE_STATUS_COLOR: Record<string, string> = {
-  draft: "gray",
-  sent: "blue",
-  approved: "green",
-  rejected: "red",
-  expired: "orange",
-  converted_to_invoice: "grape",
-};
 
 export const INVOICE_STATUS_OPTIONS = [
   { value: "draft", label: "Borrador" },

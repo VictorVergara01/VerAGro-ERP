@@ -4,7 +4,7 @@ from io import StringIO
 import pytest
 from django.core.management import CommandError, call_command
 
-from apps.billing.models import Invoice, InvoiceLine, Quote, QuoteLine
+from apps.billing.models import Invoice, InvoiceLine
 from apps.checklists.models import (
     ChecklistTemplate,
     ChecklistTemplateItem,
@@ -13,9 +13,28 @@ from apps.checklists.models import (
 )
 from apps.customers.models import Customer
 from apps.inventory.models import InventoryMovement, Product
+from apps.inventory.models import ProductCategory
+from apps.equipment.models import EquipmentType, EquipmentModel, EquipmentComponent
 from apps.purchasing.models import PurchaseOrder, PurchaseOrderLine
 from apps.service_orders.models import ServiceOrder, ServiceOrderPart
 from apps.suppliers.models import Supplier
+
+
+@pytest.mark.django_db
+def test_empty_products_preserves_categories_and_drone_structure():
+    category = ProductCategory.objects.create(name="Motores T50")
+    drone_type = EquipmentType.objects.create(name="T50 vaciado")
+    model = EquipmentModel.objects.create(equipment_type=drone_type, brand="DJI", name="T50", model_code="T50-empty")
+    component = EquipmentComponent.objects.create(equipment_model=model, code="M1", name="Motor M1")
+    Product.objects.create(sku="T50-REAL", name="Motor", category=category)
+    out = StringIO()
+    call_command("purge_demo_products", "--all-products", stdout=out)
+    assert Product.objects.filter(sku="T50-REAL").exists()
+    call_command("purge_demo_products", "--all-products", "--confirm", stdout=StringIO())
+    assert not Product.objects.exists()
+    assert ProductCategory.objects.filter(pk=category.pk).exists()
+    assert EquipmentModel.objects.filter(pk=model.pk).exists()
+    assert EquipmentComponent.objects.filter(pk=component.pk).exists()
 
 
 @pytest.fixture
@@ -144,35 +163,6 @@ def test_bloquea_por_lineas_de_orden_de_compra(datos_de_prueba, purchase_order):
     with pytest.raises(CommandError):
         call_command("purge_demo_products", "--confirm", stdout=StringIO())
     assert Product.objects.filter(pk=demo.pk).exists()   # PROTECT: no borró nada
-
-
-@pytest.mark.django_db
-def test_aborta_si_hay_cotizaciones_afectadas_sin_allow_orphans(datos_de_prueba):
-    demo, _ = datos_de_prueba
-    customer = Customer.objects.create(name="Cliente cotización")
-    quote = Quote.objects.create(customer=customer)
-    QuoteLine.objects.create(
-        quote=quote, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
-    )
-    with pytest.raises(CommandError):
-        call_command("purge_demo_products", "--confirm", stdout=StringIO())
-    assert Product.objects.filter(pk=demo.pk).exists()   # no borró nada
-
-
-@pytest.mark.django_db
-def test_allow_orphans_deja_huerfana_la_linea_de_cotizacion(datos_de_prueba):
-    demo, _ = datos_de_prueba
-    customer = Customer.objects.create(name="Cliente cotización")
-    quote = Quote.objects.create(customer=customer)
-    line = QuoteLine.objects.create(
-        quote=quote, product=demo, quantity=Decimal("1"), unit_price=Decimal("5")
-    )
-    call_command(
-        "purge_demo_products", "--confirm", "--allow-orphans", stdout=StringIO()
-    )
-    line.refresh_from_db()
-    assert line.product_id is None               # SET_NULL
-    assert not Product.objects.filter(pk=demo.pk).exists()
 
 
 @pytest.mark.django_db

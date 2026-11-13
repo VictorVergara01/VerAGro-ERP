@@ -1,6 +1,7 @@
+from decimal import Decimal
 from rest_framework import serializers
 
-from .models import FieldJob, FieldJobProduct, FieldPlot, FieldPlotProduct
+from .models import FieldJob, FieldJobProduct, FieldPlot, FieldPlotProduct, FieldPilot
 
 
 class FieldJobProductSerializer(serializers.ModelSerializer):
@@ -10,6 +11,11 @@ class FieldJobProductSerializer(serializers.ModelSerializer):
 
 
 class FieldJobSerializer(serializers.ModelSerializer):
+    estimated_quintals = serializers.DecimalField(max_digits=16, decimal_places=2, read_only=True)
+    estimated_total = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    actual_quintals_per_hectare = serializers.DecimalField(max_digits=16, decimal_places=4, read_only=True, allow_null=True)
+    total_quintals = serializers.DecimalField(max_digits=16, decimal_places=2, read_only=True)
+    billable_quantity = serializers.DecimalField(max_digits=16, decimal_places=2, read_only=True)
     products = FieldJobProductSerializer(many=True, required=False)
     customer_name = serializers.CharField(source="customer.name", read_only=True)
     plot = serializers.PrimaryKeyRelatedField(
@@ -21,9 +27,15 @@ class FieldJobSerializer(serializers.ModelSerializer):
     equipment_name = serializers.CharField(
         source="equipment.name", read_only=True, default=""
     )
-    technician_name = serializers.CharField(
-        source="technician.full_name", read_only=True, default=""
+    pilot_name = serializers.CharField(
+        source="pilot.name", read_only=True, default=""
     )
+    pilot = serializers.PrimaryKeyRelatedField(queryset=FieldPilot.objects.all(), required=False, allow_null=True)
+
+    def validate_pilot(self, value):
+        if value and not value.is_active and (not self.instance or self.instance.pilot_id != value.pk):
+            raise serializers.ValidationError("Selecciona un piloto activo.")
+        return value
     job_type_display = serializers.CharField(
         source="get_job_type_display", read_only=True
     )
@@ -44,6 +56,36 @@ class FieldJobSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        kind = attrs.get("job_type", getattr(self.instance, "job_type", "fumigation"))
+        billing_unit = attrs.get("billing_unit", getattr(self.instance, "billing_unit", "ha"))
+        if kind == "spreading" and self.instance is None and "unit_price" not in attrs:
+            from apps.core.models import CompanyProfile
+            company = CompanyProfile.load()
+            attrs["unit_price"] = company.spreading_price_per_quintal if billing_unit == "qq" else company.spreading_price_per_hectare
+        dose = attrs.get("quintals_per_hectare", getattr(self.instance, "quintals_per_hectare", None))
+        planned_qq = attrs.get("planned_quintals", getattr(self.instance, "planned_quintals", None))
+        if planned_qq is not None and planned_qq <= 0:
+            raise serializers.ValidationError({"planned_quintals": "La cantidad debe ser mayor que cero."})
+        if dose is not None and dose <= 0:
+            raise serializers.ValidationError({"quintals_per_hectare": "La carga debe ser mayor que cero."})
+        if kind != "spreading":
+            if billing_unit != "ha":
+                raise serializers.ValidationError({"billing_unit": "La pulverización se cobra por hectárea."})
+            attrs["quintals_per_hectare"] = None
+            attrs["planned_quintals"] = None
+        elif billing_unit == "qq" and dose is None and planned_qq is None:
+            raise serializers.ValidationError({"quintals_per_hectare": "Indica los qq aplicados por hectárea para calcular el cobro."})
+        products = attrs.get("products")
+        if products is None and self.instance:
+            products = [{"unit": p.unit} for p in self.instance.products.all()]
+        if kind == "spreading":
+            if any(p["unit"] not in ("kg/ha", "g/ha", "qq/ha") for p in (products or [])):
+                raise serializers.ValidationError({"products": "Para sólidos usa kg/ha, g/ha o qq/ha; revisa las dosis antes de cambiar el tipo."})
+            attrs["water_per_hectare"] = None
+            attrs["tank_volume_liters"] = None
+        for field in ("hectares", "unit_price"):
+            if field in attrs and (attrs[field] < 0 or (field == "hectares" and attrs[field] == 0)):
+                raise serializers.ValidationError({field: "El área debe ser mayor que cero y el precio no puede ser negativo."})
         # El lote es un enlace informativo: debe ser del mismo cliente del trabajo.
         # En PATCH parcial, cliente y lote se resuelven contra la instancia.
         plot = attrs.get("plot", getattr(self.instance, "plot", None))
@@ -78,16 +120,28 @@ class FieldJobSerializer(serializers.ModelSerializer):
             "plot_name",
             "equipment",
             "equipment_name",
-            "technician",
-            "technician_name",
+            "pilot",
+            "pilot_name",
             "scheduled_date",
             "done_date",
+            "due_date",
             "location",
             "crop",
             "crop_display",
             "crop_other",
             "products",
             "hectares",
+            "billing_unit",
+            "quintals_per_hectare",
+            "planned_quintals",
+            "actual_hectares",
+            "actuals_from_legacy",
+            "applied_quintals",
+            "estimated_quintals",
+            "estimated_total",
+            "actual_quintals_per_hectare",
+            "total_quintals",
+            "billable_quantity",
             "unit_price",
             "total",
             "tank_volume_liters",
@@ -99,6 +153,9 @@ class FieldJobSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = (
+            "actuals_from_legacy",
+            "actual_hectares",
+            "applied_quintals",
             "id",
             "number",
             "status",
@@ -124,6 +181,21 @@ class FieldJobSerializer(serializers.ModelSerializer):
             for product in products:
                 FieldJobProduct.objects.create(field_job=job, **product)
         return job
+
+
+class FieldJobCompletionSerializer(serializers.Serializer):
+    actual_hectares = serializers.DecimalField(max_digits=10, decimal_places=4, min_value=Decimal("0.0001"))
+    applied_quintals = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"), required=False, allow_null=True)
+    done_date = serializers.DateField(required=False)
+    due_date = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        job = self.context["job"]
+        if job.job_type != "spreading" and attrs.get("applied_quintals") is not None:
+            raise serializers.ValidationError({"applied_quintals": "Los quintales aplican a trabajos con sólidos."})
+        if job.billing_unit == "qq" and attrs.get("applied_quintals") is None:
+            raise serializers.ValidationError({"applied_quintals": "Indica los qq realmente aplicados para calcular el cobro."})
+        return attrs
 
 
 class FieldPlotProductSerializer(serializers.ModelSerializer):

@@ -16,7 +16,7 @@ vi.mock("../inventory/api", () => ({
   useProducts: () => ({
     data: {
       results: [
-        { id: 10, sku: "IMP-1", name: "Impeller pump motor", category: 5 },
+        { id: 10, sku: "IMP-1", name: "Impeller pump motor", category: 5, catalog_categories: [5, 7], sku_aliases: ["OLD-10"], part_number: "OEM-10" },
         { id: 20, sku: "MOT-1", name: "Motor brushless", category: 7 },
       ],
     },
@@ -58,6 +58,43 @@ function renderModal() {
 }
 
 describe("AddPartModal", () => {
+  it("encuentra el mismo repuesto en una categoría adicional", async () => {
+    renderModal();
+    fireEvent.click(screen.getByRole("radio", { name: "Motor" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Pieza" }));
+    expect(within(await screen.findByRole("listbox")).getByText(/Impeller pump motor/)).toBeInTheDocument();
+  });
+
+  it("permite buscar por un SKU anterior sin crear otra pieza", async () => {
+    renderModal();
+    const input = screen.getByRole("combobox", { name: "Pieza" });
+    fireEvent.click(input);
+    fireEvent.change(input, { target: { value: "OLD-10" } });
+    const options = await screen.findByRole("listbox");
+    expect(within(options).getByText(/Impeller pump motor/)).toBeInTheDocument();
+    expect(within(options).queryByText(/Motor brushless/)).not.toBeInTheDocument();
+  });
+  it("registra una pieza manual pendiente sin producto de inventario", async () => {
+    addMutate.mockClear();
+    renderModal();
+    fireEvent.click(screen.getByRole("radio", { name: "Pieza manual" }));
+    fireEvent.change(screen.getByLabelText(/Nombre de la pieza/), { target: { value: "Motor T50" } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+    await vi.waitFor(() => expect(addMutate).toHaveBeenCalledTimes(1));
+    expect(addMutate.mock.calls[0][0]).toMatchObject({ description: "Motor T50", inventory_source: "pending" });
+    expect(addMutate.mock.calls[0][0].product).toBeUndefined();
+  });
+
+  it("permite usar una pieza conocida con inventario sin actualizar", async () => {
+    addMutate.mockClear();
+    renderModal();
+    fireEvent.click(screen.getByRole("combobox", { name: "Pieza" }));
+    fireEvent.click(within(await screen.findByRole("listbox")).getByText(/Impeller pump motor/));
+    fireEvent.click(screen.getByRole("switch", { name: "Mi inventario aún no está actualizado" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+    await vi.waitFor(() => expect(addMutate).toHaveBeenCalledTimes(1));
+    expect(addMutate.mock.calls[0][0]).toMatchObject({ product: 10, inventory_source: "pending" });
+  });
   it("preselecciona el modelo de la orden", () => {
     renderModal();
     expect(screen.getByDisplayValue("Agras T50")).toBeInTheDocument();

@@ -18,6 +18,14 @@ const invoice = {
   balance_due: "50.00",
 } as unknown as Invoice;
 
+it("comparte el borrador para aceptación sin presentar saldo por cobrar", () => {
+  const message = buildWhatsappMessage({ ...invoice, status: "draft" });
+  expect(message).toContain("factura en borrador");
+  expect(message).toContain("aceptación");
+  expect(message).toContain("sin emitir");
+  expect(message).not.toContain("Saldo pendiente");
+});
+
 describe("normalizePhone", () => {
   it("antepone 507 a números locales de Panamá", () => {
     expect(normalizePhone("6123-4567")).toBe("50761234567");

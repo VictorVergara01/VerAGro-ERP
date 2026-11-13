@@ -21,7 +21,7 @@ def _job(**kwargs):
 @pytest.mark.django_db
 def test_mark_done_from_scheduled():
     job = _job()
-    mark_done(job)
+    mark_done(job, actual_hectares="10")
     job.refresh_from_db()
     assert job.status == FieldJob.Status.DONE
     assert job.done_date is not None

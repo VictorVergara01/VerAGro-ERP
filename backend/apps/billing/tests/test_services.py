@@ -3,16 +3,8 @@ from decimal import Decimal
 import pytest
 from rest_framework.exceptions import ValidationError
 
-from apps.billing.models import Invoice, InvoiceLine, Quote, QuoteLine
-from apps.billing.services import (
-    convert_quote_to_invoice,
-    create_invoice_from_service_order,
-    create_quote_from_service_order,
-    issue_invoice,
-    recalculate_invoice,
-    recalculate_quote,
-    record_payment,
-)
+from apps.billing.models import Invoice, InvoiceLine
+from apps.billing.services import create_invoice_from_service_order, issue_invoice, recalculate_invoice, record_payment
 from apps.customers.models import Customer
 from apps.inventory.models import InventoryMovement, Product
 from apps.service_orders.models import ServiceOrder, ServiceOrderPart
@@ -25,24 +17,6 @@ def customer(db):
 
 def _product(sku, **kwargs):
     return Product.objects.create(sku=sku, name=sku, **kwargs)
-
-
-@pytest.mark.django_db
-def test_recalculate_quote(customer):
-    q = Quote.objects.create(
-        customer=customer,
-        discount_percentage=Decimal("10"),
-        tax_percentage=Decimal("5"),
-    )
-    QuoteLine.objects.create(quote=q, description="A", quantity=2, unit_price=30)  # 60
-    QuoteLine.objects.create(quote=q, description="B", quantity=1, unit_price=40)  # 40
-    recalculate_quote(q)
-    q.refresh_from_db()
-    assert q.subtotal == Decimal("100.00")
-    # desc 10% = 10; gravable 90; imp 5% = 4.50; total 94.50
-    assert q.discount_amount == Decimal("10.00")
-    assert q.tax_amount == Decimal("4.50")
-    assert q.total == Decimal("94.50")
 
 
 @pytest.mark.django_db
@@ -101,16 +75,6 @@ def _finished_order_with_part(customer):
         status=ServiceOrderPart.Status.USED,
     )
     return order
-
-
-@pytest.mark.django_db
-def test_create_quote_from_service_order(customer):
-    order = _finished_order_with_part(customer)
-    quote = create_quote_from_service_order(order=order)
-    types = sorted(line.line_type for line in quote.lines.all())
-    assert types == ["diagnostic", "labor", "product"]
-    # 50 + 20 + 2*15 = 100
-    assert quote.total == Decimal("100.00")
 
 
 @pytest.mark.django_db
@@ -190,25 +154,6 @@ def test_zero_total_invoice_settles_on_issue(customer):
 
 
 @pytest.mark.django_db
-def test_convert_blocked_if_order_already_invoiced(customer):
-    # Bug #2: no se puede crear una 2.ª factura de una orden ya facturada.
-    from apps.service_orders.services import finish_order
-
-    order = ServiceOrder.objects.create(
-        customer=customer, status=ServiceOrder.Status.IN_PROGRESS,
-        labor_cost=Decimal("50"),
-    )
-    quote = create_quote_from_service_order(order=order)
-    finish_order(order)  # crea la factura automática
-    quote.status = Quote.Status.APPROVED
-    quote.save()
-    with pytest.raises(ValidationError):
-        convert_quote_to_invoice(quote=quote)
-    # La orden sigue con una sola factura.
-    assert order.invoices.count() == 1
-
-
-@pytest.mark.django_db
 def test_issue_product_sale_deducts_inventory(customer):
     product = _product("PS1", stock_quantity=Decimal("10"))
     inv = Invoice.objects.create(
@@ -224,22 +169,3 @@ def test_issue_product_sale_deducts_inventory(customer):
     mov = InventoryMovement.objects.get(product=product, movement_type="sale_out")
     assert mov.quantity == Decimal("3")
     assert mov.reference_id == inv.id
-
-
-@pytest.mark.django_db
-def test_convert_quote_requires_approved(customer):
-    q = Quote.objects.create(customer=customer)  # draft
-    with pytest.raises(ValidationError):
-        convert_quote_to_invoice(quote=q)
-
-
-@pytest.mark.django_db
-def test_convert_quote_to_invoice(customer):
-    q = Quote.objects.create(customer=customer, status=Quote.Status.APPROVED)
-    QuoteLine.objects.create(quote=q, description="A", quantity=1, unit_price=100)
-    recalculate_quote(q)
-    invoice = convert_quote_to_invoice(quote=q)
-    q.refresh_from_db()
-    assert q.status == Quote.Status.CONVERTED
-    assert invoice.quote_id == q.id
-    assert invoice.total == Decimal("100.00")

@@ -2,7 +2,6 @@ import {
   IconBox,
   IconDeviceDesktop,
   IconDrone,
-  IconFileInvoice,
   IconHome,
   IconReceipt,
   IconReportAnalytics,
@@ -31,6 +30,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Dashboard", to: "/", icon: IconHome },
       { label: "Órdenes de servicio", to: "/service-orders", icon: IconTool },
       { label: "Trabajos de campo", to: "/field-jobs", icon: IconDrone },
+      { label: "Gastos de campo", to: "/field-finance", icon: IconReceipt },
+      { label: "Cobros de campo", to: "/field-collections", icon: IconReceipt },
       { label: "Clientes", to: "/customers", icon: IconUsers },
       { label: "Equipos", to: "/equipment", icon: IconDeviceDesktop },
       { label: "Inventario", to: "/inventory", icon: IconBox },
@@ -41,7 +42,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Facturación",
     items: [
-      { label: "Cotizaciones", to: "/quotes", icon: IconFileInvoice },
       { label: "Facturas", to: "/invoices", icon: IconReceipt },
     ],
   },

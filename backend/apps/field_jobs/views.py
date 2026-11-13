@@ -3,12 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.db import transaction
+from drf_spectacular.utils import extend_schema
 
 from apps.core import roles
 from apps.core.permissions import RoleWriteOrReadOnly
 
 from .models import FieldJob, FieldPlot
-from .serializers import FieldJobSerializer, FieldPlotSerializer
+from .serializers import FieldJobSerializer, FieldPlotSerializer, FieldJobCompletionSerializer
 from .services import calculate_mix, cancel_job, mark_done
 
 FieldJobWrite = RoleWriteOrReadOnly(*roles.FIELD_JOBS_WRITE)
@@ -42,18 +44,20 @@ class FieldJobViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ["number", "location", "crop", "customer__name"]
 
+    def perform_destroy(self, instance):
+        if instance.status != FieldJob.Status.SCHEDULED:
+            raise ValidationError({"status": "Solo se eliminan trabajos programados; cancela los demás para conservar su historial."})
+        instance.delete()
+
     def get_queryset(self):
         qs = FieldJob.objects.select_related(
-            "customer", "plot", "equipment", "technician"
+            "customer", "plot", "equipment", "pilot"
         ).prefetch_related("invoices", "products")
-        user = self.request.user
-        if user.is_authenticated and user.role == roles.PILOTO:
-            qs = qs.filter(technician_id=user.id)
         params = self.request.query_params
         for key, field in (
             ("customer", "customer_id"),
             ("equipment", "equipment_id"),
-            ("technician", "technician_id"),
+            ("pilot", "pilot_id"),
         ):
             value = _int_param(params, key)
             if value is not None:
@@ -72,26 +76,26 @@ class FieldJobViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         extra = {"created_by": self.request.user}
-        user = self.request.user
-        if user.role == roles.PILOTO:
-            extra["technician"] = user
         job = serializer.save(**extra)
         job.recalculate_total()
         job.save(update_fields=["total", "updated_at"])
 
+    @transaction.atomic
     def perform_update(self, serializer):
+        serializer.instance = FieldJob.objects.select_for_update().get(pk=serializer.instance.pk)
+        if serializer.instance.status != FieldJob.Status.SCHEDULED:
+            raise ValidationError({"status": "Solo se edita la programación de trabajos pendientes."})
         extra = {}
-        user = self.request.user
-        if user.is_authenticated and user.role == roles.PILOTO:
-            extra["technician"] = user
         job = serializer.save(**extra)
         job.recalculate_total()
         job.save(update_fields=["total", "updated_at"])
 
+    @extend_schema(request=FieldJobCompletionSerializer, responses=FieldJobSerializer)
     @action(detail=True, methods=["post"], url_path="mark-done")
     def mark_done_action(self, request, pk=None):
         job = self.get_object()
-        mark_done(job, user=request.user)
+        mark_done(job, user=request.user, actual_hectares=request.data.get("actual_hectares"),
+                  applied_quintals=request.data.get("applied_quintals"), done_date=request.data.get("done_date"), due_date=request.data.get('due_date'))
         job.refresh_from_db()
         return Response(self.get_serializer(job).data)
 

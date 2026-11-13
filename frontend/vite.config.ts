@@ -8,6 +8,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Docker Desktop no siempre propaga los eventos del volumen de Windows.
+    watch: {
+      usePolling: process.env.DOCKER_POLLING === "true",
+      interval: 300,
+    },
   },
   build: {
     rollupOptions: {

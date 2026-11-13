@@ -7,6 +7,7 @@ import {
   Select,
   Textarea,
   TextInput,
+  Accordion,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -204,12 +205,20 @@ export function ServiceOrderFormModal({
             />
           </Grid.Col>
           <Grid.Col span={12}>
+            <Accordion defaultValue={editing ? "work" : null}>
+              <Accordion.Item value="work">
+                <Accordion.Control>Diagnóstico, trabajo y costos (opcional al recibir)</Accordion.Control>
+                <Accordion.Panel><Grid>
+          <Grid.Col span={12}>
             <Textarea
               label="Diagnóstico"
               autosize
               minRows={2}
               {...form.getInputProps("diagnostic_summary")}
             />
+          </Grid.Col>
+          <Grid.Col span={12}>
+            <Textarea label="Trabajo realizado" autosize minRows={2} {...form.getInputProps("technical_notes")} />
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <NumberInput label="Mano de obra" min={0} decimalScale={2} {...form.getInputProps("labor_cost")} />
@@ -222,6 +231,10 @@ export function ServiceOrderFormModal({
           </Grid.Col>
           <Grid.Col span={{ base: 6, sm: 3 }}>
             <NumberInput label="Impuesto %" min={0} decimalScale={2} {...form.getInputProps("tax_percentage")} />
+          </Grid.Col>
+                </Grid></Accordion.Panel>
+              </Accordion.Item>
+            </Accordion>
           </Grid.Col>
         </Grid>
         <Group justify="flex-end" mt="md">

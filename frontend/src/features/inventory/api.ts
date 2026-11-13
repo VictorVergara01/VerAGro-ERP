@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../../lib/api/client";
+import { userErrorMessage } from "../../lib/api/errors";
 import type { Paginated, Schemas } from "../../lib/api/types";
 import type { CostHistoryEntry, InventoryMovement, Product, ProductCategory } from "./types";
 import type {
@@ -12,9 +13,11 @@ export interface ProductListParams {
   search?: string;
   category?: number;
   equipmentType?: number;
+  equipmentModel?: number;
   includeInactive?: boolean;
   page?: number;
   pageSize?: number;
+  countStatus?: "uncounted" | "counted" | "zero";
 }
 
 export function useProducts(params: ProductListParams) {
@@ -27,9 +30,11 @@ export function useProducts(params: ProductListParams) {
             search: params.search || undefined,
             category: params.category,
             equipment_type: params.equipmentType,
+            equipment_model: params.equipmentModel,
             include_inactive: params.includeInactive ? "true" : undefined,
             page: params.page,
             page_size: params.pageSize,
+            count_status: params.countStatus,
           } as Record<string, unknown>,
         },
       });
@@ -53,12 +58,52 @@ export function useProduct(id: number | undefined) {
   });
 }
 
-export function useCategories() {
+export function useInitialCountProgress(params: ProductListParams) {
   return useQuery({
-    queryKey: ["product-categories"],
+    queryKey: ["initial-count-progress", params],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/inventory/products/count-progress/", {
+        params: { query: { search: params.search || undefined, category: params.category, equipment_type: params.equipmentType, equipment_model: params.equipmentModel } },
+      });
+      if (error || !data) throw new Error("No se pudo cargar el avance del conteo.");
+      return data;
+    },
+  });
+}
+
+export function useInitialStockCount(id: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["product", id, "initial-count"], enabled,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/inventory/products/{id}/initial-count/", { params: { path: { id } } });
+      if (error || !data) throw new Error("No se pudo cargar el conteo registrado.");
+      return data;
+    },
+  });
+}
+
+export function useRecordInitialCount(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { quantity: string; unit_cost: string | null; location: string; notes: string; expected_updated_at: string }) => {
+      const { data, error } = await api.POST("/api/inventory/products/{id}/initial-count/", { params: { path: { id } }, body: input });
+      if (error) throw new Error(userErrorMessage(error, "No se pudo guardar el conteo."));
+      return data;
+    },
+    onSettled: () => {
+      for (const queryKey of [["products"], ["product", id], ["initial-count-progress"], ["order-compatible"], ["reports"], ["dashboard"]]) {
+        void qc.invalidateQueries({ queryKey });
+      }
+    },
+  });
+}
+
+export function useCategories(params: { equipmentModel?: number } = {}) {
+  return useQuery({
+    queryKey: ["product-categories", params.equipmentModel ?? "all"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/inventory/categories/");
+      const { data, error } = await api.GET("/api/inventory/categories/", { params: { query: { equipment_model: params.equipmentModel } } });
       if (error || !data) throw new Error("No se pudieron cargar las categorías.");
       return data as unknown as ProductCategory[];
     },

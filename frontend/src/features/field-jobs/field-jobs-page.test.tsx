@@ -10,7 +10,7 @@ vi.mock("./api", () => ({ useFieldJobs: () => mockList(), useSaveFieldJob: () =>
 vi.mock("../customers/api", () => ({ useCustomers: () => ({ data: { results: [] } }) }));
 vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results: [] } }) }));
 vi.mock("../field-plots/api", () => ({ useFieldPlots: () => ({ data: [], isLoading: false }) }));
-vi.mock("../service-orders/api", () => ({ useTechnicians: () => ({ data: [] }), usePilots: () => ({ data: [] }) }));
+vi.mock("../field-finance/api", () => ({ useTechnicians: () => ({ data: [] }), usePilots: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({ useCompany: () => ({ data: {} }) }));
 vi.mock("../auth/useAuth", () => ({ useAuth: () => ({ user: { role: "super_admin" } }) }));
 

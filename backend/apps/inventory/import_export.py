@@ -8,7 +8,7 @@ from django.db import transaction
 
 from apps.suppliers.models import Supplier
 
-from .models import Product, ProductCategory
+from .models import Product, ProductCategory, ProductAlias
 from .services import apply_adjustment, apply_margin
 
 # Orden canónico de columnas (import + export).
@@ -116,7 +116,7 @@ def _create_row(row, user):
         raise ValueError("El nombre es obligatorio.")
 
     sku = (row.get("sku") or "").strip()
-    if sku and Product.objects.filter(sku=sku).exists():
+    if sku and (Product.objects.filter(sku=sku).exists() or ProductAlias.objects.filter(sku=sku).exists()):
         raise ValueError("El SKU ya existe.")
 
     stock_inicial = _parse_decimal(row.get("stock_inicial"), "stock_inicial")

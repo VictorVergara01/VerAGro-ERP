@@ -2,6 +2,7 @@ import {
   Alert,
   Card,
   Group,
+  SegmentedControl,
   SimpleGrid,
   Stack,
   Tabs,
@@ -11,12 +12,17 @@ import {
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { useState } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useFieldFinanceReport } from "../field-finance/api";
+import type { FieldPerformance } from "../field-finance/api";
+import { FieldReceivablesPanel } from "../field-collections/FieldCollectionsPage";
 
 import { DataTable, type Column } from "../../components/ui/DataTable";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { formatCurrency, formatDate } from "../../utils/format";
 import {
   useBelowFloorSalesReport,
+  useFieldJobsReport,
   useLowStockReport,
   useProfitReport,
   useSalesReport,
@@ -25,6 +31,8 @@ import {
 import type {
   BelowFloorRow,
   DateRange,
+  FieldJobsReport,
+  ReportSegment,
   LowStockReport,
   ProfitReport,
   SalesReport,
@@ -174,8 +182,8 @@ function ServiceOrdersPanel({ range }: { range: DateRange }) {
   );
 }
 
-function SalesPanel({ range }: { range: DateRange }) {
-  const q = useSalesReport(range);
+function SalesPanel({ range, segment = "workshop" }: { range: DateRange; segment?: ReportSegment }) {
+  const q = useSalesReport(range, segment);
   const monthColumns: Column<SalesReport["sales_by_month"][number]>[] = [
     { header: "Mes", render: (m) => m.month },
     { header: "Facturas", align: "right", render: (m) => m.count },
@@ -191,7 +199,7 @@ function SalesPanel({ range }: { range: DateRange }) {
     <Guard query={q}>
       {(d) => (
         <Stack>
-          <Text fw={600}>Ventas por mes</Text>
+          <Text fw={600}>{segment === "field" ? "Facturación de campo por mes" : "Ventas de taller y repuestos por mes"}</Text>
           <DataTable
             columns={monthColumns}
             rows={d.sales_by_month}
@@ -319,7 +327,78 @@ function BelowFloorPanel({ range }: { range: DateRange }) {
   );
 }
 
+function FieldJobsPanel({ range }: { range: DateRange }) {
+  const query = useFieldJobsReport(range);
+  const columns: Column<FieldJobsReport["by_type"][number]>[] = [
+    { header: "Actividad", render: (r) => r.job_type === "spreading" ? "Aplicación de sólidos" : "Pulverización" },
+    { header: "Trabajos realizados", align: "right", render: (r) => r.count },
+    { header: "Hectáreas reales", align: "right", render: (r) => r.hectares },
+    { header: "Quintales aplicados", align: "right", render: (r) => r.quintals },
+  ];
+  return (
+    <Guard query={query}>
+      {(data) => (
+        <Stack>
+          <SimpleGrid cols={{ base: 1, sm: 4 }}>
+            {[
+              ["Programados en el período", data.scheduled_count],
+              ["Realizados en el período", data.completed_count],
+              ["Hectáreas reales", data.actual_hectares],
+              ["Quintales aplicados", data.applied_quintals],
+            ].map(([label, value]) => (
+              <Card withBorder radius="md" key={String(label)}>
+                <Text c="dimmed" size="xs" tt="uppercase" fw={600}>{label}</Text>
+                <Text fz={26} fw={700}>{value}</Text>
+              </Card>
+            ))}
+          </SimpleGrid>
+          <Text c="dimmed" size="sm">Los trabajos e ingresos operativos usan la fecha de cierre y las cantidades reales. Los cobros se registran por la fecha del dinero recibido.</Text>
+          <DataTable columns={columns} rows={data.by_type} rowKey={(r) => r.job_type} emptyText="Sin trabajos realizados en el rango." />
+        </Stack>
+      )}
+    </Guard>
+  );
+}
+
+function FieldCostsPanel({ range }: { range: DateRange }) {
+  const query = useFieldFinanceReport(range);
+  return <Guard query={query}>{(d) => <Stack>
+    {!!d.unpriced_jobs.length && <Alert color="yellow">Hay {d.unpriced_jobs.length} trabajos sin costo de piloto registrado. El resultado está incompleto; configura las tarifas en Gastos de campo.</Alert>}
+    {!!d.unlinked_invoice_count && <Alert color="yellow">Hay {d.unlinked_invoice_count} facturas antiguas de campo sin trabajo vinculado. Se conservan en los totales, pero no forman parte de los resultados por piloto.</Alert>}
+    <SimpleGrid cols={{ base: 1, sm: 3 }}>
+      {[
+        ["Ingresos por servicios realizados", d.revenue], ["Costo de pilotos", d.pilot_cost], ["Costo de asistentes", d.assistant_cost],
+        ["Gastos generales", d.general_cost], ["Costos totales", d.total_cost], ["Resultado operativo", d.operating_result],
+        ["Pagado en el período", d.paid_in_period], ["Cobrado en el período", d.collected_in_period],
+        ["Flujo neto de caja del período", d.cash_flow_in_period],
+        ["Costos del período pendientes de pago", d.pending_cost], ["Servicios del período pendientes de cobro", d.receivable],
+      ].map(([label, amount]) => <Card withBorder key={String(label)}><Text c="dimmed" size="sm">{label}</Text><Text fz={24} fw={700}>{formatCurrency(amount)}</Text></Card>)}
+    </SimpleGrid>
+    <Text size="sm" c="dimmed">Los costos corresponden a la fecha del trabajo, jornada o gasto. Los cobros y pagos se muestran por su fecha real. El flujo neto es cobrado menos pagado; no incluye saldo inicial de caja.</Text>
+    <Text component={Link} to="/field-finance">Administrar gastos y liquidaciones de campo</Text>
+  </Stack>}</Guard>;
+}
+
+function FieldPerformancePanel({ range }: { range: DateRange }) {
+  const query = useFieldFinanceReport(range);
+  const columns = (label: string): Column<FieldPerformance>[] => [
+    { header: label, render: (r) => r.name || String(r.id || "Sin asignar") },
+    { header: "Trabajos", render: (r) => r.count }, { header: "Ha reales", render: (r) => r.hectares },
+    { header: "Quintales", render: (r) => r.quintals }, { header: "Importe servicios", render: (r) => formatCurrency(r.revenue) },
+    { header: "Cobrado", render: (r) => formatCurrency(r.collected) }, { header: "Saldo", render: (r) => formatCurrency(r.balance_due) },
+    { header: "Costo piloto", render: (r) => formatCurrency(r.pilot_cost) },
+    { header: "Margen antes de asistentes y gastos generales", render: (r) => <>{formatCurrency(r.margin_before_general_costs)}{r.unpriced_count > 0 && <Text size="xs" c="orange">Falta costo en {r.unpriced_count} trabajos</Text>}</> },
+  ];
+  return <Guard query={query}>{(d) => <Stack>
+    <Text size="sm" c="dimmed">Los gastos generales y las jornadas de asistentes se descuentan en el resultado del área, sin distribuirlos entre clientes o pilotos. Los cobros y saldos de estas tablas corresponden a los trabajos realizados en el período.</Text>
+    <Text fw={600}>Resultados por cliente</Text><DataTable columns={columns("Cliente")} rows={d.by_customer || []} rowKey={(r) => String(r.id)} emptyText="Sin trabajos realizados en el rango." />
+    <Text fw={600}>Resultados por piloto</Text><DataTable columns={columns("Piloto")} rows={d.by_pilot || []} rowKey={(r) => String(r.id)} emptyText="Sin trabajos realizados en el rango." />
+    <Text fw={600}>Resumen mensual de operaciones</Text><DataTable columns={columns("Mes")} rows={d.by_month || []} rowKey={(r) => String(r.id)} emptyText="Sin trabajos realizados en el rango." />
+  </Stack>}</Guard>;
+}
+
 export function ReportsPage() {
+  const [segment, setSegment] = useState<ReportSegment>("workshop");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const range: DateRange = { from, to };
@@ -327,15 +406,20 @@ export function ReportsPage() {
   return (
     <Stack>
       <PageHeader title="Reportes" />
-      <Tabs defaultValue="low-stock">
-        <Tabs.List>
-          <Tabs.Tab value="low-stock">Bajo stock</Tabs.Tab>
-          <Tabs.Tab value="service-orders">Servicios</Tabs.Tab>
-          <Tabs.Tab value="sales">Ventas</Tabs.Tab>
-          <Tabs.Tab value="profit">Ganancia</Tabs.Tab>
-          <Tabs.Tab value="below-floor">Ventas bajo el piso</Tabs.Tab>
-        </Tabs.List>
-
+      <SegmentedControl
+        aria-label="Área del reporte"
+        value={segment}
+        onChange={(value) => setSegment(value as ReportSegment)}
+        data={[
+          { value: "workshop", label: "Taller y repuestos" },
+          { value: "field", label: "Trabajos de campo" },
+        ]}
+      />
+      <Text c="dimmed" size="sm">
+        {segment === "workshop"
+          ? "Órdenes de servicio y ventas de repuestos. Los trabajos de campo se consultan por separado."
+          : "Actividad y facturación exclusiva de los trabajos de campo."}
+      </Text>
         <Group my="md">
           <TextInput
             label="Desde"
@@ -350,7 +434,28 @@ export function ReportsPage() {
             onChange={(e) => setTo(e.currentTarget.value)}
           />
         </Group>
-
+      {segment === "field" ? (
+        <Tabs defaultValue="activity" keepMounted={false}>
+          <Tabs.List>
+            <Tabs.Tab value="activity">Actividad de campo</Tabs.Tab>
+            <Tabs.Tab value="billing">Cobros y saldos</Tabs.Tab>
+            <Tabs.Tab value="costs">Costos y resultado</Tabs.Tab>
+            <Tabs.Tab value="performance">Clientes y pilotos</Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="activity" pt="md"><FieldJobsPanel range={range} /></Tabs.Panel>
+          <Tabs.Panel value="billing" pt="md"><FieldReceivablesPanel range={range} /></Tabs.Panel>
+          <Tabs.Panel value="costs" pt="md"><FieldCostsPanel range={range} /></Tabs.Panel>
+          <Tabs.Panel value="performance" pt="md"><FieldPerformancePanel range={range} /></Tabs.Panel>
+        </Tabs>
+      ) : (
+      <Tabs defaultValue="low-stock" key="workshop">
+        <Tabs.List>
+          <Tabs.Tab value="low-stock">Bajo stock</Tabs.Tab>
+          <Tabs.Tab value="service-orders">Órdenes de servicio</Tabs.Tab>
+          <Tabs.Tab value="sales">Ventas</Tabs.Tab>
+          <Tabs.Tab value="profit">Ganancia</Tabs.Tab>
+          <Tabs.Tab value="below-floor">Ventas bajo el piso</Tabs.Tab>
+        </Tabs.List>
         <Tabs.Panel value="low-stock">
           <LowStockPanel />
         </Tabs.Panel>
@@ -367,6 +472,7 @@ export function ReportsPage() {
           <BelowFloorPanel range={range} />
         </Tabs.Panel>
       </Tabs>
+      )}
     </Stack>
   );
 }

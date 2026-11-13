@@ -36,18 +36,18 @@ def test_readonly_lee_pero_no_escribe(customer):
     assert res.status_code == 403
 
 
-def test_piloto_crea_lotes(customer):
-    client = _client_for_role("piloto")
+def test_technician_crea_lotes(customer):
+    client = _client_for_role("technician")
     res = client.post(
         PLOTS_URL, {"customer": customer.id, "name": "Potrero 1"}, format="json"
     )
     assert res.status_code == 201, res.content
 
 
-def test_piloto_ve_lotes_de_cualquier_cliente(customer):
+def test_technician_ve_lotes_de_cualquier_cliente(customer):
     """A diferencia de los trabajos, los lotes no se filtran por piloto asignado."""
     otro = Customer.objects.create(name="Finca Santa Rita")
     FieldPlot.objects.create(customer=customer, name="Potrero 1")
     FieldPlot.objects.create(customer=otro, name="Potrero 2")
-    body = _client_for_role("piloto").get(PLOTS_URL).json()
+    body = _client_for_role("technician").get(PLOTS_URL).json()
     assert len(body) == 2

@@ -1,4 +1,5 @@
 import math
+from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
@@ -8,24 +9,53 @@ from .models import FieldJob
 
 
 @transaction.atomic
-def mark_done(job, user=None):
+def mark_done(job, user=None, *, actual_hectares=None, applied_quintals=None, done_date=None, due_date=None):
+    from .serializers import FieldJobCompletionSerializer
+
+    FieldJob.objects.select_for_update().get(pk=job.pk)
+    job.refresh_from_db()
     if job.status != FieldJob.Status.SCHEDULED:
         raise ValidationError(
             {"status": "Solo se marca hecho un trabajo programado (scheduled)."}
         )
+    data = {"actual_hectares": actual_hectares, "applied_quintals": applied_quintals}
+    if done_date is not None:
+        data["done_date"] = done_date
+    if due_date is not None:
+        data["due_date"] = due_date
+    completion = FieldJobCompletionSerializer(data=data, context={"job": job})
+    completion.is_valid(raise_exception=True)
+    job.actual_hectares = completion.validated_data["actual_hectares"]
+    job.applied_quintals = completion.validated_data.get("applied_quintals")
     job.status = FieldJob.Status.DONE
-    job.done_date = timezone.localdate()
-    job.save(update_fields=["status", "done_date", "updated_at"])
+    job.done_date = completion.validated_data.get("done_date", timezone.localdate())
+    job.due_date = completion.validated_data.get('due_date') or job.due_date or (job.done_date + timedelta(days=10))
+    if job.due_date < job.done_date:
+        raise ValidationError({'due_date': 'El vencimiento no puede ser anterior al trabajo.'})
+    job.recalculate_total()
+    job.save(update_fields=["actual_hectares", "applied_quintals", "status", "done_date", "due_date", "total", "updated_at"])
+    from .finance import accrue_pilot
+    accrue_pilot(job)
     return job
 
 
 @transaction.atomic
 def cancel_job(job, user=None):
+    FieldJob.objects.select_for_update().get(pk=job.pk)
+    job.refresh_from_db()
+    if job.collections.exists():
+        raise ValidationError({'status': 'El trabajo tiene cobros registrados y no se puede cancelar.'})
+    from .models import PilotEarning
+    earning = PilotEarning.objects.select_for_update().filter(job=job).first()
+    if earning and earning.payment_id:
+        raise ValidationError({"status": "El piloto ya recibió el pago de este trabajo."})
     if job.status == FieldJob.Status.INVOICED:
         raise ValidationError(
             {"status": "No se puede cancelar un trabajo ya facturado."}
         )
     job.status = FieldJob.Status.CANCELLED
+    if earning:
+        earning.delete()
     job.save(update_fields=["status", "updated_at"])
     return job
 

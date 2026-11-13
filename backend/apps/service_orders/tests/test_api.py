@@ -175,39 +175,6 @@ def test_filters_and_search(tech_client, customer):
 
 
 @pytest.mark.django_db
-def test_generate_quote_non_terminal_invoice_requires_finished(tech_client, customer):
-    o = ServiceOrder.objects.create(customer=customer)  # received
-    # La cotización puede generarse desde cualquier estado no terminal.
-    assert (
-        tech_client.post(f"/api/service-orders/{o.id}/generate-quote/").status_code
-        == 201
-    )
-    # La factura exige la orden finalizada.
-    assert (
-        tech_client.post(f"/api/service-orders/{o.id}/generate-invoice/").status_code
-        == 400
-    )
-    o.status = ServiceOrder.Status.FINISHED
-    o.save()
-    assert (
-        tech_client.post(f"/api/service-orders/{o.id}/generate-invoice/").status_code
-        == 201
-    )
-
-
-@pytest.mark.django_db
-def test_generate_quote_blocked_on_terminal_order(tech_client, customer):
-    # Gap #3: no se cotiza una orden ya entregada/cerrada.
-    o = ServiceOrder.objects.create(
-        customer=customer, status=ServiceOrder.Status.DELIVERED
-    )
-    assert (
-        tech_client.post(f"/api/service-orders/{o.id}/generate-quote/").status_code
-        == 400
-    )
-
-
-@pytest.mark.django_db
 def test_reserve_blocked_before_approved(tech_client, customer):
     # Gap #5: no se reservan piezas antes de aprobar (orden en received).
     o = ServiceOrder.objects.create(customer=customer)  # received

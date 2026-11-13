@@ -9,7 +9,8 @@ from apps.core.models import CompanyProfile
 def test_company_profile_field_job_defaults():
     company = CompanyProfile.load()
     assert company.fumigation_price_per_hectare == Decimal("20")
-    assert company.spreading_price_per_quintal == Decimal("10")
+    assert company.spreading_price_per_quintal == Decimal("15")
+    assert company.spreading_price_per_hectare == Decimal("25")
     assert company.drone_tank_volume_liters == Decimal("200")
     assert company.default_water_per_hectare == Decimal("8")
 
@@ -39,6 +40,7 @@ def test_company_api_exposes_field_job_prices():
     for key in (
         "fumigation_price_per_hectare",
         "spreading_price_per_quintal",
+        "spreading_price_per_hectare",
         "drone_tank_volume_liters",
         "default_water_per_hectare",
     ):

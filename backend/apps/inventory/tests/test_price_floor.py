@@ -80,16 +80,11 @@ def test_la_linea_dentro_del_rango_no_se_marca():
 
 @pytest.mark.django_db
 def test_la_linea_sin_producto_no_avisa_ni_rompe():
-    """QuoteLine/InvoiceLine admiten líneas sin producto (servicio, texto manual)."""
     customer = Customer.objects.create(name="Cliente")
     invoice = Invoice.objects.create(customer=customer)
     line = InvoiceLine.objects.create(
-        invoice=invoice,
-        product=None,
-        description="Mano de obra",
-        quantity=Decimal("1"),
-        unit_price=Decimal("50.00"),
-        line_type=LineType.LABOR,
+        invoice=invoice, product=None, description="Mano de obra",
+        quantity=Decimal("1"), unit_price=Decimal("50"), line_type=LineType.LABOR,
     )
     data = InvoiceLineSerializer(instance=line).data
     assert data["below_min_price"] is False

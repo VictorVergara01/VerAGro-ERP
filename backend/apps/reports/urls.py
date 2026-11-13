@@ -4,6 +4,8 @@ from .views import (
     BelowFloorSalesReport,
     DashboardReport,
     EquipmentHistoryReport,
+    FieldJobsReport,
+    FieldFinanceReport,
     LowStockReport,
     ProfitReport,
     SalesReport,
@@ -11,6 +13,8 @@ from .views import (
 )
 
 urlpatterns = [
+    path("reports/field-finance/", FieldFinanceReport.as_view(), name="reports-field-finance"),
+    path("reports/field-jobs/", FieldJobsReport.as_view(), name="reports-field-jobs"),
     path("reports/dashboard/", DashboardReport.as_view(), name="reports-dashboard"),
     path("reports/low-stock/", LowStockReport.as_view(), name="reports-low-stock"),
     path(

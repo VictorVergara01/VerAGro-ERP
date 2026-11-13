@@ -3,6 +3,14 @@ import type { Schemas } from "../../lib/api/types";
 export type ServiceOrder = Schemas["ServiceOrder"];
 export type ServiceOrderPart = Schemas["ServiceOrderPart"];
 
+export const PART_SOURCE_LABEL: Record<string, string> = {
+  inventory: "Inventario",
+  pending: "Por conciliar",
+  customer: "Del cliente",
+  external: "Compra directa",
+  counted: "Considerada en conteo físico",
+};
+
 export const SERVICE_TYPE_OPTIONS = [
   { value: "diagnostic", label: "Diagnóstico" },
   { value: "preventive_maintenance", label: "Mant. preventivo" },
@@ -19,7 +27,7 @@ export const SERVICE_TYPE_LABEL: Record<string, string> = Object.fromEntries(
 export const SO_STATUS_OPTIONS = [
   { value: "received", label: "Recibida" },
   { value: "in_diagnostic", label: "En diagnóstico" },
-  { value: "quoted", label: "Cotizada" },
+  { value: "quoted", label: "Pendiente de aprobación" },
   { value: "approved", label: "Aprobada" },
   { value: "in_progress", label: "En proceso" },
   { value: "waiting_parts", label: "Esperando piezas" },
@@ -50,6 +58,7 @@ export const PART_STATUS_LABEL: Record<string, string> = {
   used: "Usada",
   pending_purchase: "Pend. compra",
   returned: "Devuelta",
+  pending_inventory: "Pendiente de inventario",
 };
 export const PART_STATUS_COLOR: Record<string, string> = {
   required: "gray",
@@ -57,4 +66,5 @@ export const PART_STATUS_COLOR: Record<string, string> = {
   used: "green",
   pending_purchase: "orange",
   returned: "red",
+  pending_inventory: "orange",
 };

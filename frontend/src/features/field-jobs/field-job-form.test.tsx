@@ -1,12 +1,14 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { FieldJobFormModal } from "./FieldJobFormModal";
 import type { FieldJob } from "./types";
 
+const { saveJob } = vi.hoisted(() => ({ saveJob: vi.fn().mockResolvedValue({}) }));
+
 vi.mock("./api", () => ({
-  useSaveFieldJob: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useSaveFieldJob: () => ({ mutateAsync: saveJob, isPending: false }),
   useCalculateMix: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("../customers/api", () => ({
@@ -30,10 +32,10 @@ vi.mock("../field-plots/api", () => ({
   }),
 }));
 vi.mock("../equipment/api", () => ({ useEquipmentList: () => ({ data: { results: [] } }) }));
-vi.mock("../service-orders/api", () => ({ usePilots: () => ({ data: [] }) }));
+vi.mock("../field-finance/api", () => ({ usePilots: () => ({ data: [] }) }));
 vi.mock("../settings/api", () => ({
   useCompany: () => ({
-    data: { fumigation_price_per_hectare: "20", drone_tank_volume_liters: "200",
+    data: { fumigation_price_per_hectare: "20", spreading_price_per_quintal: "15", spreading_price_per_hectare: "25", drone_tank_volume_liters: "200",
       default_water_per_hectare: "8" },
   }),
 }));
@@ -47,6 +49,67 @@ function renderForm(job: Partial<FieldJob> | null = null) {
 }
 
 describe("FieldJobFormModal", () => {
+  it("programa quintales totales directamente sin exigir una dosis por hectárea", async () => {
+    saveJob.mockClear();
+    renderForm({ id: 1, customer: 7, job_type: "spreading", billing_unit: "qq", planned_quintals: "30", hectares: "10", unit_price: "15" });
+    expect(screen.getByText(/450\.00/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    await vi.waitFor(() => expect(saveJob).toHaveBeenCalledTimes(1));
+    expect(saveJob.mock.calls[0][0]).toMatchObject({ planned_quintals: "30", quintals_per_hectare: null });
+  });
+  it("carga $25/ha para pasto y $15/qq para urea al elegir la modalidad", async () => {
+    renderForm();
+    fireEvent.click(screen.getByRole("combobox", { name: "Tipo de aplicación" }));
+    fireEvent.click(within(await screen.findByRole("listbox")).getByText("Aplicación de sólidos"));
+    expect(screen.getByLabelText("Precio/ha ($)")).toHaveDisplayValue("25");
+    fireEvent.change(screen.getByLabelText("Hectáreas programadas"), { target: { value: "10" } });
+    expect(screen.getByText(/250\.00/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("combobox", { name: "Modalidad de cobro" }));
+    fireEvent.click(within(await screen.findByRole("listbox")).getByText("Por quintal (qq)"));
+    expect(screen.getByLabelText("Precio/qq ($)")).toHaveDisplayValue("15");
+    fireEvent.change(screen.getByLabelText("Dosis prevista (qq/ha)"), { target: { value: "3" } });
+    expect(screen.getByText(/450\.00/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Precio/qq ($)"), { target: { value: "16" } });
+    expect(screen.getByText(/480\.00/)).toBeInTheDocument();
+  });
+  it("guarda sólidos con unidades de masa y sin datos de pulverización", async () => {
+    saveJob.mockClear();
+    renderForm({ id: 1, customer: 7, job_type: "spreading", hectares: "5", unit_price: "12" });
+    expect(screen.getByRole("combobox", { name: "Tipo de aplicación" })).toHaveValue("Aplicación de sólidos");
+    expect(screen.queryByText(/Detalles de aplicación/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Agregar producto sólido/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Nombre del producto sólido/i), { target: { value: "Abono" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    await vi.waitFor(() => expect(saveJob).toHaveBeenCalledTimes(1));
+    expect(saveJob.mock.calls[0][0]).toMatchObject({ job_type: "spreading", water_per_hectare: null, tank_volume_liters: null });
+    expect(saveJob.mock.calls[0][0].products[0]).toMatchObject({ name: "Abono", unit: "qq/ha" });
+  });
+
+  it("calcula 30 qq para 10 ha de urea a 3 qq/ha y cobra por qq", async () => {
+    saveJob.mockClear();
+    renderForm({ id: 1, customer: 7, job_type: "spreading", billing_unit: "qq", quintals_per_hectare: "3", hectares: "10", unit_price: "5" });
+    expect(screen.getByLabelText("Precio/qq ($)")).toHaveDisplayValue("5");
+    expect(screen.getByText("30 qq")).toBeInTheDocument();
+    expect(screen.getByText(/150\.00/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    await vi.waitFor(() => expect(saveJob).toHaveBeenCalledTimes(1));
+    expect(saveJob.mock.calls[0][0]).toMatchObject({ billing_unit: "qq", quintals_per_hectare: "3", hectares: "10", unit_price: "5" });
+  });
+
+  it("cobrar por hectárea conserva el área aunque la carga sea 3 qq/ha", () => {
+    renderForm({ id: 1, customer: 7, job_type: "spreading", billing_unit: "ha", quintals_per_hectare: "3", hectares: "10", unit_price: "5" });
+    expect(screen.getByLabelText("Precio/ha ($)")).toHaveDisplayValue("5");
+    expect(screen.getByText("30 qq")).toBeInTheDocument();
+    expect(screen.getByText(/50\.00/)).toBeInTheDocument();
+  });
+
+  it("vacía la receta al cambiar de pulverización a sólidos", async () => {
+    renderForm({ id: 1, customer: 7, products: [{ id: 1, name: "Líquido", dose_per_hectare: "2", unit: "L/ha" }] });
+    expect(screen.getByDisplayValue("Líquido")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("combobox", { name: "Tipo de aplicación" }));
+    fireEvent.click(within(await screen.findByRole("listbox")).getByText("Aplicación de sólidos"));
+    expect(screen.queryByDisplayValue("Líquido")).not.toBeInTheDocument();
+  });
   it("muestra Hectáreas (fumigación) y NO muestra Quintales", () => {
     renderForm();
     expect(screen.getByLabelText(/hectáreas/i)).toBeInTheDocument();

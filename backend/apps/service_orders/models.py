@@ -17,7 +17,7 @@ class ServiceOrder(TimeStampedModel):
     class Status(models.TextChoices):
         RECEIVED = "received", "Recibida"
         IN_DIAGNOSTIC = "in_diagnostic", "En diagnóstico"
-        QUOTED = "quoted", "Cotizada"
+        QUOTED = "quoted", "Pendiente de aprobación"
         APPROVED = "approved", "Aprobada"
         IN_PROGRESS = "in_progress", "En proceso"
         WAITING_PARTS = "waiting_parts", "Esperando piezas"
@@ -89,18 +89,36 @@ class ServiceOrder(TimeStampedModel):
 
 
 class ServiceOrderPart(TimeStampedModel):
+    class InventorySource(models.TextChoices):
+        INVENTORY = "inventory", "Inventario"
+        PENDING = "pending", "Pendiente de inventario"
+        CUSTOMER = "customer", "Aportada por el cliente"
+        EXTERNAL = "external", "Compra para esta reparación"
+        COUNTED = "counted", "Ya considerada en conteo físico"
+
     class Status(models.TextChoices):
         REQUIRED = "required", "Requerida"
         RESERVED = "reserved", "Reservada"
         USED = "used", "Usada"
         PENDING_PURCHASE = "pending_purchase", "Pendiente de compra"
         RETURNED = "returned", "Devuelta"
+        PENDING_INVENTORY = "pending_inventory", "Pendiente de inventario"
 
     service_order = models.ForeignKey(
         ServiceOrder, on_delete=models.CASCADE, related_name="parts"
     )
     product = models.ForeignKey(
-        "inventory.Product", on_delete=models.PROTECT, related_name="service_parts"
+        "inventory.Product", on_delete=models.PROTECT, related_name="service_parts",
+        null=True, blank=True,
+    )
+    description = models.CharField(max_length=255, blank=True)
+    part_number = models.CharField(max_length=100, blank=True)
+    inventory_source = models.CharField(
+        max_length=20, choices=InventorySource.choices, default=InventorySource.INVENTORY
+    )
+    reconciled_at = models.DateTimeField(null=True, blank=True)
+    reconciled_by = models.ForeignKey(
+        "users.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     component = models.ForeignKey(
         "equipment.EquipmentComponent",

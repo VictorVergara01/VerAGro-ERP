@@ -3,8 +3,9 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.db.models import Q
 
-from .models import InventoryMovement, Product, ProductCategory, ProductCompatibility
+from .models import InventoryMovement, Product, ProductCategory, ProductCompatibility, InitialStockCount, ProductAlias
 from .services import apply_adjustment, generate_product_sku
 from .validators import margin_errors_for
 
@@ -45,6 +46,9 @@ class ProductCategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    sku_aliases = serializers.SlugRelatedField(source="aliases", slug_field="sku", many=True, read_only=True)
+    initial_counted_at = serializers.DateTimeField(source="initial_count.created_at", read_only=True, default=None, allow_null=True)
+    initial_counted_quantity = serializers.DecimalField(source="initial_count.counted_quantity", max_digits=12, decimal_places=2, read_only=True, default=None, allow_null=True)
     available_quantity = serializers.DecimalField(
         max_digits=12, decimal_places=2, read_only=True
     )
@@ -70,9 +74,23 @@ class ProductSerializer(serializers.ModelSerializer):
             "max_sale_price",
             "average_cost",
             "last_purchase_cost",
+            "catalog_categories",
         )
 
     def validate(self, attrs):
+        sku = attrs.get("sku")
+        if sku and ProductAlias.objects.filter(sku__iexact=sku.strip()).exists():
+            raise serializers.ValidationError({"sku": "Este SKU es una referencia de un producto existente. Busca el producto por ese código."})
+        part_number = attrs.get("part_number", getattr(self.instance, "part_number", ""))
+        brand = attrs.get("brand", getattr(self.instance, "brand", ""))
+        if part_number and part_number.strip():
+            existing = Product.objects.filter(part_number__iexact=part_number.strip())
+            if brand.strip():
+                existing = existing.filter(Q(brand__iexact=brand.strip()) | Q(brand=""))
+            if self.instance:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise serializers.ValidationError({"part_number": "Ya existe ese número de pieza para la misma marca. Usa el producto existente y agrega sus compatibilidades."})
         errors = margin_errors_for(attrs, self.instance)
         if errors:
             raise serializers.ValidationError(errors)
@@ -110,6 +128,34 @@ class ProductSerializer(serializers.ModelSerializer):
 
             apply_margin(product)
         return product
+
+
+class InitialStockCountInputSerializer(serializers.Serializer):
+    quantity = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"))
+    unit_cost = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True, min_value=Decimal("0.01"))
+    location = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+    expected_updated_at = serializers.DateTimeField()
+
+    def validate(self, attrs):
+        if attrs["quantity"] > 0 and attrs.get("unit_cost") is None:
+            raise serializers.ValidationError({"unit_cost": "El costo unitario es obligatorio cuando hay existencias."})
+        return attrs
+
+
+class InitialStockCountSerializer(serializers.ModelSerializer):
+    counted_by_name = serializers.CharField(source="created_by.full_name", read_only=True, default="")
+
+    class Meta:
+        model = InitialStockCount
+        fields = "__all__"
+
+
+class CountProgressSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    counted = serializers.IntegerField()
+    uncounted = serializers.IntegerField()
+    counted_zero = serializers.IntegerField()
 
 
 class InventoryMovementSerializer(serializers.ModelSerializer):

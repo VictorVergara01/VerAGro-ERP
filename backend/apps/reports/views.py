@@ -1,21 +1,23 @@
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
-from django.db.models import Count, DecimalField, F, Sum
+from django.db.models import Count, DecimalField, F, Q, Sum
 from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.billing.models import Invoice, InvoiceLine
+from apps.billing.models import Invoice, InvoiceLine, Payment
 from apps.core import roles
 from apps.core.permissions import role_required
 from apps.inventory.models import Product
+from apps.field_jobs.models import FieldJob
+from apps.field_jobs.models import PilotEarning, AssistantDay, FieldExpense, FieldPayment, FieldCollection
 from apps.purchasing.models import PurchaseOrder
 from apps.service_orders.models import ServiceOrder, ServiceOrderPart
 
@@ -34,6 +36,21 @@ SALES_STATUSES = (
     Invoice.Status.PAID,
 )
 DECIMAL = DecimalField(max_digits=18, decimal_places=2)
+FIELD_INVOICE = Q(invoice_type=Invoice.InvoiceType.FIELD_JOB) | Q(field_job__isnull=False)
+REPORT_PARAMETERS = [
+    OpenApiParameter("from", OpenApiTypes.DATE),
+    OpenApiParameter("to", OpenApiTypes.DATE),
+    OpenApiParameter("segment", OpenApiTypes.STR, enum=["workshop", "field"], default="workshop"),
+]
+
+
+def _segment_invoices(qs, request):
+    segment = request.query_params.get("segment", "workshop")
+    if segment == "field":
+        return qs.filter(FIELD_INVOICE)
+    if segment == "workshop":
+        return qs.exclude(FIELD_INVOICE)
+    raise ValidationError({"segment": "Usa workshop o field."})
 
 
 def _parse_date(value, field):
@@ -221,14 +238,100 @@ class ServiceOrdersReport(APIView):
         )
 
 
+class FieldJobsReport(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=OpenApiTypes.OBJECT, parameters=REPORT_PARAMETERS[:2])
+    def get(self, request):
+        date_from, date_to = _date_range(request)
+        scheduled = _apply_range(FieldJob.objects.exclude(status=FieldJob.Status.CANCELLED), "scheduled_date", date_from, date_to)
+        completed = _apply_range(
+            FieldJob.objects.filter(status__in=(FieldJob.Status.DONE, FieldJob.Status.INVOICED)),
+            "done_date", date_from, date_to,
+        )
+        by_type = list(completed.values("job_type").annotate(
+            count=Count("id"),
+            hectares=Coalesce(Sum("actual_hectares"), 0, output_field=DECIMAL),
+            quintals=Coalesce(Sum("applied_quintals"), 0, output_field=DECIMAL),
+        ).order_by("job_type"))
+        return Response({
+            "scheduled_count": scheduled.count(),
+            "completed_count": completed.count(),
+            "actual_hectares": sum((row["hectares"] for row in by_type), Decimal("0")),
+            "applied_quintals": sum((row["quintals"] for row in by_type), Decimal("0")),
+            "by_type": by_type,
+        })
+
+
+class FieldFinanceReport(APIView):
+    permission_classes = [Financial]
+
+    @extend_schema(responses=OpenApiTypes.OBJECT, parameters=REPORT_PARAMETERS[:2])
+    def get(self, request):
+        date_from, date_to = _date_range(request)
+
+        def period(qs, field):
+            return _apply_range(qs, field, date_from, date_to)
+
+        def total(qs, field="amount"):
+            return qs.aggregate(value=Coalesce(Sum(field), 0, output_field=DECIMAL))["value"]
+
+        pilots = period(PilotEarning.objects.all(), "earned_date")
+        assistants = period(AssistantDay.objects.all(), "date")
+        expenses = period(FieldExpense.objects.all(), "date")
+        from apps.field_jobs.collections import accounts_queryset, account_row
+        jobs = list(period(accounts_queryset().select_related('pilot_earning'), 'done_date'))
+        invoices = period(Invoice.objects.filter(invoice_type=Invoice.InvoiceType.FIELD_JOB, field_job__isnull=True, status__in=SALES_STATUSES), "issue_date")
+        pilot_cost, assistant_cost, general_cost = total(pilots), total(assistants), total(expenses)
+        revenue = sum((job.total for job in jobs), Decimal('0')) + total(invoices, "total")
+        paid = total(period(FieldPayment.objects.all(), "payment_date")) + total(period(FieldExpense.objects.filter(payment_date__isnull=False), "payment_date"))
+        collected = total(period(FieldCollection.objects.all(), 'payment_date')) + total(period(Payment.objects.filter(
+            invoice__invoice_type=Invoice.InvoiceType.FIELD_JOB, invoice__field_job__isnull=True,
+            invoice__status__in=SALES_STATUSES,
+        ), "payment_date"))
+        missing = period(FieldJob.objects.filter(status__in=("done", "invoiced"), pilot_earning__isnull=True), "done_date")
+        by_customer, by_pilot, by_month = {}, {}, {}
+        for job in jobs:
+            row = account_row(job)
+            earning = getattr(job, 'pilot_earning', None)
+            pilot_cost_for_job = earning.amount if earning else Decimal('0')
+            for groups, key, name in ((by_customer, job.customer_id, job.customer.name), (by_pilot, job.pilot_id, row['pilot_name']), (by_month, job.done_date.strftime('%Y-%m') if job.done_date else 'Sin fecha', '')):
+                item = groups.setdefault(key, {'id': key, 'name': name, 'count': 0, 'hectares': Decimal('0'), 'quintals': Decimal('0'), 'revenue': Decimal('0'), 'collected': Decimal('0'), 'balance_due': Decimal('0'), 'pilot_cost': Decimal('0'), 'margin_before_general_costs': Decimal('0'), 'unpriced_count': 0})
+                item['count'] += 1
+                item['hectares'] += job.actual_hectares or Decimal('0')
+                item['quintals'] += job.applied_quintals or Decimal('0')
+                item['revenue'] += job.total
+                item['collected'] += job.collected
+                item['balance_due'] += row['balance_due']
+                item['pilot_cost'] += pilot_cost_for_job
+                item['margin_before_general_costs'] += job.total - pilot_cost_for_job
+                item['unpriced_count'] += int(earning is None)
+        return Response({
+            "revenue": revenue, "pilot_cost": pilot_cost, "assistant_cost": assistant_cost,
+            "general_cost": general_cost, "total_cost": pilot_cost + assistant_cost + general_cost,
+            "operating_result": revenue - pilot_cost - assistant_cost - general_cost,
+            "paid_in_period": paid,
+            "collected_in_period": collected,
+            'cash_flow_in_period': collected - paid,
+            "pending_cost": total(pilots.filter(payment__isnull=True)) + total(assistants.filter(payment__isnull=True)) + total(expenses.filter(payment_date__isnull=True)),
+            "receivable": sum((max(job.balance, Decimal('0')) for job in jobs), Decimal('0')) + total(invoices, "balance_due"),
+            'by_customer': sorted(by_customer.values(), key=lambda row: row['revenue'], reverse=True),
+            'by_pilot': sorted(by_pilot.values(), key=lambda row: row['revenue'], reverse=True),
+            'by_month': [by_month[key] for key in sorted(by_month)],
+            'unlinked_invoice_count': invoices.count(),
+            "unpriced_jobs": list(missing.values("id", "number", "pilot_id", "pilot__name", "actual_hectares", "done_date")),
+            "expenses_by_category": list(expenses.values("category").annotate(total=Sum("amount")).order_by("category")),
+        })
+
+
 class SalesReport(APIView):
     permission_classes = [Financial]
 
-    @extend_schema(responses=OpenApiTypes.OBJECT)
+    @extend_schema(responses=OpenApiTypes.OBJECT, parameters=REPORT_PARAMETERS)
     def get(self, request):
         date_from, date_to = _date_range(request)
         invoices = _apply_range(
-            Invoice.objects.filter(status__in=SALES_STATUSES),
+            _segment_invoices(Invoice.objects.filter(status__in=SALES_STATUSES), request),
             "issue_date",
             date_from,
             date_to,
@@ -248,9 +351,9 @@ class SalesReport(APIView):
             .order_by("month")
         ]
         pending = list(
-            Invoice.objects.filter(
+            _apply_range(_segment_invoices(Invoice.objects.filter(
                 status__in=(Invoice.Status.ISSUED, Invoice.Status.PARTIALLY_PAID)
-            )
+            ), request), "issue_date", date_from, date_to)
             .values("invoice_number", "customer__name", "total", "balance_due", "status")
         )
         return Response({"sales_by_month": by_month, "pending_invoices": pending})
@@ -259,11 +362,11 @@ class SalesReport(APIView):
 class ProfitReport(APIView):
     permission_classes = [Financial]
 
-    @extend_schema(responses=OpenApiTypes.OBJECT)
+    @extend_schema(responses=OpenApiTypes.OBJECT, parameters=REPORT_PARAMETERS)
     def get(self, request):
         date_from, date_to = _date_range(request)
         invoices = _apply_range(
-            Invoice.objects.filter(status__in=SALES_STATUSES),
+            _segment_invoices(Invoice.objects.filter(status__in=SALES_STATUSES), request),
             "issue_date",
             date_from,
             date_to,
@@ -373,8 +476,7 @@ class BelowFloorSalesResponseSerializer(serializers.Serializer):
 class BelowFloorSalesReport(APIView):
     """Líneas vendidas por debajo del piso de precio vigente del producto.
 
-    Las cotizaciones quedan fuera: son propuestas, no ventas, y meterían
-    negociaciones que nunca se cerraron en la cifra.
+    Los borradores quedan fuera porque aún no representan ventas confirmadas.
     """
 
     permission_classes = [Financial]
@@ -389,10 +491,11 @@ class BelowFloorSalesReport(APIView):
                 product__min_sale_price__gt=0,
                 unit_price__lt=F("product__min_sale_price"),
                 # Solo facturas que representan una venta real: fuera los
-                # borradores (propuestas, igual que las cotizaciones) y las
+                # borradores (propuestas pendientes de aceptación) y las
                 # anuladas (ventas que no ocurrieron).
                 invoice__status__in=SALES_STATUSES,
-            ).select_related("product", "invoice", "invoice__created_by"),
+            ).exclude(Q(invoice__invoice_type=Invoice.InvoiceType.FIELD_JOB) | Q(invoice__field_job__isnull=False))
+            .select_related("product", "invoice", "invoice__created_by"),
             "invoice__issue_date",
             date_from,
             date_to,

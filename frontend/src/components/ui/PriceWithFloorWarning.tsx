@@ -3,7 +3,7 @@ import { Text, Tooltip } from "@mantine/core";
 import { formatCurrency } from "../../utils/format";
 
 /**
- * Precio unitario de una línea de venta (factura, cotización o pieza de orden de
+ * Precio unitario de una línea de venta (factura o pieza de orden de
  * servicio), marcado en rojo con un tooltip cuando quedó vendido bajo el piso
  * (`below_min_price`). Puramente informativo: no valida ni bloquea el guardado.
  *

@@ -1,4 +1,6 @@
 from django.db.models import Prefetch
+from django.db import transaction
+from drf_spectacular.utils import extend_schema
 from rest_framework import filters, mixins, status as http_status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -14,8 +16,9 @@ from .serializers import (
     ServiceOrderPartSerializer,
     ServiceOrderPhotoSerializer,
     ServiceOrderSerializer,
+    ReconcilePartSerializer,
 )
-from .services import cancel_order, finish_order, recalculate_totals, reserve_parts
+from .services import cancel_order, finish_order, recalculate_totals, reserve_parts, reconcile_part
 
 ServiceWrite = RoleWriteOrReadOnly(*roles.SERVICE_WRITE)
 
@@ -52,7 +55,10 @@ def _assert_not_terminal(order):
         )
 
 
+@transaction.atomic
 def _transition(order, allowed_from, new_status, **extra):
+    ServiceOrder.objects.select_for_update().get(pk=order.pk)
+    order.refresh_from_db()
     if order.status not in allowed_from:
         raise ValidationError(
             {
@@ -140,7 +146,8 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
         _transition(
             order,
-            (ServiceOrder.Status.APPROVED, ServiceOrder.Status.WAITING_PARTS),
+            (ServiceOrder.Status.RECEIVED, ServiceOrder.Status.IN_DIAGNOSTIC,
+             ServiceOrder.Status.QUOTED, ServiceOrder.Status.APPROVED, ServiceOrder.Status.WAITING_PARTS),
             ServiceOrder.Status.IN_PROGRESS,
         )
         return Response(self.get_serializer(order).data)
@@ -171,10 +178,12 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
 
     # --- Piezas e inventario ---
     @action(detail=True, methods=["post"], url_path="add-part")
+    @transaction.atomic
     def add_part(self, request, pk=None):
         order = self.get_object()
         _assert_not_terminal(order)
-        data = {**request.data, "service_order": order.id}
+        data = request.data.copy()
+        data["service_order"] = order.id
         serializer = ServiceOrderPartSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         part = serializer.save()
@@ -240,19 +249,6 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         return Response(ServiceChecklistSerializer(qs, many=True).data)
 
     # --- Documentos (módulo billing, import local) ---
-    @action(detail=True, methods=["post"], url_path="generate-quote")
-    def generate_quote(self, request, pk=None):
-        from apps.billing.serializers import QuoteSerializer
-        from apps.billing.services import create_quote_from_service_order
-
-        order = self.get_object()
-        # No tiene sentido cotizar una orden ya finalizada/facturada/entregada.
-        _assert_not_terminal(order)
-        quote = create_quote_from_service_order(order=order, user=request.user)
-        return Response(
-            QuoteSerializer(quote).data, status=http_status.HTTP_201_CREATED
-        )
-
     @action(detail=True, methods=["post"], url_path="generate-invoice")
     def generate_invoice(self, request, pk=None):
         from apps.billing.serializers import InvoiceSerializer
@@ -368,6 +364,7 @@ class ServiceOrderPartViewSet(viewsets.ModelViewSet):
     EDITABLE_PART_STATUSES = (
         ServiceOrderPart.Status.REQUIRED,
         ServiceOrderPart.Status.PENDING_PURCHASE,
+        ServiceOrderPart.Status.PENDING_INVENTORY,
     )
 
     def get_queryset(self):
@@ -377,6 +374,18 @@ class ServiceOrderPartViewSet(viewsets.ModelViewSet):
             qs = qs.filter(service_order_id=order)
         return qs
 
+    @extend_schema(request=ReconcilePartSerializer, responses=ServiceOrderPartSerializer)
+    @action(detail=True, methods=["post"])
+    def reconcile(self, request, pk=None):
+        data = ReconcilePartSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        part = reconcile_part(
+            part=self.get_object(), source=data.validated_data["source"],
+            product=data.validated_data.get("product"), user=request.user,
+        )
+        return Response(self.get_serializer(part).data)
+
+    @transaction.atomic
     def perform_create(self, serializer):
         order = serializer.validated_data.get("service_order")
         if order is None:
@@ -385,8 +394,12 @@ class ServiceOrderPartViewSet(viewsets.ModelViewSet):
         serializer.save()
         recalculate_totals(order)
 
+    @transaction.atomic
     def perform_update(self, serializer):
         part = serializer.instance
+        ServiceOrder.objects.select_for_update().get(pk=part.service_order_id)
+        part = ServiceOrderPart.objects.select_for_update().get(pk=part.pk)
+        serializer.instance = part
         _assert_not_terminal(part.service_order)
         if part.status not in self.EDITABLE_PART_STATUSES:
             raise ValidationError(
@@ -395,7 +408,10 @@ class ServiceOrderPartViewSet(viewsets.ModelViewSet):
         part = serializer.save()
         recalculate_totals(part.service_order)
 
+    @transaction.atomic
     def perform_destroy(self, instance):
+        ServiceOrder.objects.select_for_update().get(pk=instance.service_order_id)
+        instance = ServiceOrderPart.objects.select_for_update().get(pk=instance.pk)
         order = instance.service_order
         _assert_not_terminal(order)
         # Borrar una pieza reservada libera su reserva en inventario.
@@ -408,6 +424,7 @@ class ServiceOrderPartViewSet(viewsets.ModelViewSet):
                 notes=f"Baja de pieza orden {order.service_order_number}",
             )
         instance.delete()
+        recalculate_totals(order)
 
 
 class ServiceOrderPhotoViewSet(

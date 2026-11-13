@@ -1,21 +1,6 @@
 from django.contrib import admin
 
-from .models import Invoice, InvoiceLine, Payment, Quote, QuoteLine
-
-
-class QuoteLineInline(admin.TabularInline):
-    model = QuoteLine
-    extra = 0
-    readonly_fields = ("total",)
-
-
-@admin.register(Quote)
-class QuoteAdmin(admin.ModelAdmin):
-    list_display = ("quote_number", "customer", "status", "issue_date", "total")
-    list_filter = ("status",)
-    search_fields = ("quote_number", "customer__name")
-    readonly_fields = ("subtotal", "total")
-    inlines = (QuoteLineInline,)
+from .models import Invoice, InvoiceLine, Payment
 
 
 class InvoiceLineInline(admin.TabularInline):

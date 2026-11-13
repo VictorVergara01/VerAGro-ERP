@@ -3,7 +3,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
-from .models import InventoryMovement, Product
+from .models import InventoryMovement, Product, InitialStockCount
 
 ADJUSTMENT_TYPES = {
     InventoryMovement.MovementType.ADJUSTMENT_IN,
@@ -18,7 +18,7 @@ def _q(value):
 
 
 def apply_weighted_average(locked_product, quantity_in, unit_cost):
-    """Promedio móvil ponderado. ÚNICO lugar del sistema donde average_cost cambia.
+    """Promedio móvil ponderado para entradas posteriores al saldo inicial.
 
     Recibe el producto YA bloqueado con select_for_update(): no abre transacción ni
     bloquea por su cuenta, eso es responsabilidad del llamador.
@@ -42,6 +42,54 @@ def apply_weighted_average(locked_product, quantity_in, unit_cost):
 def generate_product_sku(pk):
     """SKU autogenerado: prefijo fijo + pk con relleno de ceros a 6 dígitos."""
     return f"SKU-{pk:06d}"
+
+
+@transaction.atomic
+def record_initial_count(*, product, quantity, unit_cost=None, location="", notes="", expected_updated_at, user=None):
+    locked = Product.objects.select_for_update().get(pk=product.pk)
+    if not locked.is_active:
+        raise ValidationError({"product": "El producto está inactivo."})
+    if InitialStockCount.objects.filter(product=locked).exists():
+        raise ValidationError({"product": "Este producto ya tiene un conteo inicial. Para cambios posteriores usa los ajustes de inventario."})
+    if locked.updated_at != expected_updated_at:
+        raise ValidationError({"detail": "El producto cambió mientras contabas. Cierra el formulario y vuelve a abrirlo para revisar sus existencias."})
+    quantity = Decimal(str(quantity))
+    if not quantity.is_finite() or quantity < 0:
+        raise ValidationError({"quantity": "La cantidad contada debe ser cero o mayor."})
+    cost = Decimal(str(unit_cost)) if unit_cost is not None else None
+    if cost is not None and (not cost.is_finite() or cost <= 0):
+        raise ValidationError({"unit_cost": "El costo unitario debe ser mayor que cero."})
+    if quantity > 0 and cost is None:
+        raise ValidationError({"unit_cost": "Indica el costo unitario para valorar las existencias contadas."})
+    if quantity < locked.reserved_quantity:
+        raise ValidationError({"quantity": "La cantidad contada es menor que las piezas reservadas. Revisa las reservas antes de guardar."})
+
+    previous_quantity = locked.stock_quantity
+    previous_cost = locked.average_cost
+    count = InitialStockCount.objects.create(
+        product=locked, quantity_before=previous_quantity, counted_quantity=quantity,
+        reserved_quantity=locked.reserved_quantity, average_cost_before=previous_cost,
+        unit_cost=cost, location=location, notes=notes, created_by=user,
+    )
+    locked.stock_quantity = quantity
+    locked.location = location
+    if quantity > 0:
+        # La apertura establece la base de valoración del conteo físico.
+        locked.average_cost = cost
+    locked.save(update_fields=["stock_quantity", "location", "average_cost", "updated_at"])
+    if quantity > 0:
+        apply_margin(locked)
+    difference = quantity - previous_quantity
+    if difference:
+        movement = InventoryMovement.objects.create(
+            product=locked, movement_type="adjustment_in" if difference > 0 else "adjustment_out",
+            quantity=abs(difference), unit_cost=cost if difference > 0 else previous_cost,
+            average_cost_after=locked.average_cost, reference_type="initial_count", reference_id=count.pk,
+            notes="Conteo físico inicial" + (f": {notes}" if notes else ""), created_by=user,
+        )
+        count.movement = movement
+        count.save(update_fields=["movement", "updated_at"])
+    return count
 
 
 def effective_margins(product):
@@ -255,7 +303,8 @@ def consume_stock(
         raise ValidationError({"quantity": "La cantidad debe ser mayor que cero."})
 
     locked = Product.objects.select_for_update().get(pk=product.pk)
-    if quantity > locked.stock_quantity:
+    limit = locked.stock_quantity if was_reserved else locked.available_quantity
+    if quantity > limit:
         raise ValidationError({"quantity": "Stock insuficiente para el consumo."})
     locked.stock_quantity = locked.stock_quantity - quantity
     if was_reserved:

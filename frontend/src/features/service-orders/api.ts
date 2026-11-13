@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../../lib/api/client";
+import { api, authedFetch } from "../../lib/api/client";
+import { userErrorMessage } from "../../lib/api/errors";
 import type { Paginated } from "../../lib/api/types";
 import type { ServiceOrder } from "./types";
 import type { CompatibleProductsResponse } from "./despieceTypes";
@@ -26,21 +27,6 @@ export function useTechnicians() {
       const { data, error } = await api.GET("/api/users/", {
         // El OpenAPI no declara ?role= (la vista lo lee a mano).
         params: { query: { role: "technician" } as unknown as never },
-      });
-      if (error || !data) return [] as UserOption[];
-      return data as unknown as UserOption[];
-    },
-  });
-}
-
-export function usePilots() {
-  return useQuery({
-    queryKey: ["users", "piloto"],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/users/", {
-        // El OpenAPI no declara ?role= (la vista lo lee a mano).
-        params: { query: { role: "piloto" } as unknown as never },
       });
       if (error || !data) return [] as UserOption[];
       return data as unknown as UserOption[];
@@ -101,9 +87,7 @@ export function useSaveServiceOrder() {
       if (error) throw new Error("No se pudo crear la orden.");
       return data as ServiceOrder;
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["service-orders"] });
-    },
+    onSuccess: (saved) => invalidate(qc, saved.id),
   });
 }
 
@@ -119,6 +103,9 @@ function invalidate(qc: ReturnType<typeof useQueryClient>, id?: number) {
   void qc.invalidateQueries({ queryKey: ["service-order", id] });
   void qc.invalidateQueries({ queryKey: ["service-orders"] });
   void qc.invalidateQueries({ queryKey: ["products"] });
+  void qc.invalidateQueries({ queryKey: ["product"] });
+  void qc.invalidateQueries({ queryKey: ["order-compatible", id] });
+  void qc.invalidateQueries({ queryKey: ["invoices"] });
 }
 
 export function useServiceOrderAction(id: number | undefined) {
@@ -142,7 +129,7 @@ export function useServiceOrderAction(id: number | undefined) {
           api.POST("/api/service-orders/{id}/cancel/", { params, body: empty }),
       };
       const { data, error } = await calls[action]();
-      if (error) throw new Error("No se pudo ejecutar la acción.");
+      if (error) throw new Error(userErrorMessage(error, "No se pudo ejecutar la acción."));
       return data;
     },
     onSuccess: () => invalidate(qc, id),
@@ -169,7 +156,10 @@ export function useReserveParts(id: number | undefined) {
 }
 
 export interface AddPartInput {
-  product: number;
+  product?: number;
+  description?: string;
+  part_number?: string;
+  inventory_source?: string;
   quantity: string;
   unit_cost?: string;
   unit_price?: string;
@@ -188,7 +178,7 @@ export function useAddPart(id: number | undefined) {
           body: input as unknown as ServiceOrder,
         },
       );
-      if (error) throw new Error("No se pudo agregar la pieza.");
+      if (error) throw new Error(userErrorMessage(error, "No se pudo agregar la pieza."));
       return data;
     },
     onSuccess: () => invalidate(qc, id),
@@ -208,26 +198,20 @@ export function useDeletePart(orderId: number | undefined) {
   });
 }
 
-export function useGenerateDocument(id: number | undefined) {
+export function useReconcilePart(orderId: number | undefined) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (kind: "quote" | "invoice") => {
-      const params = { path: { id: id as number } };
-      const empty = {} as unknown as ServiceOrder;
-      const { data, error } =
-        kind === "quote"
-          ? await api.POST("/api/service-orders/{id}/generate-quote/", {
-              params,
-              body: empty,
-            })
-          : await api.POST("/api/service-orders/{id}/generate-invoice/", {
-              params,
-              body: empty,
-            });
-      if (error) throw new Error("No se pudo generar el documento.");
-      return data as { id: number; quote_number?: string; invoice_number?: string };
+    mutationFn: async ({ id, ...body }: { id: number; source: string; product?: number }) => {
+      const res = await authedFetch(`/api/service-order-parts/${id}/reconcile/`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(Object.values(error).flat().join(" ") || "No se pudo conciliar la pieza.");
+      }
+      return res.json();
     },
-    onSuccess: () => invalidate(qc, id),
+    onSuccess: () => invalidate(qc, orderId),
   });
 }
 

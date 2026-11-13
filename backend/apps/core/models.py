@@ -36,7 +36,10 @@ class CompanyProfile(models.Model):
         max_digits=10, decimal_places=2, default=20
     )
     spreading_price_per_quintal = models.DecimalField(
-        max_digits=10, decimal_places=2, default=10
+        max_digits=10, decimal_places=2, default=15
+    )
+    spreading_price_per_hectare = models.DecimalField(
+        max_digits=10, decimal_places=2, default=25
     )
     drone_tank_volume_liters = models.DecimalField(
         max_digits=8, decimal_places=2, default=200

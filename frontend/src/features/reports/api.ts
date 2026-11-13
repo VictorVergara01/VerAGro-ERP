@@ -4,6 +4,8 @@ import { api } from "../../lib/api/client";
 import type {
   BelowFloorReport,
   DateRange,
+  FieldJobsReport,
+  ReportSegment,
   LowStockReport,
   ProfitReport,
   SalesReport,
@@ -26,8 +28,8 @@ export function useLowStockReport() {
 }
 
 // Las vistas leen ?from=&to= aunque el OpenAPI no las declare (query tipado como never).
-function rangeQuery(range: DateRange) {
-  return { from: range.from || undefined, to: range.to || undefined } as unknown as never;
+function rangeQuery(range: DateRange, segment?: ReportSegment) {
+  return { from: range.from || undefined, to: range.to || undefined, segment } as unknown as never;
 }
 
 export function useServiceOrdersReport(range: DateRange) {
@@ -44,12 +46,12 @@ export function useServiceOrdersReport(range: DateRange) {
   });
 }
 
-export function useSalesReport(range: DateRange) {
+export function useSalesReport(range: DateRange, segment: ReportSegment = "workshop") {
   return useQuery({
-    queryKey: ["report", "sales", range],
+    queryKey: ["report", "sales", segment, range],
     queryFn: async () => {
       const { data, error, response } = await api.GET("/api/reports/sales/", {
-        params: { query: rangeQuery(range) },
+        params: { query: rangeQuery(range, segment) },
       });
       if (error || !data) throw reportError(response?.status);
       return data as unknown as SalesReport;
@@ -71,15 +73,28 @@ export function useBelowFloorSalesReport(range: DateRange) {
   });
 }
 
-export function useProfitReport(range: DateRange) {
+export function useProfitReport(range: DateRange, segment: ReportSegment = "workshop") {
   return useQuery({
-    queryKey: ["report", "profit", range],
+    queryKey: ["report", "profit", segment, range],
     queryFn: async () => {
       const { data, error, response } = await api.GET("/api/reports/profit/", {
-        params: { query: rangeQuery(range) },
+        params: { query: rangeQuery(range, segment) },
       });
       if (error || !data) throw reportError(response?.status);
       return data as unknown as ProfitReport;
+    },
+  });
+}
+
+export function useFieldJobsReport(range: DateRange) {
+  return useQuery({
+    queryKey: ["report", "field-jobs", range],
+    queryFn: async () => {
+      const { data, error, response } = await api.GET("/api/reports/field-jobs/", {
+        params: { query: rangeQuery(range) },
+      });
+      if (error || !data) throw reportError(response?.status);
+      return data as unknown as FieldJobsReport;
     },
   });
 }

@@ -10,7 +10,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { formatCurrency } from "../../utils/format";
 import { useRecordPayment } from "./api";
@@ -25,20 +25,18 @@ export function PaymentModal({
   onClose: () => void;
   invoice: Invoice;
 }) {
+  return <Modal opened={opened} onClose={onClose} title="Registrar pago" size="md">
+    {opened && <PaymentForm invoice={invoice} onClose={onClose} />}
+  </Modal>;
+}
+
+function PaymentForm({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const record = useRecordPayment(invoice.id);
-  const [amount, setAmount] = useState<number | string>("");
+  const [amount, setAmount] = useState<number | string>(invoice.balance_due ?? "");
   const [method, setMethod] = useState("cash");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
-
-  useEffect(() => {
-    if (opened) {
-      setAmount(invoice.balance_due ?? "");
-      setMethod("cash");
-      setReference("");
-      setNotes("");
-    }
-  }, [opened, invoice.balance_due]);
+  const [requestId] = useState(() => crypto.randomUUID());
 
   const submit = async () => {
     if (!amount || Number(amount) <= 0) {
@@ -51,6 +49,7 @@ export function PaymentModal({
         method,
         reference_number: reference,
         notes,
+        ...(invoice.field_job ? { request_id: requestId } : {}),
       });
       notifications.show({ color: "green", message: "Pago registrado." });
       onClose();
@@ -60,7 +59,6 @@ export function PaymentModal({
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Registrar pago" size="md">
       <Stack>
         <Text size="sm" c="dimmed">
           Saldo pendiente: {formatCurrency(invoice.balance_due)}
@@ -98,6 +96,5 @@ export function PaymentModal({
           </Button>
         </Group>
       </Stack>
-    </Modal>
   );
 }

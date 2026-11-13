@@ -16,6 +16,8 @@ import {
   FJ_STATUS_COLOR,
   FJ_STATUS_LABEL,
   FJ_STATUS_OPTIONS,
+  JOB_TYPE_OPTIONS,
+  JOB_TYPE_LABEL,
   type FieldJob,
 } from "./types";
 
@@ -23,6 +25,7 @@ export function FieldJobsPage() {
   const [search, setSearch] = useState("");
   const [debounced] = useDebouncedValue(search, 300);
   const [status, setStatus] = useState<string | null>(null);
+  const [jobType, setJobType] = useState<string | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
@@ -33,6 +36,7 @@ export function FieldJobsPage() {
   const { data, isLoading, error } = useFieldJobs({
     search: debounced,
     status: status || undefined,
+    job_type: jobType || undefined,
     from: from || undefined,
     to: to || undefined,
     page,
@@ -41,9 +45,11 @@ export function FieldJobsPage() {
   const columns: Column<FieldJob>[] = [
     { header: "N.º", render: (j) => j.number },
     { header: "Cliente", render: (j) => j.customer_name ?? "—" },
+    { header: "Aplicación", render: (j) => JOB_TYPE_LABEL[j.job_type ?? "fumigation"] },
     { header: "Finca", render: (j) => j.location || "—" },
     { header: "Programado", render: (j) => formatDate(j.scheduled_date) },
-    { header: "Ha", align: "right", render: (j) => `${j.hectares} ha` },
+    { header: "Ha previstas / reales", align: "right", render: (j) => `${j.hectares} / ${j.actual_hectares ?? "—"}` },
+    { header: "Cobro", render: (j) => j.billing_unit === "qq" ? `${j.total_quintals} qq` : "Por hectárea" },
     { header: "Total", align: "right", render: (j) => formatCurrency(j.total) },
     {
       header: "Estado",
@@ -62,7 +68,7 @@ export function FieldJobsPage() {
     <Stack>
       <PageHeader
         title="Trabajos de campo"
-        subtitle="Fumigación con drones."
+        subtitle="Pulverización y aplicación de sólidos con drones."
         action={
           canWriteService(user?.role) ? (
             <Button leftSection={<IconPlus size={18} />} onClick={open}>Nuevo trabajo</Button>
@@ -91,6 +97,8 @@ export function FieldJobsPage() {
               />
               <Select placeholder="Estado" data={FJ_STATUS_OPTIONS} value={status}
                 onChange={(v) => { setStatus(v); resetPage(); }} clearable w={160} />
+              <Select placeholder="Tipo de aplicación" aria-label="Tipo de aplicación" data={JOB_TYPE_OPTIONS} value={jobType}
+                onChange={(v) => { setJobType(v); resetPage(); }} clearable w={220} />
               <TextInput type="date" aria-label="Desde" value={from}
                 onChange={(e) => { setFrom(e.currentTarget.value); resetPage(); }} />
               <TextInput type="date" aria-label="Hasta" value={to}

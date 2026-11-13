@@ -71,8 +71,9 @@ export function useSaveFieldJob() {
       if (error) throw new Error(userErrorMessage(error, "No se pudo crear el trabajo."));
       return data as FieldJob;
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       void qc.invalidateQueries({ queryKey: ["field-jobs"] });
+      void qc.invalidateQueries({ queryKey: ["field-job", saved.id] });
     },
   });
 }
@@ -90,7 +91,7 @@ export function useDeleteFieldJob() {
   });
 }
 
-type FJAction = "mark-done" | "cancel" | "generate-invoice";
+type FJAction = "cancel" | "generate-invoice";
 
 export function useFieldJobAction(id: number | undefined) {
   const qc = useQueryClient();
@@ -99,8 +100,6 @@ export function useFieldJobAction(id: number | undefined) {
       const params = { path: { id: id as number } };
       const empty = {} as unknown as FieldJob;
       const calls: Record<FJAction, () => ReturnType<typeof api.POST>> = {
-        "mark-done": () =>
-          api.POST("/api/field-jobs/{id}/mark-done/", { params, body: empty }),
         cancel: () => api.POST("/api/field-jobs/{id}/cancel/", { params, body: empty }),
         "generate-invoice": () =>
           api.POST("/api/field-jobs/{id}/generate-invoice/", { params, body: empty }),
@@ -112,6 +111,25 @@ export function useFieldJobAction(id: number | undefined) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["field-job", id] });
       void qc.invalidateQueries({ queryKey: ["field-jobs"] });
+      for (const key of ["field-account", "field-accounts", "field-finance", "report", "invoices"]) void qc.invalidateQueries({ queryKey: [key] });
+    },
+  });
+}
+
+export function useCompleteFieldJob(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { actual_hectares: string; applied_quintals?: string | null; done_date?: string; due_date?: string }) => {
+      const { data, error } = await api.POST("/api/field-jobs/{id}/mark-done/", {
+        params: { path: { id } }, body,
+      });
+      if (error) throw new Error(userErrorMessage(error, "No se pudo registrar el trabajo realizado."));
+      return data;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["field-job", id] });
+      void qc.invalidateQueries({ queryKey: ["field-jobs"] });
+      for (const key of ["field-account", "field-accounts", "field-finance", "report"]) void qc.invalidateQueries({ queryKey: [key] });
     },
   });
 }

@@ -65,6 +65,15 @@ export interface DateRange {
   to?: string;
 }
 
+export type ReportSegment = "workshop" | "field";
+export interface FieldJobsReport {
+  scheduled_count: number;
+  completed_count: number;
+  actual_hectares: number | string;
+  applied_quintals: number | string;
+  by_type: { job_type: string; count: number; hectares: number | string; quintals: number | string }[];
+}
+
 export type BelowFloorRow = {
   document: string;
   document_type: "invoice" | "service_order";
